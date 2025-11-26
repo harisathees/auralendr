@@ -1,0 +1,26 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Admin\BranchController;
+use App\Http\Controllers\Admin\StaffController;
+
+
+Route::get('/test', function () {
+    return response()->json(['status' => 'API Working']);
+});
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:8,1');
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/me', [AuthController::class, 'me']);
+
+    // Admin-only routes
+    Route::middleware('admin')->group(function () {
+        Route::apiResource('branches', BranchController::class);
+        Route::apiResource('staff', StaffController::class);
+    });
+
+    // Staff endpoints (example)
+    // Route::get('/branch/customers', [CustomerController::class,'index']); // to implement later
+});
