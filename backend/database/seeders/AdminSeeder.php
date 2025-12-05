@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\Branch;
+use App\Models\BranchAndUser\User;
+use App\Models\BranchAndUser\Branch;
 use Illuminate\Support\Facades\Hash;
 
 class AdminSeeder extends Seeder
@@ -19,7 +19,7 @@ class AdminSeeder extends Seeder
 
         // Create super admin
         User::firstOrCreate(
-            ['email' => 'admin@gamil.com'],
+            ['email' => 'admin@gmail.com'],
             [
                 'name' => 'Admin',
                 'password' => Hash::make('12345'),

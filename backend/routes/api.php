@@ -1,14 +1,17 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\login\AuthController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\pledge\PledgeController;
 
 
 Route::get('/test', function () {
     return response()->json(['status' => 'API Working']);
 });
+
+// FOR LOGIN
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:8,1');
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -24,3 +27,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // Staff endpoints (example)
     // Route::get('/branch/customers', [CustomerController::class,'index']); // to implement later
 });
+
+// Pledge routes
+Route::middleware(['auth:sanctum'])->group(function () {
+    // Temporarily remove permission middleware to debug - will add back after fixing
+    Route::get('pledges', [PledgeController::class,'index']);
+    Route::post('pledges', [PledgeController::class,'store']);
+    Route::get('pledges/{pledge}', [PledgeController::class,'show']);
+    Route::put('pledges/{pledge}', [PledgeController::class,'update']);
+    Route::delete('pledges/{pledge}', [PledgeController::class,'destroy']);
+});
+

@@ -9,6 +9,11 @@ class RouteServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        // Register route model bindings
+        Route::bind('pledge', function ($value) {
+            return \App\Models\pledge\Pledge::findOrFail($value);
+        });
+
         $this->routes(function () {
             Route::middleware('api')
                 ->prefix('api')
