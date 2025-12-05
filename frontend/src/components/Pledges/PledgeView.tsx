@@ -1,11 +1,26 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { deletePledge } from "../../api/pledgeService";
 
 interface Props {
   pledge: any;
 }
 
 const PledgeView: React.FC<Props> = ({ pledge }) => {
+  const navigate = useNavigate();
+
+  const handleDelete = async () => {
+    if (window.confirm("Are you sure you want to delete this pledge? This action cannot be undone.")) {
+      try {
+        await deletePledge(pledge.id);
+        navigate("/pledges");
+      } catch (error) {
+        console.error("Failed to delete pledge:", error);
+        alert("Failed to delete pledge. Please try again.");
+      }
+    }
+  };
+
   if (!pledge) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
   return (
@@ -28,6 +43,12 @@ const PledgeView: React.FC<Props> = ({ pledge }) => {
           >
             Edit Pledge
           </Link>
+          <button
+            onClick={handleDelete}
+            className="px-4 py-2 text-white bg-red-600 rounded hover:bg-red-700 transition-colors shadow"
+          >
+            Delete Pledge
+          </button>
         </div>
       </div>
 

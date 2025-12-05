@@ -375,9 +375,30 @@ class PledgeController extends Controller
     {
         $this->authorize('delete', $pledge);
 
-        // Soft delete recommended; here we delete
+        // 1. Delete physical files and MediaFile records
+        foreach ($pledge->media as $mediaFile) {
+            if ($mediaFile->file_path && Storage::disk('public')->exists($mediaFile->file_path)) {
+                Storage::disk('public')->delete($mediaFile->file_path);
+            }
+            $mediaFile->delete();
+        }
+
+        // 2. Delete Jewels
+        $pledge->jewels()->delete();
+
+        // 3. Delete Loan
+        if ($pledge->loan) {
+            $pledge->loan->delete();
+        }
+
+        // 4. Delete Pledge
         $pledge->delete();
 
-        return response()->json(['message' => 'Pledge deleted']);
+        // 5. Delete Customer (assuming 1:1 relationship based on store logic)
+        if ($pledge->customer) {
+            $pledge->customer->delete();
+        }
+
+        return response()->json(['message' => 'Pledge, Customer, and all associated data deleted successfully']);
     }
 }
