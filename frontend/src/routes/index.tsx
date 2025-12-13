@@ -31,15 +31,12 @@ const AppRoutes: React.FC = () => {
         }
       />
 
-{/*       
-    <Route path="/pledges" element={<ProtectedRoute><List /></ProtectedRoute>} />
+      
+      <Route path="/pledges" element={<ProtectedRoute><List /></ProtectedRoute>} />
       <Route path="/pledges/create" element={<ProtectedRoute><Create /></ProtectedRoute>} />
       <Route path="/pledges/:id/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
-      <Route path="/pledges/:id" element={<ProtectedRoute><View /></ProtectedRoute>} /> */}
-      <Route path="/pledges" element={<List />} />
-      <Route path="/pledges/create" element={<Create />} />
-      <Route path="/pledges/:id/edit" element={<Edit />} />
-      <Route path="/pledges/:id" element={<View />} />
+      <Route path="/pledges/:id" element={<ProtectedRoute><View /></ProtectedRoute>} />
+      
 
       {/* Catch all - redirect to home */}
       <Route path="*" element={<Navigate to="/" replace />} />
