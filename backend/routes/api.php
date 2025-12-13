@@ -5,6 +5,8 @@ use App\Http\Controllers\login\AuthController;
 use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\pledge\PledgeController;
+use App\Http\Controllers\Admin\JewelTypeController;
+use App\Http\Controllers\Admin\JewelQualityController;
 
 
 Route::get('/test', function () {
@@ -31,10 +33,12 @@ Route::middleware('auth:sanctum')->group(function () {
 // Pledge routes
 Route::middleware(['auth:sanctum'])->group(function () {
     // Temporarily remove permission middleware to debug - will add back after fixing
-    Route::get('pledges', [PledgeController::class,'index']);
-    Route::post('pledges', [PledgeController::class,'store']);
-    Route::get('pledges/{pledge}', [PledgeController::class,'show']);
-    Route::put('pledges/{pledge}', [PledgeController::class,'update']);
-    Route::delete('pledges/{pledge}', [PledgeController::class,'destroy']);
+    Route::get('pledges', [PledgeController::class, 'index']);
+    Route::post('pledges', [PledgeController::class, 'store']);
+    Route::get('pledges/{pledge}', [PledgeController::class, 'show']);
+    Route::put('pledges/{pledge}', [PledgeController::class, 'update']);
+    Route::delete('pledges/{pledge}', [PledgeController::class, 'destroy']);
+    Route::get('jewel-types', [JewelTypeController::class, 'index']);
+    Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
 });
 

@@ -1,12 +1,17 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import React, { lazy } from "react";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute";
 import Login from "../pages/login/Login";
-import Dashboard from "../pages/dashboard/Dashboard";
-import List from "../pages/Pledges/List";
-import Create from "../pages/Pledges/Create";
-import Edit from "../pages/Pledges/Edit";
-import View from "../pages/Pledges/View";
+import DashboardLayout from "../layouts/DashboardLayout";
+
+// Lazy load dashboard pages to enable transition animations
+const Dashboard = lazy(() => import("../pages/dashboard/Dashboard"));
+const List = lazy(() => import("../pages/Pledges/List"));
+const Create = lazy(() => import("../pages/Pledges/Create"));
+const Edit = lazy(() => import("../pages/Pledges/Edit"));
+const View = lazy(() => import("../pages/Pledges/View"));
+
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
@@ -21,12 +26,12 @@ const AppRoutes: React.FC = () => {
       />
       <Route path="/login" element={<Navigate to="/" replace />} />
 
-      {/* Protected Routes */}
+      {/* Protected Routes wrapped in DashboardLayout */}
+      {/* Protected Routes wrapped in DashboardLayout */}
       <Route
-        path="/dashboard"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <DashboardLayout />
           </ProtectedRoute>
         }
       />
