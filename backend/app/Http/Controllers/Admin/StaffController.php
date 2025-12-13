@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
+use App\Models\BranchAndUser\User;
 use Illuminate\Support\Facades\Hash;
 
 class StaffController extends Controller

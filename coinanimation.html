@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spinning Gold Coin Loader</title>
+    <style>
+        /* CSS Variables for Easy Customization */
+        :root {
+            --coin-size: 100px; /* Adjust coin size here */
+            --gold-color-light: #FFD700;
+            --gold-color-dark: #A67C00;
+            --spin-duration: 1.2s; /* Adjust speed here (lower number = faster) */
+            --edge-color: #B8860B; /* Darker gold for the coin's edge */
+        }
+
+        /* -------------------------------------- */
+        /* 1. CONTAINER: Used to center the loader and control visibility */
+        /* -------------------------------------- */
+        .loader-container {
+            /* Full screen overlay settings */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999; /* Ensure it stays on top */
+            /* Start hidden until triggered in a real application */
+            /* In this example, we show it immediately for demonstration */
+        }
+
+        /* -------------------------------------- */
+        /* 2. COIN BASE: Sets up the 3D space and overall animation */
+        /* -------------------------------------- */
+        .coin {
+            width: var(--coin-size);
+            height: var(--coin-size);
+            
+            /* Set up the 3D space for the flip */
+            transform-style: preserve-3d;
+            perspective: 600px;
+            
+            /* Start the continuous animation */
+            animation: flip var(--spin-duration) infinite linear;
+            
+            /* Style the circular edge */
+            border-radius: 50%;
+            background-color: var(--edge-color); 
+            box-shadow: 
+                0 0 10px rgba(0, 0, 0, 0.5), /* Shadow for depth */
+                inset 0 0 5px rgba(255, 255, 255, 0.4); /* Highlight on the edge */
+        }
+
+        /* -------------------------------------- */
+        /* 3. COIN FACES: Styling and positioning the front/back */
+        /* -------------------------------------- */
+        .coin-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            backface-visibility: hidden; /* Key for the 3D flip effect */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: calc(var(--coin-size) / 2.5);
+            font-family: Arial, sans-serif;
+            font-weight: 900;
+            color: var(--edge-color); 
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+            
+            /* Gold Gradient/Look */
+            background: radial-gradient(
+                circle at 40% 40%, 
+                var(--gold-color-light), 
+                var(--gold-color-dark) 
+            );
+            border: 4px solid var(--gold-color-light);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); /* Subtle ambient glow */
+        }
+
+        /* Front Face (Symbol: Dollar) */
+        .front:before {
+            content: '$'; 
+        }
+
+        /* Back Face (Symbol: Star) */
+        .back {
+            /* Rotate the back face 180 degrees so it starts facing away */
+            transform: rotateY(180deg);
+        }
+        .back:before {
+            content: '★'; 
+        }
+
+        /* -------------------------------------- */
+        /* 4. KEYFRAME ANIMATION */
+        /* -------------------------------------- */
+        @keyframes flip {
+            0% {
+                transform: rotateY(0deg);
+            }
+            100% {
+                transform: rotateY(360deg);
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="loader-container" id="loading-indicator">
+        <div class="coin">
+            <div class="coin-face front"></div>
+            <div class="coin-face back"></div>
+        </div>
+    </div>
+    
+    <div style="padding: 50px; text-align: center;">
+        <h1>Simulating Page Content Load...</h1>
+        <p>The spinning coin will disappear after 4 seconds.</p>
+    </div>
+
+    <script>
+        /**
+         * Functions to control the visibility of the loader.
+         * In a real application, you would integrate these with your navigation logic.
+         */
+
+        const loaderContainer = document.getElementById('loading-indicator');
+
+        // Function to show the loading screen
+        function showLoading() {
+            if (loaderContainer) {
+                loaderContainer.style.display = 'flex';
+            }
+        }
+
+        // Function to hide the loading screen
+        function hideLoading() {
+            if (loaderContainer) {
+                loaderContainer.style.display = 'none';
+            }
+        }
+
+
+        // --- DEMO USAGE ---
+
+        // 1. Ensure the loader is visible immediately when the script runs
+        showLoading(); 
+
+        // 2. Simulate a network/page load delay (4 seconds)
+        console.log('Page loading started...');
+        setTimeout(() => {
+            hideLoading();
+            console.log('Page loaded! Coin is now hidden.');
+        }, 4000); 
+
+        // In your page navigation logic (e.g., when clicking a link):
+        // 1. Call showLoading()
+        // 2. Start fetching new page data/content
+        // 3. When data is received and page is rendered, call hideLoading()
+    </script>
+
+</body>
+</html>

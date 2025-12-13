@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Branch;
+use App\Models\BranchAndUser\Branch;
 
 class BranchController extends Controller
 {
