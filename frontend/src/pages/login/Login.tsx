@@ -89,9 +89,9 @@ const Login: React.FC = () => {
               <label className="text-[#0c1d16] dark:text-white text-base font-bold ml-1" htmlFor="password">
                 Password
               </label>
-              <div className="flex w-full items-stretch rounded-lg shadow-sm bg-white dark:bg-zinc-800 focus-within:ring-2 focus-within:ring-primary focus-within:ring-opacity-50 transition-all duration-200">
+              <div className="relative">
                 <input
-                  className="form-input flex-1 h-14 px-4 bg-transparent text-[#0c1d16] dark:text-white border-none focus:outline-none focus:ring-0 placeholder:text-gray-400 text-base font-normal rounded-l-lg"
+                  className="form-input flex w-full h-14 px-4 bg-white dark:bg-zinc-800 text-[#0c1d16] dark:text-white border-none rounded-lg focus:ring-2 focus:ring-primary focus:ring-opacity-50 placeholder:text-gray-400 text-base font-normal shadow-sm transition-all duration-200 pr-12"
                   id="password"
                   placeholder="••••••••"
                   type={showPassword ? "text" : "password"}
@@ -100,8 +100,8 @@ const Login: React.FC = () => {
                   required
                 />
                 <button
-                  className="flex items-center justify-center px-4 bg-transparent text-primary hover:text-primary-dark transition-colors rounded-r-lg focus:outline-none cursor-pointer"
                   type="button"
+                  className="absolute inset-y-0 right-0 flex items-center pr-4 cursor-pointer text-gray-400 hover:text-primary transition-colors focus:outline-none"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   <span className="material-symbols-outlined">

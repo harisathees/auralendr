@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import http from "../../api/http";
 
 // Helper component for consistent media upload UI
 interface MediaUploadBlockProps {
@@ -74,6 +75,39 @@ const Create: React.FC = () => {
   const [stoneWeight, setStoneWeight] = useState<string>("");
   const [netWeight, setNetWeight] = useState<string>("");
   const [loanNo, setLoanNo] = useState<string>("");
+
+  // Fetch Jewel Types
+  const [jewelTypes, setJewelTypes] = useState<{ id: number; name: string }[]>([]);
+  const [jewelQualities, setJewelQualities] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    // Fetch jewel types from API using configured http client
+    http.get("/jewel-types")
+      .then(res => {
+        console.log("Jewel Types API Response:", res.data);
+        if (Array.isArray(res.data)) {
+          setJewelTypes(res.data);
+        } else {
+          console.error("Jewel Types API returned non-array:", res.data);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch jewel types", err);
+        if (err.response) {
+          console.error("Error status:", err.response.status);
+          console.error("Error data:", err.response.data);
+        }
+      });
+
+    // Fetch jewel qualities
+    http.get("/jewel-qualities")
+      .then(res => {
+        if (Array.isArray(res.data)) {
+          setJewelQualities(res.data);
+        }
+      })
+      .catch(err => console.error("Failed to fetch jewel qualities", err));
+  }, []);
 
   useEffect(() => {
     const w = parseFloat(weight) || 0;
@@ -180,11 +214,19 @@ const Create: React.FC = () => {
               <label className="flex flex-col gap-1.5">
                 <span className="text-primary-text dark:text-white text-sm font-medium">Jewel Type <span className="text-red-500">*</span></span>
                 <div className="relative">
-                  <select className="form-select w-full rounded-lg border-border-green bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none text-gray-500 dark:text-gray-300 outline-none border">
-                    <option disabled selected>Select</option>
-                    <option>Gold Ring</option>
-                    <option>Gold Chain</option>
-                    <option>Bangles</option>
+                  <select className="form-select w-full rounded-lg border-border-green bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none text-gray-500 dark:text-gray-300 outline-none border" defaultValue="">
+                    <option value="" disabled>Select</option>
+                    {jewelTypes.map((type) => (
+                      <option key={type.id} value={type.name}>{type.name}</option>
+                    ))}
+                    {jewelTypes.length === 0 && (
+                      <>
+                        <option value="Gold">Gold</option>
+                        <option value="Silver">Silver</option>
+                        <option value="Platinum">Platinum</option>
+                        <option value="Diamond">Diamond</option>
+                      </>
+                    )}
                   </select>
                   <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
                 </div>
@@ -193,11 +235,18 @@ const Create: React.FC = () => {
               <label className="flex flex-col gap-1.5">
                 <span className="text-primary-text dark:text-white text-sm font-medium">Quality</span>
                 <div className="relative">
-                  <select className="form-select w-full rounded-lg border-border-green bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none text-gray-500 dark:text-gray-300 outline-none border">
-                    <option disabled selected>Select</option>
-                    <option>24K</option>
-                    <option>22K</option>
-                    <option>18K</option>
+                  <select className="form-select w-full rounded-lg border-border-green bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none text-gray-500 dark:text-gray-300 outline-none border" defaultValue="">
+                    <option value="" disabled>Select</option>
+                    {jewelQualities.map((q) => (
+                      <option key={q.id} value={q.name}>{q.name}</option>
+                    ))}
+                    {jewelQualities.length === 0 && (
+                      <>
+                        <option value="24K">24K</option>
+                        <option value="22K">22K</option>
+                        <option value="18K">18K</option>
+                      </>
+                    )}
                   </select>
                   <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
                 </div>

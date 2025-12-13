@@ -79,7 +79,7 @@ const BottomNavigation: React.FC = () => {
                         <div className="relative flex justify-center items-end h-full group -top-4">
                             {/* FAB Menu */}
                             <div
-                                className={`absolute bottom-32 left-1/2 -translate-x-1/2 flex items-center gap-4 transition-all duration-300 transform origin-bottom ${fabOpen ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                                className={`absolute bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-4 transition-all duration-300 transform origin-bottom ${fabOpen ? "scale-100 opacity-100" : "scale-0 opacity-0"
                                     }`}
                             >
                                 {/* Create Pledge */}

@@ -14,7 +14,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Check localStorage or system preference
         if (localStorage.getItem("theme") === "dark") return "dark";
         if (localStorage.getItem("theme") === "light") return "light";
-        if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
         return "light";
     });
 
