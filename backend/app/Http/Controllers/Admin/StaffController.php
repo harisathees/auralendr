@@ -12,7 +12,11 @@ class StaffController extends Controller
     public function index()
     {
         // include branch relationship for UI
-        return User::with('branch')->get();
+        // include branch relationship for UI, sort by role (admin first) and then newness
+        return User::with('branch')
+            ->orderBy('role', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     public function store(Request $request)
@@ -20,7 +24,7 @@ class StaffController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string',
             'branch_id' => 'nullable|exists:branches,id',
             'role' => 'required|in:staff,admin'
         ]);
@@ -36,17 +40,17 @@ class StaffController extends Controller
         return response()->json($user, 201);
     }
 
-    public function show(User $user)
+    public function show(User $staff)
     {
-        return $user->load('branch');
+        return $staff->load('branch');
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $staff)
     {
         $data = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|unique:users,email,'.$user->id,
-            'password' => 'nullable|string|min:8',
+            'email' => 'sometimes|required|email|unique:users,email,' . $staff->id,
+            'password' => 'nullable|string',
             'branch_id' => 'nullable|exists:branches,id',
             'role' => 'sometimes|required|in:staff,admin'
         ]);
@@ -57,13 +61,13 @@ class StaffController extends Controller
             unset($data['password']);
         }
 
-        $user->update($data);
-        return response()->json($user);
+        $staff->update($data);
+        return response()->json($staff);
     }
 
-    public function destroy(User $user)
+    public function destroy(User $staff)
     {
-        $user->delete();
+        $staff->delete();
         return response()->json(['message' => 'Deleted']);
     }
 }
