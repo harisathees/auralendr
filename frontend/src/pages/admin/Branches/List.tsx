@@ -4,12 +4,7 @@ import BranchForm from './BranchForm';
 import { useNavigate } from 'react-router-dom';
 import Toast from '../../../components/Shared/Toast';
 import ConfirmationModal from '../../../components/Shared/ConfirmationModal';
-
-interface Branch {
-    id: number;
-    branch_name: string;
-    location: string | null;
-}
+import type { Branch } from '../../../types/models';
 
 const List: React.FC = () => {
     const navigate = useNavigate();

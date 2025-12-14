@@ -16,6 +16,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSuccess, onCancel }) => {
     const [dueDate, setDueDate] = useState('');
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [loadingUsers, setLoadingUsers] = useState(true);
 
     useEffect(() => {
@@ -46,11 +47,13 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSuccess, onCancel }) => {
             setStatus('pending');
             setDueDate('');
         }
+        setError(null);
     }, [task]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setError(null);
 
         const payload = {
             title,
@@ -67,8 +70,9 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSuccess, onCancel }) => {
                 await http.post('/tasks', payload);
             }
             onSuccess();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error saving task:", error);
+            setError(error.response?.data?.message || 'Failed to save task');
         } finally {
             setLoading(false);
         }
@@ -87,6 +91,11 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSuccess, onCancel }) => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    {error && (
+                        <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg border border-red-100 dark:border-red-800">
+                            {error}
+                        </div>
+                    )}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
                         <input

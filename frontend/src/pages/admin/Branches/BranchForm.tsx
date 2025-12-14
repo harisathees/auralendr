@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import http from '../../../api/http';
 
-interface Branch {
-    id?: number;
+import type { Branch } from '../../../types/models';
+
+interface BranchFormData {
     branch_name: string;
     location: string;
 }
@@ -14,7 +15,7 @@ interface BranchFormProps {
 }
 
 const BranchForm: React.FC<BranchFormProps> = ({ branch, onSuccess, onCancel }) => {
-    const [formData, setFormData] = useState<Branch>({
+    const [formData, setFormData] = useState<BranchFormData>({
         branch_name: '',
         location: '',
     });

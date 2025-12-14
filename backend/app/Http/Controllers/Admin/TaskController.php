@@ -28,6 +28,7 @@ class TaskController extends Controller
         $task = Task::create([
             ...$validated,
             'created_by' => Auth::id(),
+            'branch_id' => Auth::user()->branch_id,
         ]);
 
         return response()->json($task->load(['assignee', 'creator']), 201);
