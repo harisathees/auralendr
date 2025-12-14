@@ -12,6 +12,7 @@ const List = lazy(() => import("../pages/Pledges/List"));
 const Create = lazy(() => import("../pages/Pledges/Create"));
 const Edit = lazy(() => import("../pages/Pledges/Edit"));
 const View = lazy(() => import("../pages/Pledges/View"));
+const BranchList = lazy(() => import("../pages/admin/Branches/List"));
 
 const AppRoutes: React.FC = () => {
   return (
@@ -37,12 +38,12 @@ const AppRoutes: React.FC = () => {
         }
       />
 
-      
+
       <Route path="/pledges" element={<ProtectedRoute><List /></ProtectedRoute>} />
       <Route path="/pledges/create" element={<ProtectedRoute><Create /></ProtectedRoute>} />
       <Route path="/pledges/:id/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
       <Route path="/pledges/:id" element={<ProtectedRoute><View /></ProtectedRoute>} />
-      
+
 
       {/* Admin Routes */}
       <Route
@@ -53,7 +54,7 @@ const AppRoutes: React.FC = () => {
         }
       >
         <Route path="/admin/dashboard" element={<Dashboard />} />
-        <Route path="/admin/branches" element={<div>Branches Page (Placeholder)</div>} />
+        <Route path="/admin/branches" element={<BranchList />} />
         <Route path="/admin/users" element={<div>Users Page (Placeholder)</div>} />
         <Route path="/admin/configurations" element={<div>Configurations Page (Placeholder)</div>} />
         {/* FAB Action Routes (if they are pages) */}
