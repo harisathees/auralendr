@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\pledge\PledgeController;
 use App\Http\Controllers\Admin\JewelTypeController;
 use App\Http\Controllers\Admin\JewelQualityController;
+use App\Http\Controllers\Admin\TaskController;
 
 
 Route::get('/test', function () {
@@ -24,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('admin')->group(function () {
         Route::apiResource('branches', BranchController::class);
         Route::apiResource('staff', StaffController::class);
+        Route::apiResource('tasks', TaskController::class);
     });
 
     // Staff endpoints (example)

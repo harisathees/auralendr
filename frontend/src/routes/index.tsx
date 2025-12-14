@@ -14,6 +14,7 @@ const Edit = lazy(() => import("../pages/Pledges/Edit"));
 const View = lazy(() => import("../pages/Pledges/View"));
 const BranchList = lazy(() => import("../pages/admin/Branches/List"));
 const UsersList = lazy(() => import("../pages/admin/Users/List"));
+const TasksList = lazy(() => import("../pages/admin/Tasks/List"));
 
 const AppRoutes: React.FC = () => {
   return (
@@ -60,7 +61,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/configurations" element={<div>Configurations Page (Placeholder)</div>} />
         {/* FAB Action Routes (if they are pages) */}
         <Route path="/admin/analysis" element={<div>Advanced Analysis Page (Placeholder)</div>} />
-        <Route path="/admin/tasks" element={<div>Assign Tasks Page (Placeholder)</div>} />
+        <Route path="/admin/tasks" element={<TasksList />} />
       </Route>
 
       {/* Catch all - redirect to home */}
