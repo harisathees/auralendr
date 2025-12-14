@@ -18,8 +18,13 @@ const Login: React.FC = () => {
     setError("");
     try {
       // Passing email to login function
-      await login(email, password);
-      navigate("/dashboard");
+      const user = await login(email, password);
+
+      if (user.role === 'admin') {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error) {
       setError((error as Error).message || "Login failed. Please check your credentials.");
     }
