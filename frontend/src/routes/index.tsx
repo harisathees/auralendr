@@ -4,6 +4,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute";
 import Login from "../pages/login/Login";
 import DashboardLayout from "../layouts/DashboardLayout";
+import AdminLayout from "../layouts/AdminLayout";
 
 // Lazy load dashboard pages to enable transition animations
 const Dashboard = lazy(() => import("../pages/dashboard/Dashboard"));
@@ -42,6 +43,23 @@ const AppRoutes: React.FC = () => {
       <Route path="/pledges/:id/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
       <Route path="/pledges/:id" element={<ProtectedRoute><View /></ProtectedRoute>} />
       
+
+      {/* Admin Routes */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/admin/dashboard" element={<Dashboard />} />
+        <Route path="/admin/branches" element={<div>Branches Page (Placeholder)</div>} />
+        <Route path="/admin/users" element={<div>Users Page (Placeholder)</div>} />
+        <Route path="/admin/configurations" element={<div>Configurations Page (Placeholder)</div>} />
+        {/* FAB Action Routes (if they are pages) */}
+        <Route path="/admin/analysis" element={<div>Advanced Analysis Page (Placeholder)</div>} />
+        <Route path="/admin/tasks" element={<div>Assign Tasks Page (Placeholder)</div>} />
+      </Route>
 
       {/* Catch all - redirect to home */}
       <Route path="*" element={<Navigate to="/" replace />} />

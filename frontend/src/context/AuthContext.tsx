@@ -1,4 +1,4 @@
-import{
+import {
   createContext,
   useContext,
   useState,
@@ -17,7 +17,7 @@ interface User {
 interface AuthContextType {
   token: string | null;
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => void;
 }
 
@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const [user, setUser] = useState<User | null>(getUserFromStorage());
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string): Promise<User> => {
     try {
       const res = await http.post("/login", { email, password });
 
@@ -75,7 +75,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(userData));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+      return userData;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Login error:", error);
 
