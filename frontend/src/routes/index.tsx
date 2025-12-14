@@ -38,13 +38,13 @@ const AppRoutes: React.FC = () => {
             <DashboardLayout />
           </ProtectedRoute>
         }
-      />
-
-
-      <Route path="/pledges" element={<ProtectedRoute><List /></ProtectedRoute>} />
-      <Route path="/pledges/create" element={<ProtectedRoute><Create /></ProtectedRoute>} />
-      <Route path="/pledges/:id/edit" element={<ProtectedRoute><Edit /></ProtectedRoute>} />
-      <Route path="/pledges/:id" element={<ProtectedRoute><View /></ProtectedRoute>} />
+      >
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/pledges" element={<List />} />
+        <Route path="/pledges/create" element={<Create />} />
+        <Route path="/pledges/:id/edit" element={<Edit />} />
+        <Route path="/pledges/:id" element={<View />} />
+      </Route>
 
 
       {/* Admin Routes */}
