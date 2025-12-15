@@ -3,6 +3,8 @@ import http from "../../api/http";
 import { AudioRecorder } from "../../components/audiocamera/AudioRecorder";
 import { CameraCapture } from "../../components/audiocamera/CameraCapture";
 
+import { useAuth } from "../../context/AuthContext";
+
 // --- UI Components from Create.tsx ---
 
 interface MediaUploadBlockProps {
@@ -87,6 +89,8 @@ interface Props {
 }
 
 const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
+  const { user } = useAuth(); // Get current user (and branch_id)
+
   // --- State ---
 
   // Modal State
@@ -213,27 +217,114 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
   const [jewelNames, setJewelNames] = useState<{ id: number; name: string }[]>([]);
   const [activeSearchJewelIndex, setActiveSearchJewelIndex] = useState<number | null>(null);
 
-  // Loan Configs
-  const [interestRates, setInterestRates] = useState<{ id: number; rate: string; jewel_type_id?: number | null }[]>([]);
-  const [loanValidities, setLoanValidities] = useState<{ id: number; months: number; label?: string; jewel_type_id?: number | null }[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string; balance: string; show_balance: boolean }[]>([]);
-
   // Hidden File Inputs for triggering system dialogs
   const docInputRef = useRef<HTMLInputElement>(null);
   const jewelInputRef = useRef<HTMLInputElement>(null);
   const evidenceInputRef = useRef<HTMLInputElement>(null);
   const customerImageInputRef = useRef<HTMLInputElement>(null);
 
+  // Loan Configs
+  const [interestRates, setInterestRates] = useState<{ id: number; rate: string; jewel_type_id?: number | null; estimation_percentage?: string }[]>([]);
+  const [loanValidities, setLoanValidities] = useState<{ id: number; months: number; label?: string; jewel_type_id?: number | null }[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string; balance: string; show_balance: boolean }[]>([]);
+  const [metalRates, setMetalRates] = useState<{ name: string; metal_rate?: { rate: string } }[]>([]);
+  const [processingFeesConfigs, setProcessingFeesConfigs] = useState<{ jewel_type_id: number; percentage: string; max_amount: string | null }[]>([]);
+
   // --- Effects ---
 
+  // Fetch processing fees when branch ID is available
   useEffect(() => {
-    // Determine initial due date if not set (3 months from now)
-    if (!loan.due_date && loan.date) {
+    if (user?.branch_id) {
+      http.get(`/processing-fees?branch_id=${user.branch_id}`)
+        .then(res => setProcessingFeesConfigs(res.data))
+        .catch(console.error);
+    }
+  }, [user?.branch_id]);
+
+  useEffect(() => {
+    // Determine due date (loan date + validity months)
+    if (loan.date) {
       const d = new Date(loan.date);
       d.setMonth(d.getMonth() + parseInt(loan.validity_months || "3"));
       setLoan(prev => ({ ...prev, due_date: d.toISOString().split('T')[0] }));
     }
   }, [loan.date, loan.validity_months]);
+
+  // Automate Processing Fee Calculation
+  useEffect(() => {
+    if (!loan.amount || !jewels.length || !processingFeesConfigs.length) return;
+
+    const amount = parseFloat(loan.amount);
+    if (isNaN(amount) || amount <= 0) return;
+
+    // Determine jewel type from first jewel
+    const firstJewelTypeName = jewels[0]?.jewel_type;
+    const jewelTypeObj = jewelTypes.find(t => t.name === firstJewelTypeName);
+
+    if (!jewelTypeObj) return;
+
+    // Find config for this jewel type
+    const config = processingFeesConfigs.find(c => c.jewel_type_id === jewelTypeObj.id);
+    if (!config) return;
+
+    // Calculate Fee
+    const percentage = parseFloat(config.percentage);
+    let fee = amount * (percentage / 100);
+
+    // Apply Cap
+    const maxAmount = config.max_amount ? parseFloat(config.max_amount) : null;
+    if (maxAmount !== null && fee > maxAmount) {
+      fee = maxAmount;
+    }
+
+    // Update state (rounding to nearest integer)
+    // Note: We only auto-update if the user hasn't manually entered a CUSTOM value that deviates significantly?
+    // Actually, usually auto-calc overrides unless user JUST typed.
+    // A common pattern is: auto-update ONLY when dependencies (amount/jewel type) change.
+    // Since this useEffect runs on Amount/JewelType change, it will overwrite manual updates if they align with a dependency change event.
+    // If user changes Amount -> Recalc. If user edits Fee -> No recalc (until Amount changes again).
+    setLoan(prev => ({ ...prev, processing_fee: Math.round(fee).toString() }));
+
+  }, [loan.amount, jewels, processingFeesConfigs, jewelTypes]);
+
+  // Automate Estimated Amount Calculation
+  useEffect(() => {
+    if (!metalRates.length || !interestRates.length) return;
+
+    // 1. Calculate Total Net Weight of all jewels
+    const totalNetWeight = jewels.reduce((sum, j) => sum + (parseFloat(j.net_weight) || 0), 0);
+
+    if (totalNetWeight <= 0) {
+      setLoan(prev => ({ ...prev, estimated_amount: "" }));
+      return;
+    }
+
+    // 2. Identify Metal Type (use first jewel's type or fallback to Gold if unknown/mixed)
+    // Strategy: Look at the first jewel's type. If it contains 'Silver', use Silver rate. Else default to Gold.
+    const firstJewelTypeName = jewels[0]?.jewel_type || "";
+    const isSilver = firstJewelTypeName.toLowerCase().includes("silver");
+
+    const rateObj = metalRates.find(r => r.name.toLowerCase().includes(isSilver ? "silver" : "gold"));
+    const ratePerGram = parseFloat(rateObj?.metal_rate?.rate || "0");
+
+    if (!ratePerGram) return; // Cannot calculate without rate
+
+    // 3. Get Estimation Percentage from selected Interest Rate
+    // Find rate object matching current loan.interest_percentage
+    // loan.interest_percentage matches either "1.5%" or just "1.5" depending on select value. 
+    // The select options use `${parseFloat(r.rate)}%` as value.
+    const currentInterestRateObj = interestRates.find(r => `${parseFloat(r.rate)}%` === loan.interest_percentage);
+    const estimationPercent = parseFloat(currentInterestRateObj?.estimation_percentage || "0");
+
+    if (!estimationPercent) return;
+
+    // 4. Calculate
+    // Estimated Amount = Total Net Weight * Rate/gram * (Estimation% / 100)
+    const estimated = totalNetWeight * ratePerGram * (estimationPercent / 100);
+
+    setLoan(prev => ({ ...prev, estimated_amount: Math.round(estimated).toString() }));
+
+  }, [jewels, loan.interest_percentage, metalRates, interestRates]);
 
   // Derived: Filter Available Validity Months based on Jewel Type
   // Logic: Check the *first* jewel's type. If it restricts validities, use those.
@@ -328,6 +419,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
     http.get("/interest-rates").then(res => Array.isArray(res.data) && setInterestRates(res.data)).catch(console.error);
     http.get("/loan-validities").then(res => Array.isArray(res.data) && setLoanValidities(res.data)).catch(console.error);
     http.get("/money-sources").then(res => Array.isArray(res.data) && setPaymentMethods(res.data)).catch(console.error);
+    http.get("/metal-rates").then(res => Array.isArray(res.data) && setMetalRates(res.data)).catch(console.error); // Added this line
   }, []);
 
   useEffect(() => {
@@ -798,8 +890,9 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
             <label className="flex flex-col gap-1.5 w-1/3">
               <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">Estimated Amount</span>
               <input
-                value={loan.estimated_amount} onChange={e => setLoan({ ...loan, estimated_amount: e.target.value })}
-                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400 text-sm" placeholder="₹0" type="number"
+                value={loan.estimated_amount}
+                readOnly
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400 text-sm cursor-not-allowed" placeholder="₹0" type="number"
               />
             </label>
           </div>

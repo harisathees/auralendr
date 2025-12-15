@@ -36,7 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('interest-rates', \App\Http\Controllers\Admin\InterestRateController::class);
         Route::apiResource('loan-validities', \App\Http\Controllers\Admin\LoanValidityController::class);
         Route::apiResource('payment-methods', \App\Http\Controllers\Admin\PaymentMethodController::class);
-        // Route::post('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'store']);
+        Route::post('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'store']);
     });
 
     // Shared Routes (Admin + Staff)
@@ -46,7 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/interest-rates', [\App\Http\Controllers\Admin\InterestRateController::class, 'index']);
     Route::get('/loan-validities', [\App\Http\Controllers\Admin\LoanValidityController::class, 'index']);
     Route::get('/payment-methods', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'index']);
-    // Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
+    Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
     Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
 
     // Customer Search
