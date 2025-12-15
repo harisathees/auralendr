@@ -197,7 +197,7 @@ const MoneySources: React.FC = () => {
 
             {/* Form Modal */}
             {isFormOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div className="w-full max-w-lg animate-in zoom-in-95 duration-200">
                         <MoneySourceForm
                             initialData={editingSource}
@@ -215,8 +215,8 @@ const MoneySources: React.FC = () => {
                 message="Are you sure you want to delete this payment method? This action cannot be undone."
                 onConfirm={handleConfirmDelete}
                 onCancel={() => setIsDeleteOpen(false)}
-                confirmText="Delete Method"
-                isDanger={true}
+                confirmLabel="Delete Method"
+                isDangerous={true}
             />
         </div>
     );
