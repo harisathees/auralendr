@@ -207,8 +207,11 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
   const [deletedFileIds, setDeletedFileIds] = useState<number[]>([]);
 
   // Metadata Options
+  // Metadata Options
   const [jewelTypes, setJewelTypes] = useState<{ id: number; name: string }[]>([]);
   const [jewelQualities, setJewelQualities] = useState<{ id: number; name: string }[]>([]);
+  const [jewelNames, setJewelNames] = useState<{ id: number; name: string }[]>([]);
+  const [activeSearchJewelIndex, setActiveSearchJewelIndex] = useState<number | null>(null);
 
   // Hidden File Inputs for triggering system dialogs
   const docInputRef = useRef<HTMLInputElement>(null);
@@ -231,6 +234,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
     // Load metadata
     http.get("/jewel-types").then(res => Array.isArray(res.data) && setJewelTypes(res.data)).catch(console.error);
     http.get("/jewel-qualities").then(res => Array.isArray(res.data) && setJewelQualities(res.data)).catch(console.error);
+    http.get("/jewel-names").then(res => Array.isArray(res.data) && setJewelNames(res.data)).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -510,14 +514,9 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
                     className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
                   >
                     <option value="" disabled>Select</option>
-                    {jewelTypes.length > 0 ? jewelTypes.map(t => (
+                    {jewelTypes.map(t => (
                       <option key={t.id} value={t.name}>{t.name}</option>
-                    )) : (
-                      <>
-                        <option value="Gold">Gold</option>
-                        <option value="Silver">Silver</option>
-                      </>
-                    )}
+                    ))}
                   </select>
                   <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
                 </div>
@@ -531,29 +530,43 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
                     className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
                   >
                     <option value="" disabled>Select</option>
-                    {jewelQualities.length > 0 ? jewelQualities.map(q => (
+                    {jewelQualities.map(q => (
                       <option key={q.id} value={q.name}>{q.name}</option>
-                    )) : (
-                      <>
-                        <option value="24K">24K</option>
-                        <option value="22K">22K</option>
-                        <option value="18K">18K</option>
-                      </>
-                    )}
+                    ))}
                   </select>
                   <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
                 </div>
               </label>
             </div>
 
-            <label className="flex flex-col gap-1.5">
-              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Description</span>
-              <input
-                value={jewel.description} onChange={e => updateJewel(index, 'description', e.target.value)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400"
-                placeholder="Item description" type="text"
-              />
-            </label>
+            <div className="relative z-50">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Jewel Description</span>
+                <input
+                  value={jewel.description}
+                  onChange={e => updateJewel(index, 'description', e.target.value)}
+                  onFocus={() => setActiveSearchJewelIndex(index)}
+                  onBlur={() => setTimeout(() => setActiveSearchJewelIndex(null), 200)}
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400"
+                  placeholder="Type to search or enter new" type="text"
+                />
+              </label>
+              {activeSearchJewelIndex === index && jewel.description && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-40 overflow-y-auto no-scrollbar z-50">
+                  {jewelNames
+                    .filter(n => n.name.toLowerCase().includes(jewel.description.toLowerCase()))
+                    .map(n => (
+                      <div
+                        key={n.id}
+                        className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm text-black dark:text-white"
+                        onMouseDown={() => updateJewel(index, 'description', n.name)}
+                      >
+                        {n.name}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
 
             <label className="flex flex-col gap-1.5">
               <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Pieces</span>
@@ -600,11 +613,11 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
           </div>
         ))}
 
-        <div className="mt-4 flex justify-end">
+        {/* <div className="mt-4 flex justify-end">
           <button type="button" onClick={() => setJewels([...jewels, { jewel_type: "", quality: "", description: "", pieces: 1, weight: "", stone_weight: "", net_weight: "", faults: "" }])} className="text-primary font-bold text-sm flex items-center gap-1 hover:underline">
             <span className="material-symbols-outlined text-sm">add_circle</span> Add Another Jewel
           </button>
-        </div>
+        </div> */}
 
         {/* Slot 2: Jewel Image */}
         <div className="flex flex-col gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-4">
