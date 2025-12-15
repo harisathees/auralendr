@@ -27,4 +27,30 @@ class JewelNameController extends Controller
 
         return response()->json($jewelName, 201);
     }
+
+    public function show(JewelName $jewelName)
+    {
+        return response()->json($jewelName);
+    }
+
+    public function update(Request $request, JewelName $jewelName)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:jewel_names,name,' . $jewelName->id,
+            'is_active' => 'boolean'
+        ]);
+
+        if (isset($validated['name'])) {
+            $validated['slug'] = \Illuminate\Support\Str::slug($validated['name']);
+        }
+
+        $jewelName->update($validated);
+        return response()->json($jewelName);
+    }
+
+    public function destroy(JewelName $jewelName)
+    {
+        $jewelName->delete();
+        return response()->json(null, 204);
+    }
 }
