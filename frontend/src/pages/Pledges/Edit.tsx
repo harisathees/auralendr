@@ -1,29 +1,47 @@
 import React, { useEffect, useState } from "react";
-import { getPledge, updatePledge } from "../../api/pledgeService";
-import PledgeForm from "../../components/Pledges/PledgeForm";
 import { useParams, useNavigate } from "react-router-dom";
+import http from "../../api/http";
+import PledgeForm from "../../components/Pledges/PledgeForm";
 
-const Edit = () => {
+const Edit: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [pledge, setPledge] = useState<any>(null);
+  const [data, setData] = useState<any>(null);
 
   useEffect(() => {
-    getPledge(Number(id)).then((res) => setPledge(res.data));
+    http.get(`/pledges/${id}`).then(res => setData(res.data)).catch(console.error);
   }, [id]);
 
-  if (!pledge) return <div>Loading...</div>;
+  const handleSubmit = async (fd: FormData) => {
+    try {
+      await http.post(`/pledges/${id}?_method=PUT`, fd);
+      navigate("/pledges");
+    } catch (err) {
+      console.error("Failed to update pledge", err);
+    }
+  };
+
+  if (!data) return <div className="flex items-center justify-center h-full">Loading...</div>;
 
   return (
-    <div>
-      <h1>Edit Pledge</h1>
-      <PledgeForm
-        initial={pledge}
-        onSubmit={async (fd) => {
-          await updatePledge(Number(id), fd);
-          navigate(`/pledges/${id}`);
-        }}
-      />
+    <div className="flex flex-col h-full bg-background-light dark:bg-background-dark font-display text-text-main antialiased selection:bg-primary/30">
+
+      {/* Header */}
+      <header className="flex-none flex items-center justify-between bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm p-4 shadow-sm border-b border-border-green/50 z-10">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full active:bg-gray-200 dark:active:bg-gray-800 transition-colors"
+        >
+          <span className="material-symbols-outlined text-primary-text dark:text-white">arrow_back</span>
+        </button>
+        <h2 className="text-primary-text dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] text-center">Edit Pledge</h2>
+        <div className="w-10"></div>
+      </header>
+
+      <main className="flex-1 overflow-y-auto no-scrollbar">
+        <PledgeForm initial={data} onSubmit={handleSubmit} />
+      </main>
+
     </div>
   );
 };

@@ -13,6 +13,15 @@ class UpdatePledgeRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation()
+    {
+        $loan = $this->input('loan');
+        if (isset($loan['interest_percentage']) && is_string($loan['interest_percentage'])) {
+            $loan['interest_percentage'] = floatval(str_replace('%', '', $loan['interest_percentage']));
+            $this->merge(['loan' => $loan]);
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -58,7 +67,7 @@ class UpdatePledgeRequest extends FormRequest
 
             // Files
             'files' => 'nullable|array',
-            'files.*' => 'file|max:15360|mimes:jpg,jpeg,png,pdf,mp3,wav,mp4',
+            'files.*' => 'file|max:51200|mimes:jpg,jpeg,png,pdf,mp3,wav,mp4,webm,ogg,m4a',
             'file_categories' => 'nullable|array',
             'file_categories.*' => 'nullable|string|max:100',
         ];
