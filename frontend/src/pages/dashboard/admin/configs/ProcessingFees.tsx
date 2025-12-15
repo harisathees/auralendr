@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import http from "../../../../api/http";
 import { Link } from "react-router-dom";
+import { useToast } from "../../../../context";
 
 // Types
 interface Branch {
@@ -29,6 +30,7 @@ const ProcessingFees: React.FC = () => {
     const [selectedBranchId, setSelectedBranchId] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState<number | null>(null); // storing jewel_type_id being saved
+    const { showToast } = useToast();
 
     // Fetch initial data (Branches and Jewel Types)
     useEffect(() => {
@@ -47,6 +49,7 @@ const ProcessingFees: React.FC = () => {
                 }
             } catch (error) {
                 console.error("Failed to fetch initial data", error);
+                showToast("Failed to load initial data", "error");
             } finally {
                 setLoading(false);
             }
@@ -65,6 +68,7 @@ const ProcessingFees: React.FC = () => {
                 setProcessingFees(res.data);
             } catch (error) {
                 console.error("Failed to fetch processing fees", error);
+                showToast("Failed to load processing fees", "error");
             }
         };
 
@@ -104,9 +108,11 @@ const ProcessingFees: React.FC = () => {
                     return [...prev, res.data];
                 }
             });
+            showToast("Processing fee updated successfully", "success");
 
         } catch (error) {
             console.error("Failed to save processing fee", error);
+            showToast("Failed to save processing fee", "error");
         } finally {
             setSaving(null);
         }

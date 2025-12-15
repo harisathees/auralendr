@@ -2,11 +2,18 @@ import React, { useEffect, useState } from "react";
 import http from "../../../../api/http";
 import ConfigList from "./components/ConfigList";
 import { useNavigate } from "react-router-dom";
+import ConfirmationModal from "../../../../components/Shared/ConfirmationModal";
+import { useToast } from "../../../../context";
 
 const JewelTypesIndex: React.FC = () => {
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+    const { showToast } = useToast();
+
+    // Modal State
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
 
     const fetchItems = async () => {
         try {
@@ -14,6 +21,7 @@ const JewelTypesIndex: React.FC = () => {
             setItems(res.data);
         } catch (error) {
             console.error("Failed to fetch jewel types", error);
+            showToast("Failed to load jewel types", "error");
         } finally {
             setLoading(false);
         }
@@ -23,14 +31,23 @@ const JewelTypesIndex: React.FC = () => {
         fetchItems();
     }, []);
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm("Are you sure?")) return;
+    const handleDeleteClick = (id: number) => {
+        setDeletingId(id);
+        setIsDeleteOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deletingId) return;
         try {
-            await http.delete(`/jewel-types/${id}`);
-            setItems(items.filter(i => i.id !== id));
+            await http.delete(`/jewel-types/${deletingId}`);
+            setItems(items.filter(i => i.id !== deletingId));
+            setIsDeleteOpen(false);
+            setDeletingId(null);
+            showToast("Jewel type deleted successfully", "success");
         } catch (error) {
             console.error("Delete failed", error);
-            alert("Failed to delete. It might be in use.");
+            showToast("Failed to delete. It might be in use.", "error");
+            setIsDeleteOpen(false);
         }
     };
 
@@ -53,7 +70,17 @@ const JewelTypesIndex: React.FC = () => {
                 itemNameKey="name"
                 onAdd={() => navigate("/admin/configs/jewel-types/create")}
                 onEdit={(id) => navigate(`/admin/configs/jewel-types/edit/${id}`)}
-                onDelete={handleDelete}
+                onDelete={handleDeleteClick}
+            />
+
+            <ConfirmationModal
+                isOpen={isDeleteOpen}
+                title="Delete Jewel Type?"
+                message="Are you sure you want to delete this jewel type? This action cannot be undone."
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setIsDeleteOpen(false)}
+                confirmLabel="Delete"
+                isDangerous={true}
             />
         </div>
     );
