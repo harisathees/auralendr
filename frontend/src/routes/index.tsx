@@ -15,6 +15,8 @@ const View = lazy(() => import("../pages/Pledges/View"));
 const BranchList = lazy(() => import("../pages/admin/Branches/List"));
 const UsersList = lazy(() => import("../pages/admin/Users/List"));
 const TasksList = lazy(() => import("../pages/admin/Tasks/List"));
+const AdminConfigs = lazy(() => import("../pages/dashboard/admin/configs/index"));
+const MoneySources = lazy(() => import("../pages/dashboard/admin/configs/MoneySources"));
 
 const AppRoutes: React.FC = () => {
   return (
@@ -30,7 +32,6 @@ const AppRoutes: React.FC = () => {
       />
       <Route path="/login" element={<Navigate to="/" replace />} />
 
-      {/* Protected Routes wrapped in DashboardLayout */}
       {/* Protected Routes wrapped in DashboardLayout */}
       <Route
         element={
@@ -58,7 +59,13 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/dashboard" element={<Dashboard />} />
         <Route path="/admin/branches" element={<BranchList />} />
         <Route path="/admin/users" element={<UsersList />} />
-        <Route path="/admin/configurations" element={<div>Configurations Page (Placeholder)</div>} />
+
+        {/* Configurations */}
+        <Route path="/admin/configurations" element={<Navigate to="/admin/configs" replace />} />
+        <Route path="/admin/configs" element={<AdminConfigs />} />
+        <Route path="/admin/configs/money-sources" element={<MoneySources />} />
+        <Route path="/admin/configs/metal-rates" element={<div>Metal Rates (Placeholder)</div>} />
+
         {/* FAB Action Routes (if they are pages) */}
         <Route path="/admin/analysis" element={<div>Advanced Analysis Page (Placeholder)</div>} />
         <Route path="/admin/tasks" element={<TasksList />} />
@@ -71,4 +78,3 @@ const AppRoutes: React.FC = () => {
 };
 
 export default AppRoutes;
-

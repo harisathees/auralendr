@@ -47,6 +47,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'index']);
     Route::post('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'store']);
 
+    // Money Sources
+    Route::get('/money-sources', [App\Http\Controllers\Admin\MoneySourceController::class, 'index']);
+    Route::post('/money-sources', [App\Http\Controllers\Admin\MoneySourceController::class, 'store']);
+    Route::put('/money-sources/{id}', [App\Http\Controllers\Admin\MoneySourceController::class, 'update']);
+    Route::delete('/money-sources/{id}', [App\Http\Controllers\Admin\MoneySourceController::class, 'destroy']);
+
     // Staff Task Routes
     Route::get('/my-tasks', [TaskController::class, 'myTasks']);
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus']);
