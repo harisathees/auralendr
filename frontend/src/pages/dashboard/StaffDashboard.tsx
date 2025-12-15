@@ -1,10 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import http from '../../api/http';
+import type { Task } from '../../types/models';
+import TaskAccordion from '../../components/Staff/TaskAccordion';
 
 const StaffDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTasks = async () => {
+    try {
+      const response = await http.get('/my-tasks');
+      setTasks(response.data);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
 
   const handleLogoutClick = () => {
     setShowMenu(false);
@@ -15,23 +35,10 @@ const StaffDashboard: React.FC = () => {
     logout();
   };
 
-  // Sample customer data matching the HTML
-  const customers = [
-    {
-      id: 1,
-      name: "Vasanth",
-      amount: "25,000",
-      loanId: "HS-2510",
-      location: "217,Threspuram",
-    },
-    {
-      id: 2,
-      name: "Hari",
-      amount: "5,000",
-      loanId: "HS-0912",
-      location: "Teacher's colony",
-    },
-  ];
+  // Calculate progress
+  const completedTasks = tasks.filter(t => t.status === 'completed').length;
+  const totalTasks = tasks.length;
+  const progressPercentage = totalTasks === 0 ? 0 : (completedTasks / totalTasks) * 100;
 
   return (
     <div className="flex flex-col h-full overflow-y-auto bg-background-light dark:bg-background-dark group/design-root font-display scrollbar-hide">
@@ -114,46 +121,44 @@ const StaffDashboard: React.FC = () => {
                 <path className="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray="60, 100" strokeLinecap="round" strokeWidth="3" />
               </svg>
               <div className="absolute flex flex-col items-center justify-center">
-                <span className="text-primary text-xl font-bold">6/10</span>
+                <span className="text-primary text-xl font-bold">{completedTasks}/{totalTasks}</span>
                 <span className="text-secondary-text dark:text-gray-400 text-xs">Done</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Customer Cards */}
+        {/* Task List */}
         <div className="flex flex-col gap-4">
-          {customers.map((customer) => (
-            <div
-              key={customer.id}
-              className="flex flex-col items-stretch justify-start rounded-xl bg-card-light dark:bg-card-dark shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none p-4 gap-4"
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-primary-text dark:text-white">Assigned Tasks</h3>
+            <button
+              onClick={fetchTasks}
+              className="p-2 -mr-2 text-gray-500 hover:text-primary transition-colors"
             >
-              <div className="flex items-start justify-between">
-                <p className="text-primary-text dark:text-gray-100 text-lg font-bold leading-tight tracking-[-0.015em]">
-                  {customer.name}
-                </p>
-                <p className="text-primary text-xl font-bold leading-tight">₹{customer.amount}</p>
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-secondary-text dark:text-gray-400 text-base">description</span>
-                  <p className="text-secondary-text dark:text-gray-400 text-sm font-medium">Loan ID: {customer.loanId}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-secondary-text dark:text-gray-400 text-base">location_on</span>
-                  <p className="text-secondary-text dark:text-gray-400 text-sm font-medium">Location: {customer.location}</p>
-                </div>
-              </div>
-              <div className="flex flex-1 gap-3 justify-end">
-                <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-transparent text-primary text-sm font-bold leading-normal tracking-[0.015em] border-2 border-primary">
-                  <span className="truncate">Call</span>
-                </button>
-                <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white dark:text-black text-sm font-bold leading-normal tracking-[0.015em]">
-                  <span className="truncate">Call</span>
-                </button>
-              </div>
+              <span className="material-symbols-outlined">refresh</span>
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-60">
+              <span className="material-symbols-outlined animate-spin text-3xl text-primary">progress_activity</span>
+              <p className="text-sm font-medium text-gray-500">Loading tasks...</p>
             </div>
-          ))}
+          ) : tasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-60 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+              <span className="material-symbols-outlined text-4xl text-gray-300">checklist</span>
+              <p className="text-sm font-medium text-gray-500">No tasks assigned</p>
+            </div>
+          ) : (
+            tasks.map((task) => (
+              <TaskAccordion
+                key={task.id}
+                task={task}
+                onUpdate={fetchTasks}
+              />
+            ))
+          )}
         </div>
       </main>
 

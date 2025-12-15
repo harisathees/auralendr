@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
+
 interface ToastProps {
     message: string;
-    type?: 'success' | 'error' | 'info';
+    type?: ToastType;
     onClose: () => void;
     duration?: number;
 }
@@ -28,8 +30,8 @@ const Toast: React.FC<ToastProps> = ({ message, type = 'success', onClose, durat
 
     return (
         <div className={`fixed bottom-24 right-6 z-[100] transition-all duration-150 ease-in-out ${isExiting
-                ? 'animate-out slide-out-to-bottom-5 fade-out'
-                : 'animate-in slide-in-from-bottom-5 fade-in'
+            ? 'animate-out slide-out-to-bottom-5 fade-out'
+            : 'animate-in slide-in-from-bottom-5 fade-in'
             }`}>
             <div className="flex items-center gap-4 bg-[#1A1C1E] text-white px-5 py-4 rounded-2xl shadow-2xl border border-gray-800 min-w-[320px] max-w-sm">
 

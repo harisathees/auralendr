@@ -360,8 +360,8 @@ const Create: React.FC = () => {
               <label className="flex flex-col gap-1.5">
                 <span className="text-primary-text dark:text-white text-sm font-medium">Interest %</span>
                 <div className="relative">
-                  <select className="form-select w-full rounded-lg border-border-green bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none text-gray-500 dark:text-gray-300 outline-none border">
-                    <option disabled selected>Select Interest %</option>
+                  <select className="form-select w-full rounded-lg border-border-green bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none text-gray-500 dark:text-gray-300 outline-none border" defaultValue="">
+                    <option value="" disabled>Select Interest %</option>
                     <option>1.5%</option>
                     <option>2.0%</option>
                     <option>2.5%</option>
@@ -374,8 +374,8 @@ const Create: React.FC = () => {
             <label className="flex flex-col gap-1.5">
               <span className="text-primary-text dark:text-white text-sm font-medium">Payment Method</span>
               <div className="relative">
-                <select className="form-select w-full rounded-lg border-border-green bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none text-gray-500 dark:text-gray-300 outline-none border">
-                  <option disabled selected>Select Payment Method</option>
+                <select className="form-select w-full rounded-lg border-border-green bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none text-gray-500 dark:text-gray-300 outline-none border" defaultValue="">
+                  <option value="" disabled>Select Payment Method</option>
                   <option>Cash</option>
                   <option>Bank Transfer</option>
                   <option>UPI</option>
@@ -449,8 +449,8 @@ const Create: React.FC = () => {
             <label className="flex flex-col gap-1.5 mt-2">
               <span className="text-primary-text dark:text-white text-sm font-medium">Status</span>
               <div className="relative">
-                <select className="form-select w-full rounded-lg border-border-green bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none text-primary-text dark:text-white outline-none border">
-                  <option selected>Active</option>
+                <select className="form-select w-full rounded-lg border-border-green bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none text-primary-text dark:text-white outline-none border" defaultValue="Active">
+                  <option>Active</option>
                   <option>Inactive</option>
                   <option>Pending</option>
                 </select>

@@ -59,4 +59,29 @@ class TaskController extends Controller
         $task->delete();
         return response()->json(null, 204);
     }
+
+    public function myTasks()
+    {
+        $tasks = Task::with(['creator'])
+            ->where('assigned_to', Auth::id())
+            ->latest()
+            ->get();
+        return response()->json($tasks);
+    }
+
+    public function updateStatus(Request $request, Task $task)
+    {
+        // verify the task is assigned to the current user
+        if ($task->assigned_to !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|string|in:pending,in_progress,completed,cancelled',
+        ]);
+
+        $task->update(['status' => $validated['status']]);
+
+        return response()->json($task->load(['creator']));
+    }
 }
