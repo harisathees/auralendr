@@ -30,3 +30,18 @@ export interface Task {
     assignee?: User;
     creator?: User;
 }
+
+export interface MoneySource {
+    id: number;
+    name: string;
+    type: 'cash' | 'bank' | 'wallet';
+    balance: string;
+    description: string | null;
+    is_outbound: boolean;
+    is_inbound: boolean;
+    is_active: boolean;
+    show_balance: boolean;
+    created_at?: string;
+    updated_at?: string;
+    branches?: any[]; // Simplified for now
+}

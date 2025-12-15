@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import http from "../../../../api/http";
-import type { MoneySource } from "../../../../types/models";
+import type { MoneySource, Branch } from "../../../../types/models";
 
 interface MoneySourceFormProps {
     initialData: MoneySource | null;
@@ -20,7 +20,24 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
     const [isActive, setIsActive] = useState(true);
     const [showBalance, setShowBalance] = useState(true);
 
+    // Branch Selection
+    const [availableBranches, setAvailableBranches] = useState<Branch[]>([]);
+    const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
+
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        fetchBranches();
+    }, []);
+
+    const fetchBranches = async () => {
+        try {
+            const res = await http.get("/branches");
+            setAvailableBranches(res.data);
+        } catch (err) {
+            console.error("Failed to fetch branches");
+        }
+    };
 
     useEffect(() => {
         if (initialData) {
@@ -32,6 +49,11 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
             setIsInbound(initialData.is_inbound !== false);
             setIsActive(initialData.is_active !== false);
             setShowBalance(initialData.show_balance !== false);
+
+            // Pre-select branches if editing
+            if (initialData.branches) {
+                setSelectedBranchIds(initialData.branches.map(b => b.id));
+            }
         } else {
             // Reset defaults for new
             setName("");
@@ -42,8 +64,25 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
             setIsInbound(true);
             setIsActive(true);
             setShowBalance(true);
+            setSelectedBranchIds([]);
         }
     }, [initialData]);
+
+    const handleBranchToggle = (branchId: number) => {
+        if (selectedBranchIds.includes(branchId)) {
+            setSelectedBranchIds(selectedBranchIds.filter(id => id !== branchId));
+        } else {
+            setSelectedBranchIds([...selectedBranchIds, branchId]);
+        }
+    };
+
+    const handleSelectAllBranches = () => {
+        if (selectedBranchIds.length === availableBranches.length) {
+            setSelectedBranchIds([]);
+        } else {
+            setSelectedBranchIds(availableBranches.map(b => b.id));
+        }
+    };
 
     const handleSubmit = async () => {
         if (!name || !balance) return;
@@ -57,7 +96,8 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
             is_outbound: isOutbound,
             is_inbound: isInbound,
             is_active: isActive,
-            show_balance: showBalance
+            show_balance: showBalance,
+            branch_ids: selectedBranchIds
         };
 
         try {
@@ -75,17 +115,29 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
     };
 
     return (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800">
-            <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col max-h-[85vh]">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50 flex-shrink-0">
                 <h2 className="text-lg font-bold text-primary-text dark:text-white">
                     {initialData ? "Edit Payment Method" : "Add Payment Method"}
                 </h2>
-                <button onClick={onCancel} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors">
-                    <span className="material-symbols-outlined text-gray-500">close</span>
-                </button>
+                <div className="flex items-center gap-3">
+                    <div
+                        onClick={() => setIsActive(!isActive)}
+                        className={`flex items-center gap-1.5 p-1 px-3 text-xs font-bold rounded-full cursor-pointer transition-all ${isActive
+                            ? 'bg-green-500 text-white shadow-md'
+                            : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                            }`}
+                    >
+                        <span className="material-symbols-outlined text-[14px]">check</span>
+                        {isActive ? 'Active' : 'Inactive'}
+                    </div>
+                    <button onClick={onCancel} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors">
+                        <span className="material-symbols-outlined text-gray-500">close</span>
+                    </button>
+                </div>
             </div>
 
-            <div className="p-6 flex flex-col gap-4">
+            <div className="p-6 flex flex-col gap-4 overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
                 <label className="flex flex-col gap-1.5">
                     <span className="text-sm font-bold text-primary-text dark:text-white">Name</span>
                     <input
@@ -114,94 +166,152 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                     </label>
 
                     <label className="flex flex-col gap-1.5">
-                        <span className="text-sm font-bold text-primary-text dark:text-white">Opening Balance</span>
-                        <input
-                            type="number"
-                            className="form-input w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 text-sm outline-none transition-all"
-                            value={balance}
-                            onChange={(e) => setBalance(e.target.value)}
-                            placeholder="0.00"
-                        />
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Opening Balance</span>
+                        <div className="relative flex items-center">
+
+                            {/* Currency Prefix */}
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500 dark:text-gray-400">
+                                ₹
+                            </span>
+
+                            <input
+                                type="number"
+                                // 👇 ADDED CLASSES HERE to hide increment/decrement arrows
+                                className="form-input w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/50 h-12 pl-8 pr-12 text-sm font-semibold outline-none transition-all
+            [appearance:textfield] 
+            [&::-webkit-outer-spin-button]:appearance-none 
+            [&::-webkit-inner-spin-button]:appearance-none 
+            [&::-webkit-outer-spin-button]:m-0 
+            [&::-webkit-inner-spin-button]:m-0"
+                                // 👆 END OF ADDED CLASSES
+                                value={balance}
+                                onChange={(e) => setBalance(e.target.value)}
+                                placeholder="0.00"
+                            />
+
+                            {/* Visibility Toggle Button */}
+                            <button
+                                type="button"
+                                onClick={() => setShowBalance(!showBalance)}
+                                title={showBalance ? "Hide Balance" : "Show Balance"}
+                                className={`absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full transition-colors ${showBalance
+                                    ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300 hover:bg-amber-200'
+                                    : 'text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                    }`}
+                            >
+                                <span className="material-symbols-outlined text-[16px]">
+                                    {showBalance ? 'visibility' : 'visibility_off'}
+                                </span>
+                            </button>
+                        </div>
                     </label>
                 </div>
 
                 <label className="flex flex-col gap-1.5">
                     <span className="text-sm font-bold text-primary-text dark:text-white">Description</span>
                     <textarea
-                        className="form-textarea w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary p-4 text-sm outline-none min-h-[100px] resize-none transition-all"
+                        className="form-textarea w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary p-4 text-sm outline-none min-h-[80px] resize-none transition-all"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Optional details..."
                     />
                 </label>
 
-                <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                    {/* Outbound */}
-                    <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${isOutbound ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
-                        <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isOutbound ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-500'}`}>
-                                <span className="material-symbols-outlined text-lg">arrow_upward</span>
-                            </div>
-                            <span className={`text-sm font-bold ${isOutbound ? 'text-blue-700 dark:text-blue-400' : 'text-gray-500'}`}>Can Send</span>
-                        </div>
-                        <input
-                            type="checkbox"
-                            checked={isOutbound}
-                            onChange={(e) => setIsOutbound(e.target.checked)}
-                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                        />
-                    </label>
+                {/* Branch Selection - Moved Below Description */}
+                <div className="flex flex-col gap-3"> {/* Increased main gap for breathing room */}
+                    <div className="flex justify-between items-center px-1"> {/* Added horizontal padding to align with grid */}
+                        <span className="text-base font-extrabold text-gray-800 dark:text-gray-100">Assign to Branches</span> {/* Slightly larger, stronger title */}
+                        <button
+                            type="button"
+                            onClick={handleSelectAllBranches}
+                            className="text-sm text-primary font-semibold hover:text-primary-dark dark:hover:text-primary-light transition-colors" // Adjusted text size/weight
+                        >
+                            {selectedBranchIds.length === availableBranches.length ? 'Deselect All' : 'Select All'}
+                        </button>
+                    </div>
 
-                    {/* Inbound */}
-                    <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${isInbound ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
-                        <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isInbound ? 'bg-purple-100 text-purple-600' : 'bg-gray-200 text-gray-500'}`}>
-                                <span className="material-symbols-outlined text-lg">arrow_downward</span>
-                            </div>
-                            <span className={`text-sm font-bold ${isInbound ? 'text-purple-700 dark:text-purple-400' : 'text-gray-500'}`}>Can Receive</span>
-                        </div>
-                        <input
-                            type="checkbox"
-                            checked={isInbound}
-                            onChange={(e) => setIsInbound(e.target.checked)}
-                            className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-                        />
-                    </label>
+                    {/* Grid Container */}
+                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-48 overflow-y-auto p-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                        {availableBranches.map(branch => {
+                            const isSelected = selectedBranchIds.includes(branch.id);
+                            return (
+                                <div
+                                    key={branch.id}
+                                    onClick={() => handleBranchToggle(branch.id)}
+                                    className={`aspect-square flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl border cursor-pointer transition-all duration-200 relative ${isSelected
+                                        ? 'bg-primary/10 border-primary shadow-sm ring-1 ring-primary/50' // Added ring for subtle focus on select
+                                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md' // Enhanced hover effect
+                                        }`}>
 
-                    {/* Active Status */}
-                    <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${isActive ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
-                        <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isActive ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'}`}>
-                                <span className="material-symbols-outlined text-lg">check_circle</span>
-                            </div>
-                            <span className={`text-sm font-bold ${isActive ? 'text-green-700 dark:text-green-400' : 'text-gray-500'}`}>Active</span>
-                        </div>
-                        <input
-                            type="checkbox"
-                            checked={isActive}
-                            onChange={(e) => setIsActive(e.target.checked)}
-                            className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
-                        />
-                    </label>
+                                    {/* Icon Container */}
+                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isSelected
+                                        ? 'bg-primary text-white shadow-inner'
+                                        : 'bg-gray-50 dark:bg-gray-700 text-gray-400 group-hover:bg-primary/10 dark:group-hover:bg-primary/20 group-hover:text-primary' // Primary color on hover
+                                        }`}>
+                                        <span className="material-symbols-outlined text-[16px]">store</span> {/* Slightly smaller icon */}
+                                    </div>
 
-                    {/* Show Balance */}
-                    <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${showBalance ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
-                        <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${showBalance ? 'bg-amber-100 text-amber-600' : 'bg-gray-200 text-gray-500'}`}>
-                                <span className="material-symbols-outlined text-lg">visibility</span>
-                            </div>
-                            <span className={`text-sm font-bold ${showBalance ? 'text-amber-700 dark:text-amber-400' : 'text-gray-500'}`}>Show Bal</span>
-                        </div>
-                        <input
-                            type="checkbox"
-                            checked={showBalance}
-                            onChange={(e) => setShowBalance(e.target.checked)}
-                            className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
-                        />
-                    </label>
+                                    {/* Branch Name */}
+                                    <span className={`text-[11px] font-medium text-center leading-snug line-clamp-2 ${isSelected
+                                        ? 'text-primary-dark dark:text-primary'
+                                        : 'text-gray-600 dark:text-gray-300' // Darker text for better contrast
+                                        }`}>
+                                        {branch.branch_name}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
 
-                <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
+                {/* Toggles - Redesigned as Compact Buttons */}
+                <div className="flex flex-col gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
+
+                    {/* Header & Status/Balance Buttons (New Layout) */}
+                    {/* Header & Status/Balance Buttons (New Layout) */}
+                    <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Transaction Filters</span>
+                    </div>
+
+                    {/* Send & Receive Toggles (Smaller/Compact) */}
+                    <div className="grid grid-cols-2 gap-2">
+                        {/* Outbound (Send) - Compacted */}
+                        <div
+                            onClick={() => setIsOutbound(!isOutbound)}
+                            className={`flex items-center justify-center p-1.5 rounded-lg border-2 cursor-pointer transition-all active:scale-95 ${isOutbound
+                                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400'
+                                : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                }`}
+                        >
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center mr-1 ${isOutbound ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-400'
+                                }`}>
+                                <span className="material-symbols-outlined text-[14px]">arrow_upward</span>
+                            </div>
+                            <span className={`text-xs font-bold uppercase tracking-wide ${isOutbound ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400'}`}>
+                                Send
+                            </span>
+                        </div>
+
+                        {/* Inbound (Receive) - Compacted */}
+                        <div
+                            onClick={() => setIsInbound(!isInbound)}
+                            className={`flex items-center justify-center p-1.5 rounded-lg border-2 cursor-pointer transition-all active:scale-95 ${isInbound
+                                ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-500 dark:border-purple-400'
+                                : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                }`}
+                        >
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center mr-1 ${isInbound ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-400'
+                                }`}>
+                                <span className="material-symbols-outlined text-[14px]">arrow_downward</span>
+                            </div>
+                            <span className={`text-xs font-bold uppercase tracking-wide ${isInbound ? 'text-purple-700 dark:text-purple-300' : 'text-gray-500 dark:text-gray-400'}`}>
+                                Receive
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex-shrink-0 mb-4">
                     <button
                         onClick={onCancel}
                         className="px-6 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

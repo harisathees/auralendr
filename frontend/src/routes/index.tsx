@@ -1,5 +1,5 @@
 import React, { lazy } from "react";
-import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
 import PublicRoute from "../components/PublicRoute";
 import Login from "../pages/login/Login";
@@ -15,6 +15,21 @@ const View = lazy(() => import("../pages/Pledges/View"));
 const BranchList = lazy(() => import("../pages/admin/Branches/List"));
 const UsersList = lazy(() => import("../pages/admin/Users/List"));
 const TasksList = lazy(() => import("../pages/admin/Tasks/List"));
+const AdminConfigs = lazy(() => import("../pages/dashboard/admin/configs/index"));
+const MoneySources = lazy(() => import("../pages/dashboard/admin/configs/MoneySources"));
+const InterestSettings = lazy(() => import("../pages/dashboard/admin/configs/InterestSettings"));
+const ValidityPeriods = lazy(() => import("../pages/dashboard/admin/configs/ValidityPeriods"));
+const ProcessingFees = lazy(() => import("../pages/dashboard/admin/configs/ProcessingFees"));
+const RepledgeBanks = lazy(() => import("../pages/dashboard/admin/configs/RepledgeBanks"));
+
+const MetalRates = lazy(() => import("../pages/dashboard/admin/configs/MetalRates"));
+const JewelTypesIndex = lazy(() => import("../pages/dashboard/admin/configs/JewelTypes"));
+
+const JewelTypeForm = lazy(() => import("../pages/dashboard/admin/configs/JewelTypeForm"));
+const JewelQualitiesIndex = lazy(() => import("../pages/dashboard/admin/configs/JewelQualities"));
+const JewelQualityForm = lazy(() => import("../pages/dashboard/admin/configs/JewelQualityForm"));
+const JewelNamesIndex = lazy(() => import("../pages/dashboard/admin/configs/JewelNames"));
+const JewelNameForm = lazy(() => import("../pages/dashboard/admin/configs/JewelNameForm"));
 
 const AppRoutes: React.FC = () => {
   return (
@@ -30,7 +45,6 @@ const AppRoutes: React.FC = () => {
       />
       <Route path="/login" element={<Navigate to="/" replace />} />
 
-      {/* Protected Routes wrapped in DashboardLayout */}
       {/* Protected Routes wrapped in DashboardLayout */}
       <Route
         element={
@@ -58,7 +72,32 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/dashboard" element={<Dashboard />} />
         <Route path="/admin/branches" element={<BranchList />} />
         <Route path="/admin/users" element={<UsersList />} />
-        <Route path="/admin/configurations" element={<div>Configurations Page (Placeholder)</div>} />
+
+        {/* Configurations */}
+        <Route path="/admin/configurations" element={<Navigate to="/admin/configs" replace />} />
+        <Route path="/admin/configs" element={<AdminConfigs />} />
+        <Route path="/admin/configs/money-sources" element={<MoneySources />} />
+        <Route path="/admin/configs/metal-rates" element={<MetalRates />} />
+
+        {/* Jewel Types */}
+        <Route path="/admin/configs/jewel-types" element={<JewelTypesIndex />} />
+        <Route path="/admin/configs/jewel-types/create" element={<JewelTypeForm />} />
+        <Route path="/admin/configs/jewel-types/edit/:id" element={<JewelTypeForm />} />
+
+        {/* Jewel Qualities */}
+        <Route path="/admin/configs/jewel-qualities" element={<JewelQualitiesIndex />} />
+        <Route path="/admin/configs/jewel-qualities/create" element={<JewelQualityForm />} />
+        <Route path="/admin/configs/jewel-qualities/edit/:id" element={<JewelQualityForm />} />
+
+        {/* Jewel Names */}
+        <Route path="/admin/configs/jewel-names" element={<JewelNamesIndex />} />
+        <Route path="/admin/configs/jewel-names/create" element={<JewelNameForm />} />
+        <Route path="/admin/configs/jewel-names/edit/:id" element={<JewelNameForm />} />
+        <Route path="/admin/configs/interest-settings" element={<InterestSettings />} />
+        <Route path="/admin/configs/validity-periods" element={<ValidityPeriods />} />
+        <Route path="/admin/configs/processing-fees" element={<ProcessingFees />} />
+        <Route path="/admin/configs/repledge-banks" element={<RepledgeBanks />} />
+
         {/* FAB Action Routes (if they are pages) */}
         <Route path="/admin/analysis" element={<div>Advanced Analysis Page (Placeholder)</div>} />
         <Route path="/admin/tasks" element={<TasksList />} />
@@ -71,4 +110,3 @@ const AppRoutes: React.FC = () => {
 };
 
 export default AppRoutes;
-

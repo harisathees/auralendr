@@ -26,26 +26,28 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('branches', BranchController::class);
         Route::apiResource('staff', StaffController::class);
         Route::apiResource('tasks', TaskController::class);
+        Route::apiResource('jewel-types', JewelTypeController::class);
+        Route::apiResource('jewel-qualities', JewelQualityController::class);
+        Route::apiResource('jewel-names', \App\Http\Controllers\Admin\JewelNameController::class);
+        Route::post('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'store']);
     });
 
-    // Staff endpoints (example)
-    // Route::get('/branch/customers', [CustomerController::class,'index']); // to implement later
-});
-
-// Pledge routes
-Route::middleware(['auth:sanctum'])->group(function () {
-    // Temporarily remove permission middleware to debug - will add back after fixing
-    Route::get('pledges', [PledgeController::class, 'index']);
-    Route::post('pledges', [PledgeController::class, 'store']);
-    Route::get('pledges/{pledge}', [PledgeController::class, 'show']);
-    Route::put('pledges/{pledge}', [PledgeController::class, 'update']);
-    Route::delete('pledges/{pledge}', [PledgeController::class, 'destroy']);
-    Route::get('jewel-types', [JewelTypeController::class, 'index']);
+    // Shared Routes (Admin + Staff)
+    Route::get('/jewel-types', [JewelTypeController::class, 'index']);
+    Route::get('/jewel-qualities', [JewelQualityController::class, 'index']);
+    Route::get('/jewel-names', [\App\Http\Controllers\Admin\JewelNameController::class, 'index']);
+    Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
     Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
 
     // Metal Rates
     Route::get('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'index']);
     Route::post('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'store']);
+
+    // Money Sources
+    Route::get('/money-sources', [App\Http\Controllers\Admin\MoneySourceController::class, 'index']);
+    Route::post('/money-sources', [App\Http\Controllers\Admin\MoneySourceController::class, 'store']);
+    Route::put('/money-sources/{id}', [App\Http\Controllers\Admin\MoneySourceController::class, 'update']);
+    Route::delete('/money-sources/{id}', [App\Http\Controllers\Admin\MoneySourceController::class, 'destroy']);
 
     // Staff Task Routes
     Route::get('/my-tasks', [TaskController::class, 'myTasks']);
