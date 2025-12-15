@@ -4,7 +4,7 @@ import type { MoneySource } from "../../../../types/models";
 import { useNavigate } from "react-router-dom";
 import MoneySourceForm from "./MoneySourceForm";
 import ConfirmationModal from "../../../../components/Shared/ConfirmationModal";
-import { useToast } from "../../../../context/ToastContext";
+import { useToast } from "../../../../context";
 
 const MoneySources: React.FC = () => {
     const navigate = useNavigate();

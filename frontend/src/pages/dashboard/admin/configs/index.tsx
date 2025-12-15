@@ -1,8 +1,8 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const AdminConfigs: React.FC = () => {
-    const navigate = useNavigate();
+
 
     const configs = [
         {
@@ -21,11 +21,66 @@ const AdminConfigs: React.FC = () => {
             bg: "bg-amber-100",
             link: "/admin/configs/metal-rates" // Placeholder link
         },
-        // Add more configs here as needed like Jewel Types etc.
+        {
+            title: "Jewel Types",
+            description: "Gold, Silver, Platinum...",
+            icon: "diamond",
+            color: "text-blue-600",
+            bg: "bg-blue-100",
+            link: "/admin/configs/jewel-types"
+        },
+        {
+            title: "Jewel Qualities",
+            description: "22k, 24k, 925...",
+            icon: "verified",
+            color: "text-purple-600",
+            bg: "bg-purple-100",
+            link: "/admin/configs/jewel-qualities"
+        },
+        {
+            title: "Jewel Names",
+            description: "Ring, Chain, Bangle...",
+            icon: "category",
+            color: "text-pink-600",
+            bg: "bg-pink-100",
+            link: "/admin/configs/jewel-names"
+        },
+        {
+            title: "Interest Settings",
+            description: "Configure loan interest rates",
+            icon: "percent",
+            color: "text-indigo-600",
+            bg: "bg-indigo-100",
+            link: "/admin/configs/interest-settings"
+        },
+        {
+            title: "Validity Months",
+            description: "Set loan validity periods",
+            icon: "event_repeat",
+            color: "text-teal-600",
+            bg: "bg-teal-100",
+            link: "/admin/configs/validity-periods"
+        },
+        {
+            title: "Loan Processing Fee",
+            description: "Manage document charges",
+            icon: "post_add",
+            color: "text-orange-600",
+            bg: "bg-orange-100",
+            link: "/admin/configs/processing-fees"
+        },
+        {
+            title: "Banks to Repledge",
+            description: "Manage repledge institutions",
+            icon: "account_balance",
+            color: "text-cyan-600",
+            bg: "bg-cyan-100",
+            link: "/admin/configs/repledge-banks"
+        },
     ];
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col min-h-full pb-24">
             {/* Header */}
             <header className="flex justify-between items-center p-4">
                 <div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import http from "../../../../api/http";
-import { useToast } from "../../../../context/ToastContext";
+import { useToast } from "../../../../context";
 
 interface MetalRate {
     rate: string;
@@ -56,11 +56,19 @@ const MetalRates: React.FC = () => {
 
     return (
         <div className="p-6 max-w-4xl mx-auto pb-24">
-            <header className="mb-8">
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
-                    Metal Rates
-                </h2>
-                <p className="text-secondary-text dark:text-gray-400">Update daily rates for Gold and Silver.</p>
+            <header className="mb-8 flex items-center gap-4">
+                <button
+                    onClick={() => window.history.back()}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                >
+                    <span className="material-symbols-outlined">arrow_back</span>
+                </button>
+                <div>
+                    <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
+                        Metal Rates
+                    </h2>
+                    <p className="text-secondary-text dark:text-gray-400">Update daily rates for Gold and Silver.</p>
+                </div>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

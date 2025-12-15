@@ -258,13 +258,6 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                                         }`}>
                                         {branch.branch_name}
                                     </span>
-
-                                    {/* Checkmark Indicator */}
-                                    {/* {isSelected && (
-                                        <div className="absolute top-0 right-0 transform -translate-y-1/2 translate-x-1/2 w-4 h-4 rounded-full bg-primary flex items-center justify-center shadow-lg">
-                                            <span className="material-symbols-outlined text-[10px] text-white">check</span>
-                                        </div>
-                                    )} */}
                                 </div>
                             );
                         })}

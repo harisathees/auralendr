@@ -150,7 +150,7 @@ const MetalRatesCard: React.FC = () => {
                 {/* Jewelry Image Overlay */}
                 <div className="absolute top-16 right-[-20px] w-48 h-48 md:w-64 md:h-64 object-contain opacity-90 transform rotate-12 drop-shadow-2xl grayscale-[0.2] contrast-125 pointer-events-none">
                     <img
-                        src="C:/Users/HII/.gemini/antigravity/brain/f3999395-50d7-494e-9883-eb9b991d56d8/jewelry_overlay.webp"
+                        src="/jewelry_overlay.webp"
                         alt="Luxury Jewelry"
                         className="w-full h-full object-contain rounded-xl shadow-xl"
                         style={{ maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)' }}
