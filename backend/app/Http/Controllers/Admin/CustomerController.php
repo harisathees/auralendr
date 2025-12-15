@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\pledge\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CustomerController extends Controller
 {
@@ -19,8 +20,20 @@ class CustomerController extends Controller
         $customers = Customer::where('mobile_no', 'LIKE', "%{$query}%")
             ->orWhere('whatsapp_no', 'LIKE', "%{$query}%")
             ->orWhere('id_proof_number', 'LIKE', "%{$query}%")
+            ->with([
+                'media' => function ($q) {
+                    $q->where('category', 'customer_document');
+                }
+            ])
             ->limit(5)
             ->get();
+
+        // Transform to include URLs directly
+        $customers->transform(function ($customer) {
+            $doc = $customer->media->where('category', 'customer_document')->last();
+            $customer->document_url = $doc ? url(Storage::url($doc->file_path)) : null;
+            return $customer;
+        });
 
         return response()->json($customers);
     }

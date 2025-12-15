@@ -31,7 +31,7 @@ class PledgeController extends Controller
 
         $query = Pledge::with(['customer', 'loan', 'jewels', 'media']);
 
-        if (! $user->hasRole('admin')) {
+        if (!$user->hasRole('admin')) {
             $query->where('branch_id', $user->branch_id);
         }
 
@@ -53,7 +53,7 @@ class PledgeController extends Controller
             // Check roles (both Spatie roles and legacy 'role' column)
             $isAdmin = $user->hasRole('admin') || $user->role === 'admin';
             $isStaff = $user->hasRole('staff') || $user->role === 'staff';
-            
+
             if (!$isAdmin && !$isStaff && !$user->hasPermissionTo('pledge.create', 'sanctum')) {
                 return response()->json([
                     'message' => 'You do not have permission to create pledges',
@@ -87,29 +87,34 @@ class PledgeController extends Controller
 
         try {
             return DB::transaction(function () use ($request, $user) {
-                // Create or reuse customer - here we always create
                 $customerData = $request->validated()['customer'];
                 // Filter out empty strings and convert to null
-                $customerData = array_map(function($value) {
+                $customerData = array_map(function ($value) {
                     return $value === '' ? null : $value;
                 }, $customerData);
-                
-                Log::info('Creating customer', ['data' => $customerData]);
-                $customer = Customer::create($customerData);
-                Log::info('Customer created', ['id' => $customer->id]);
+
+                // Create or reuse customer
+                if ($request->filled('customer_id')) {
+                    $customer = Customer::findOrFail($request->customer_id);
+                    $customer->update($customerData);
+                } else {
+                    Log::info('Creating customer', ['data' => $customerData]);
+                    $customer = Customer::create($customerData);
+                }
+                Log::info('Customer ID resolved', ['id' => $customer->id]);
 
                 Log::info('Creating pledge', [
                     'customer_id' => $customer->id,
                     'branch_id' => $user->branch_id,
                 ]);
-                
+
                 $pledge = Pledge::create([
                     'customer_id' => $customer->id,
-                    'branch_id'   => $user->branch_id,
-                    'created_by'  => $user->id,
-                    'updated_by'  => $user->id,
-                    'status'      => $request->input('pledge.status', 'active'),
-                    'reference_no'=> $request->input('pledge.reference_no') ?? null,
+                    'branch_id' => $user->branch_id,
+                    'created_by' => $user->id,
+                    'updated_by' => $user->id,
+                    'status' => $request->input('pledge.status', 'active'),
+                    'reference_no' => $request->input('pledge.reference_no') ?? null,
                 ]);
                 Log::info('Pledge created', ['id' => $pledge->id]);
 
@@ -118,8 +123,9 @@ class PledgeController extends Controller
                 Log::info('Processing jewels', ['count' => count($jewels)]);
                 foreach ($jewels as $j) {
                     // Filter out empty strings and ensure proper types
-                    $jewelData = array_map(function($value) {
-                        if ($value === '') return null;
+                    $jewelData = array_map(function ($value) {
+                        if ($value === '')
+                            return null;
                         return $value;
                     }, $j);
                     // Ensure numeric types
@@ -139,8 +145,9 @@ class PledgeController extends Controller
                 // Loan
                 $loanData = $request->validated()['loan'];
                 // Filter out empty strings and convert to null, ensure numeric types
-                $loanData = array_map(function($value) {
-                    if ($value === '') return null;
+                $loanData = array_map(function ($value) {
+                    if ($value === '')
+                        return null;
                     return $value;
                 }, $loanData);
                 // Ensure amount is numeric
@@ -159,14 +166,14 @@ class PledgeController extends Controller
                 // Files - Handle 'files[]' array notation from frontend
                 // When files are sent as files[], Laravel stores them as files.0, files.1, etc.
                 $uploadedFiles = [];
-                
+
                 // Check for indexed files (files.0, files.1, etc.) - handles files[] array notation
                 $index = 0;
                 while ($request->hasFile("files.{$index}")) {
                     $uploadedFiles[] = $request->file("files.{$index}");
                     $index++;
                 }
-                
+
                 // Fallback: Check for single 'files' key (in case it's sent differently)
                 if (empty($uploadedFiles) && $request->hasFile('files')) {
                     $file = $request->file('files');
@@ -195,10 +202,10 @@ class PledgeController extends Controller
                 foreach ($uploadedFiles as $index => $file) {
                     $timestamp = now()->format('Ymd_His');
                     $loanNoSafe = preg_replace('/[^A-Za-z0-9\-]/', '', $loan->loan_no ?? 'NoLoan');
-                    
+
                     // Determine category
                     $category = $categories[$index] ?? 'uploaded_file';
-                    
+
                     $extension = $file->getClientOriginalExtension();
                     // filename format: LoanNo_Category_DateTime_UniqID.ext
                     $filename = "{$category}_{$loanNoSafe}_{$timestamp}_" . uniqid() . ".{$extension}";
@@ -207,20 +214,20 @@ class PledgeController extends Controller
 
                     MediaFile::create([
                         'customer_id' => $customer->id,
-                        'pledge_id'   => $pledge->id,
-                        'loan_id'     => $loan->id,
-                        'jewel_id'    => null, // Explicitly null as requested
-                        'type'        => explode('/', $file->getClientMimeType())[0] ?? 'file',
-                        'category'    => $category,
-                        'file_path'   => $path,
-                        'mime_type'   => $file->getClientMimeType(),
-                        'size'        => $file->getSize(),
+                        'pledge_id' => $pledge->id,
+                        'loan_id' => $loan->id,
+                        'jewel_id' => null, // Explicitly null as requested
+                        'type' => explode('/', $file->getClientMimeType())[0] ?? 'file',
+                        'category' => $category,
+                        'file_path' => $path,
+                        'mime_type' => $file->getClientMimeType(),
+                        'size' => $file->getSize(),
                     ]);
                 }
 
                 return response()->json([
                     'message' => 'Pledge created successfully',
-                    'data'    => $pledge->load(['customer', 'loan', 'jewels', 'media']),
+                    'data' => $pledge->load(['customer', 'loan', 'jewels', 'media']),
                 ], 201);
             }, 5);
         } catch (\Illuminate\Database\QueryException $e) {
@@ -228,7 +235,7 @@ class PledgeController extends Controller
                 'user_id' => $user->id,
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'message' => 'Failed to create pledge due to database error',
                 'error' => config('app.debug') ? $e->getMessage() : 'database_error'
@@ -238,7 +245,7 @@ class PledgeController extends Controller
                 'user_id' => $user->id,
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'message' => 'Failed to create pledge',
                 'error' => config('app.debug') ? $e->getMessage() : 'server_error'
@@ -252,7 +259,7 @@ class PledgeController extends Controller
     public function show(Pledge $pledge, Request $request)
     {
         $this->authorize('view', $pledge);
-        return response()->json($pledge->load(['customer','loan','jewels','media']));
+        return response()->json($pledge->load(['customer', 'loan', 'jewels', 'media']));
     }
 
     /**
@@ -331,14 +338,14 @@ class PledgeController extends Controller
 
                 // Handle uploaded files (append) - Handle 'files[]' array notation from frontend
                 $uploadedFiles = [];
-                
+
                 // Check for indexed files (files.0, files.1, etc.) - handles files[] array notation
                 $index = 0;
                 while ($request->hasFile("files.{$index}")) {
                     $uploadedFiles[] = $request->file("files.{$index}");
                     $index++;
                 }
-                
+
                 // Fallback: Check for single 'files' key (in case it's sent differently)
                 if (empty($uploadedFiles) && $request->hasFile('files')) {
                     $file = $request->file('files');
@@ -358,7 +365,7 @@ class PledgeController extends Controller
                     $timestamp = now()->format('Ymd_His');
                     $currentLoanNo = $pledge->loan ? $pledge->loan->loan_no : ($data['loan']['loan_no'] ?? 'NoLoan');
                     $loanNoSafe = preg_replace('/[^A-Za-z0-9\-]/', '', $currentLoanNo);
-                    
+
                     // Determine category
                     $category = $categories[$index] ?? 'uploaded_file';
 
@@ -369,20 +376,20 @@ class PledgeController extends Controller
 
                     MediaFile::create([
                         'customer_id' => $pledge->customer_id,
-                        'pledge_id'   => $pledge->id,
-                        'loan_id'     => $pledge->loan?->id,
-                        'jewel_id'    => null,
-                        'type'        => explode('/', $file->getClientMimeType())[0] ?? 'file',
-                        'category'    => $category,
-                        'file_path'   => $path,
-                        'mime_type'   => $file->getClientMimeType(),
-                        'size'        => $file->getSize(),
+                        'pledge_id' => $pledge->id,
+                        'loan_id' => $pledge->loan?->id,
+                        'jewel_id' => null,
+                        'type' => explode('/', $file->getClientMimeType())[0] ?? 'file',
+                        'category' => $category,
+                        'file_path' => $path,
+                        'mime_type' => $file->getClientMimeType(),
+                        'size' => $file->getSize(),
                     ]);
                 }
 
                 return response()->json([
                     'message' => 'Pledge updated successfully',
-                    'data'    => $pledge->fresh()->load(['customer','loan','jewels','media']),
+                    'data' => $pledge->fresh()->load(['customer', 'loan', 'jewels', 'media']),
                 ]);
             });
         } catch (\Illuminate\Database\QueryException $e) {
@@ -390,7 +397,7 @@ class PledgeController extends Controller
                 'pledge_id' => $pledge->id,
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'message' => 'Failed to update pledge due to database error',
                 'error' => config('app.debug') ? $e->getMessage() : 'database_error'
@@ -400,7 +407,7 @@ class PledgeController extends Controller
                 'pledge_id' => $pledge->id,
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'message' => 'Failed to update pledge',
                 'error' => config('app.debug') ? $e->getMessage() : 'server_error'

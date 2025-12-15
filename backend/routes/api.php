@@ -8,6 +8,7 @@ use App\Http\Controllers\pledge\PledgeController;
 use App\Http\Controllers\Admin\JewelTypeController;
 use App\Http\Controllers\Admin\JewelQualityController;
 use App\Http\Controllers\Admin\TaskController;
+use App\Http\Controllers\Admin\CustomerController;
 
 
 Route::get('/test', function () {
@@ -32,15 +33,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('jewel-types', JewelTypeController::class);
         Route::apiResource('jewel-qualities', JewelQualityController::class);
         Route::apiResource('jewel-names', \App\Http\Controllers\Admin\JewelNameController::class);
-        Route::post('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'store']);
+        // Route::post('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'store']);
     });
 
     // Shared Routes (Admin + Staff)
     Route::get('/jewel-types', [JewelTypeController::class, 'index']);
     Route::get('/jewel-qualities', [JewelQualityController::class, 'index']);
     Route::get('/jewel-names', [\App\Http\Controllers\Admin\JewelNameController::class, 'index']);
-    Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
+    // Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
     Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
+
+    // Customer Search
+    Route::get('/customers/search', [CustomerController::class, 'search']);
 
     // Pledges
     Route::apiResource('pledges', PledgeController::class);

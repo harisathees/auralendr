@@ -32,27 +32,33 @@ const MetalRatesCard: React.FC = () => {
     };
 
     const handleShare = async (e: React.MouseEvent) => {
-        e.stopPropagation();
+        e.stopPropagation(); // Prevent card collapse/expand
         if (cardRef.current) {
             try {
+                // Ensure the card is fully rendered before capturing
                 const dataUrl = await htmlToImage.toPng(cardRef.current, {
                     quality: 1.0,
-                    pixelRatio: 3,
+                    pixelRatio: 2, // Improve image quality
                     backgroundColor: 'transparent',
+                    style: {
+                        height: 'auto', // Capture full height
+                        minHeight: '320px'
+                    }
                 });
 
                 const blob = await (await fetch(dataUrl)).blob();
-                const file = new File([blob], "auralendr-rates.png", { type: "image/png" });
+                const file = new File([blob], "todays-rates.png", { type: "image/png" });
 
                 if (navigator.share) {
                     await navigator.share({
                         files: [file],
-                        title: "AuraLendr Metal Rates",
+                        title: "Today's Gold Rates",
                         text: "Check out today's gold rates at AuraLendr!",
                     });
                 } else {
+                    // Fallback for desktop: download the image
                     const link = document.createElement('a');
-                    link.download = 'auralendr-rates.png';
+                    link.download = 'todays-rates.png';
                     link.href = dataUrl;
                     link.click();
                 }
@@ -65,135 +71,175 @@ const MetalRatesCard: React.FC = () => {
     const goldItem = rates.find(r => r.name.toLowerCase().includes('gold'));
     const silverItem = rates.find(r => r.name.toLowerCase().includes('silver'));
 
+    // Helper to determine trend
     const renderTrend = (rateStr?: string, prevRateStr?: string) => {
-        const rate = rateStr ? parseFloat(rateStr) : 0;
-        const prevRate = prevRateStr ? parseFloat(prevRateStr) : 0;
+        if (!rateStr || !prevRateStr) return null;
+
+        const rate = parseFloat(rateStr);
+        const prevRate = parseFloat(prevRateStr);
 
         if (rate > prevRate) {
             return (
-                <div className="w-8 h-8 rounded-full border border-[#FFCA28] flex items-center justify-center text-[#FFCA28]">
-                    <span className="material-symbols-outlined font-bold text-lg">arrow_upward</span>
+                <div className="ml-2 w-8 h-8 rounded-full border border-[#FFCA28] flex items-center justify-center text-[#FFCA28]">
+                    <span className="material-symbols-outlined font-bold">arrow_upward</span>
                 </div>
             );
         } else if (rate < prevRate) {
             return (
-                <div className="w-8 h-8 rounded-full border border-gray-400 flex items-center justify-center text-gray-400">
-                    <span className="material-symbols-outlined font-bold text-lg">arrow_downward</span>
+                <div className="ml-2 w-8 h-8 rounded-full border border-red-400 flex items-center justify-center text-red-400">
+                    <span className="material-symbols-outlined font-bold">arrow_downward</span>
                 </div>
             );
         }
         return (
-            <div className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center text-white/50">
-                <span className="material-symbols-outlined font-bold text-lg">remove</span>
+            <div className="ml-2 w-8 h-8 rounded-full border border-white/30 flex items-center justify-center text-white/50">
+                <span className="material-symbols-outlined font-bold">remove</span>
             </div>
         );
     };
 
     const goldRate = goldItem?.metal_rate?.rate;
     const silverRate = silverItem?.metal_rate?.rate;
-    const lastUpdated = goldItem?.metal_rate?.updated_at ? new Date(goldItem.metal_rate.updated_at) : new Date();
+
+    // Prefer the updated_at from the rate itself, fallback to today
+    const lastUpdated = goldItem?.metal_rate?.updated_at || new Date().toISOString();
+
 
     return (
         <div
             ref={cardRef}
-            className="w-full relative rounded-3xl overflow-hidden cursor-pointer shadow-2xl transition-transform hover:scale-[1.01] duration-300"
-            style={{
-                background: 'linear-gradient(135deg, #2C1A14 0%, #4A2F25 50%, #20130F 100%)'
-            }}
+            className="w-full relative shadow-[0_8px_32px_rgba(0,0,0,0.5)] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300"
             onClick={() => setIsExpanded(!isExpanded)}
         >
-            {/* Background Texture/Noise could be added here if desired */}
-            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay pointer-events-none"></div>
+            {/* Background Image */}
+            <div
+                className="absolute inset-0 z-0 bg-cover bg-center"
+                style={{
+                    backgroundImage: `url("C:/Users/HII/.gemini/antigravity/brain/f3999395-50d7-494e-9883-eb9b991d56d8/premium_dark_gold_bg_1765712506193.png")`, // Use new premium background
+                    filter: "brightness(0.5)"
+                }}
+            />
+            {/* Gradient Overlay for Readability */}
+            <div className="absolute inset-0 z-0 bg-gradient-to-br from-black/80 via-black/40 to-transparent" />
 
-            {/* Decorative circles */}
-            <div className="absolute top-1/2 right-0 transform -translate-y-1/2 translate-x-1/4 w-64 h-64 rounded-full border border-white/5 pointer-events-none"></div>
-            <div className="absolute top-1/3 right-10 w-96 h-96 rounded-full border border-white/5 pointer-events-none"></div>
+            {/* Content Container - Flex Column Logic */}
+            <div className={`relative z-10 p-6 flex flex-col transition-all duration-500 ease-in-out ${isExpanded ? 'h-auto min-h-[320px]' : 'h-20'}`}>
 
-            <div className="relative z-10 p-6 md:p-8 text-white font-sans min-h-[350px] flex flex-col justify-between">
-
-                {/* Header Section */}
-                <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                            <span className="material-symbols-outlined text-[#FFCA28] text-2xl">diamond</span>
-                        </div>
-                        <div>
-                            <div className="text-white/90 font-medium text-lg leading-none">
-                                {lastUpdated.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
-                            </div>
-                            <div className="text-white/60 text-sm mt-1">
-                                {lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                            </div>
-                        </div>
-                    </div>
-                    <button
-                        onClick={handleShare}
-                        className="bg-white/10 p-2 rounded-full hover:bg-white/20 transition-colors"
-                    >
-                        <span className="material-symbols-outlined text-white/70">share</span>
-                    </button>
-                </div>
-
-                {/* Brand Name */}
-                <div className="mt-8 mb-4">
-                    <h1 className="text-[#FFCA28] text-4xl font-serif tracking-wide drop-shadow-lg">
-                        AuraLendr
-                    </h1>
-                    <p className="text-white/60 text-lg font-light tracking-wide">
-                        Pawn & Finance Co.
-                    </p>
-                </div>
-
-                {/* Decorative Line */}
-                <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-4"></div>
-
-                {/* Jewelry Image Overlay */}
-                <div className="absolute top-16 right-[-20px] w-48 h-48 md:w-64 md:h-64 object-contain opacity-90 transform rotate-12 drop-shadow-2xl grayscale-[0.2] contrast-125 pointer-events-none">
-                    <img
-                        src="/jewelry_overlay.webp"
-                        alt="Luxury Jewelry"
-                        className="w-full h-full object-contain rounded-xl shadow-xl"
-                        style={{ maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)' }}
-                    />
-                    {/* Badge */}
-                    <div className="absolute bottom-4 -left-4 bg-[#3E2723] text-white/80 text-[10px] uppercase tracking-[0.2em] px-3 py-1 shadow-lg">
-                        Global Metal Prices
-                    </div>
-                </div>
-
-                {/* Prices Section */}
-                <div className="mt-auto space-y-6 relative z-20">
-
-                    {/* Gold */}
-                    <div>
-                        <div className="text-[#FFCA28] text-sm font-bold uppercase tracking-widest mb-1">
-                            Gold Price (22k)
-                        </div>
+                {/* Collapsed Header Logic */}
+                {!isExpanded && (
+                    <div className="flex items-center justify-between h-full w-full">
+                        {/* Left: Title & Date (Compact) */}
                         <div className="flex items-center gap-4">
-                            <div className="text-5xl font-bold text-white tracking-tight drop-shadow-md">
-                                ₹{goldRate ? parseFloat(goldRate).toLocaleString() : "---"}
-                                <span className="text-lg text-white/50 font-normal ml-2">/ 1gm</span>
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#FDB931] to-[#9f7928] flex items-center justify-center shadow-lg transform -rotate-12 border border-white/20">
+                                <span className="text-xl">✨</span>
                             </div>
-                            {renderTrend(goldItem?.metal_rate?.rate, goldItem?.metal_rate?.previous_rate)}
+                            <div>
+                                <h3 className="text-white font-bold text-lg leading-tight">Today's Rates</h3>
+                                <p className="text-white/60 text-xs">
+                                    {new Date(lastUpdated).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Right: Compact Rates Preview */}
+                        <div className="flex items-center gap-6">
+                            {/* Gold Compact */}
+                            <div className="flex flex-col items-end">
+                                <span className="text-[#FFCA28] text-xs font-bold uppercase tracking-wider">Gold</span>
+                                <span className="text-white font-bold">₹{goldRate ? parseFloat(goldRate).toLocaleString() : "---"}</span>
+                            </div>
+                            {/* Silver Compact */}
+                            <div className="flex flex-col items-end hidden md:flex"> {/* Visible on md+ */}
+                                <span className="text-gray-300 text-xs font-bold uppercase tracking-wider">Silver</span>
+                                <span className="text-white font-bold">₹{silverRate ? parseFloat(silverRate).toLocaleString() : "---"}</span>
+                            </div>
+                            {/* Silver Mobile Only (Added strictly as per request) */}
+                            <div className="flex flex-col items-end md:hidden">
+                                <span className="text-gray-300 text-xs font-bold uppercase tracking-wider">Ag</span>
+                                <span className="text-white font-bold">₹{silverRate ? parseFloat(silverRate).toLocaleString() : "---"}</span>
+                            </div>
+
+                            {/* Expand Icon */}
+                            <span className="material-symbols-outlined text-white/50">expand_more</span>
                         </div>
                     </div>
+                )}
 
-                    {/* Silver */}
-                    <div className="flex justify-between items-end">
-                        <div>
-                            <div className="text-gray-300 text-xs font-bold uppercase tracking-widest mb-1">
-                                Silver Price
+                {/* Expanded Content */}
+                <div className={`transition-opacity duration-500 ${isExpanded ? 'opacity-100' : 'opacity-0 hidden'}`}>
+                    {/* Header */}
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#FDB931] to-[#9f7928] flex items-center justify-center shadow-lg transform -rotate-12 border border-white/20">
+                                <span className="text-2xl">✨</span>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div className="text-3xl font-bold text-white tracking-tight">
-                                    ₹{silverRate ? parseFloat(silverRate).toLocaleString() : "---"}
-                                    <span className="text-sm text-white/50 font-normal ml-1">/ 1gm</span>
+                            <div>
+                                <h3 className="text-2xl font-display font-bold text-white tracking-wide">
+                                    Today's Rates
+                                </h3>
+                                <div className="flex items-center gap-2 text-white/60 text-sm">
+                                    <span className="material-symbols-outlined text-sm">calendar_today</span>
+                                    {new Date(lastUpdated).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                 </div>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={handleShare}
+                            className="bg-white/10 hover:bg-white/20 backdrop-blur-md p-2 rounded-full transition-colors text-white border border-white/10 group relative"
+                            title="Share as Image"
+                        >
+                            <span className="material-symbols-outlined">share</span>
+                            <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                Share Card
+                            </span>
+                        </button>
+                    </div>
+
+                    {/* Rates Grid */}
+                    <div className="space-y-6 mt-4">
+                        {/* Gold Rate */}
+                        <div className="flex items-center justify-between group">
+                            <div className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-full bg-[#FFCA28]/20 flex items-center justify-center border border-[#FFCA28]/30 group-hover:scale-110 transition-transform duration-300">
+                                    <span className="text-2xl">👑</span>
+                                </div>
+                                <div>
+                                    <p className="text-[#FFCA28] font-bold text-sm tracking-widest uppercase mb-0.5">Gold Rate</p>
+                                    <p className="text-white/40 text-xs">22k / 916 Hallmarked</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-3xl md:text-4xl font-bold text-white">
+                                    ₹{goldRate ? parseFloat(goldRate).toLocaleString() : "---,---"}
+                                </span>
+                                <span className="text-white/60 text-sm">/ 1gm</span>
+                                {renderTrend(goldItem?.metal_rate?.rate, goldItem?.metal_rate?.previous_rate)}
+                            </div>
+                        </div>
+
+                        {/* Silver Rate */}
+                        <div className="flex items-center justify-between group">
+                            <div className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-full bg-gray-400/20 flex items-center justify-center border border-gray-400/30 group-hover:scale-110 transition-transform duration-300">
+                                    <span className="text-2xl">⚪</span>
+                                </div>
+                                <div>
+                                    <p className="text-gray-300 font-bold text-sm tracking-widest uppercase mb-0.5">Silver Rate</p>
+                                    <p className="text-white/40 text-xs">99.9% Pure Silver</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-3xl md:text-4xl font-bold text-white">
+                                    ₹{silverRate ? parseFloat(silverRate).toLocaleString() : "--,---"}
+                                </span>
+                                <span className="text-white/60 text-sm">/ 1gm</span>
                                 {renderTrend(silverItem?.metal_rate?.rate, silverItem?.metal_rate?.previous_rate)}
                             </div>
                         </div>
 
-                        <div className="text-white/40 text-xs font-medium tracking-wide">
+                        {/* Location */}
+                        <div className="md:ml-auto mt-4 md:mt-0 text-white/50 text-sm font-medium text-right">
                             Place: Chennai, India
                         </div>
                     </div>

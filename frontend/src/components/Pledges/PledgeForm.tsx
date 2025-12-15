@@ -14,11 +14,12 @@ interface MediaUploadBlockProps {
   onUpload?: () => void;
   isAudio?: boolean;
   file?: File | null;
+  existingUrl?: string | null;
   onRemove?: () => void;
 }
 
 const MediaUploadBlock: React.FC<MediaUploadBlockProps> = ({
-  label, icon, onCamera, onGallery, onRecord, onUpload, isAudio = false, file, onRemove
+  label, icon, onCamera, onGallery, onRecord, onUpload, isAudio = false, file, existingUrl, onRemove
 }) => {
   return (
     <div className="flex flex-col gap-2 h-full">
@@ -36,6 +37,18 @@ const MediaUploadBlock: React.FC<MediaUploadBlockProps> = ({
               <span className="material-symbols-outlined text-sm">close</span>
             </button>
             <span className="text-xs text-gray-500 mt-2 truncate w-full text-center px-2">{file.name}</span>
+          </div>
+        ) : existingUrl ? (
+          <div className="flex flex-col items-center justify-center w-full h-full">
+            {isAudio ? (
+              <div className="text-xs text-gray-500">Audio Preview Not Supported for URL</div>
+            ) : (
+              <img src={existingUrl} alt="existing" className="w-full h-full object-cover rounded-lg" />
+            )}
+            <button onClick={onRemove} type="button" className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 z-10 hover:bg-red-600">
+              <span className="material-symbols-outlined text-sm">close</span>
+            </button>
+            <span className="text-xs text-green-600 mt-2 truncate w-full text-center px-2 font-bold bg-green-50 rounded px-2 py-0.5">Existing File</span>
           </div>
         ) : (
           <>
@@ -62,7 +75,7 @@ const MediaUploadBlock: React.FC<MediaUploadBlockProps> = ({
           <span className="text-xs font-bold">{label}</span>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 
@@ -109,6 +122,53 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
     name: "", mobile_no: "", whatsapp_no: "", address: "", sub_address: "", id_proof_type: "Aadhar", id_proof_number: ""
   });
 
+  // Customer Search Logic
+  const [customerSuggestions, setCustomerSuggestions] = useState<any[]>([]);
+  const [activeSearchField, setActiveSearchField] = useState<string | null>(null);
+
+  const searchCustomer = async (query: string, field: string) => {
+    if (!query) {
+      setCustomerSuggestions([]);
+      return;
+    }
+    try {
+      const res = await http.get(`/customers/search?query=${query}`);
+      setCustomerSuggestions(res.data || []);
+      setActiveSearchField(field);
+    } catch (err) {
+      console.error("Error searching customer", err);
+    }
+  };
+
+  const selectCustomer = (c: any) => {
+    setCustomer({
+      ...customer,
+      name: c.name || "",
+      mobile_no: c.mobile_no || "",
+      whatsapp_no: c.whatsapp_no || "",
+      address: c.address || "",
+      sub_address: c.sub_address || "",
+      id_proof_type: c.id_proof_type || "Aadhar",
+      id_proof_number: c.id_proof_number || ""
+    });
+    setFetchedDocUrl(c.document_url || null);
+    setCustomerSuggestions([]);
+    setActiveSearchField(null);
+  };
+
+  // Add customerId separately to track if it's an existing customer
+  const [customerId, setCustomerId] = useState<string | null>(initial?.customer_id ?? null);
+
+  // Wrap selectCustomer to also set ID
+  const handleSelectCustomer = (c: any) => {
+    setCustomerId(c.id);
+    selectCustomer(c);
+  };
+
+  const clearSuggestions = () => {
+    setTimeout(() => setCustomerSuggestions([]), 200);
+  };
+
   // Loan
   const [loan, setLoan] = useState({
     loan_no: initial?.loan?.loan_no ?? "",
@@ -135,7 +195,12 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
   const [docFile, setDocFile] = useState<File | null>(null);
   const [jewelFile, setJewelFile] = useState<File | null>(null);
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
+
   const [customerImageFile, setCustomerImageFile] = useState<File | null>(null);
+
+  // Fetched URLs from Customer Search
+  const [fetchedDocUrl, setFetchedDocUrl] = useState<string | null>(null);
+
 
   // Existing Media (for Edit mode)
   const [existingFiles, setExistingFiles] = useState<any[]>([]);
@@ -228,6 +293,8 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
     const fd = new FormData();
 
     // Customer
+    // Customer
+    if (customerId) fd.append("customer_id", customerId);
     Object.entries(customer).forEach(([k, v]) => fd.append(`customer[${k}]`, String(v ?? "")));
 
     // Loan
@@ -290,34 +357,66 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
             <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Name <span className="text-red-500">*</span></span>
             <input
               value={customer.name} onChange={e => setCustomer({ ...customer, name: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400"
               placeholder="Enter full name" type="text" required
             />
           </label>
 
-          <label className="flex flex-col gap-1.5">
+          <label className="flex flex-col gap-1.5 z-40">
             <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Mobile No <span className="text-red-500">*</span></span>
-            <input
-              value={customer.mobile_no} onChange={e => setCustomer({ ...customer, mobile_no: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all"
-              placeholder="Enter mobile number" type="tel" required
-            />
+            <div className="relative">
+              <input
+                value={customer.mobile_no}
+                onChange={e => {
+                  setCustomer({ ...customer, mobile_no: e.target.value });
+                  searchCustomer(e.target.value, 'mobile');
+                }}
+                onBlur={clearSuggestions}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400"
+                placeholder="Enter mobile number" type="tel" required
+              />
+              {activeSearchField === 'mobile' && customerSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto no-scrollbar z-50">
+                  {customerSuggestions.map(c => (
+                    <div key={c.id} className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm text-black dark:text-white" onMouseDown={() => handleSelectCustomer(c)}>
+                      <span className="font-bold text-black dark:text-white">{c.name}</span> - {c.mobile_no}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </label>
 
-          <label className="flex flex-col gap-1.5">
+          <label className="flex flex-col gap-1.5 z-30">
             <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Whatsapp No</span>
-            <input
-              value={customer.whatsapp_no} onChange={e => setCustomer({ ...customer, whatsapp_no: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all"
-              placeholder="Enter whatsapp number" type="tel"
-            />
+            <div className="relative">
+              <input
+                value={customer.whatsapp_no}
+                onChange={e => {
+                  setCustomer({ ...customer, whatsapp_no: e.target.value });
+                  searchCustomer(e.target.value, 'whatsapp');
+                }}
+                onBlur={clearSuggestions}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400"
+                placeholder="Enter whatsapp number" type="tel"
+              />
+              {activeSearchField === 'whatsapp' && customerSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto no-scrollbar z-50">
+                  {customerSuggestions.map(c => (
+                    <div key={c.id} className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm text-black dark:text-white" onMouseDown={() => handleSelectCustomer(c)}>
+                      <span className="font-bold text-black dark:text-white">{c.name}</span> - {c.whatsapp_no}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </label>
 
           <label className="flex flex-col gap-1.5">
             <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Address</span>
             <textarea
               value={customer.address} onChange={e => setCustomer({ ...customer, address: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary p-4 shadow-sm resize-none h-24 outline-none transition-all"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary p-4 shadow-sm resize-none h-24 outline-none transition-all placeholder:text-gray-400"
               placeholder="Enter full address"
             ></textarea>
           </label>
@@ -328,7 +427,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
               <div className="relative">
                 <select
                   value={customer.id_proof_type} onChange={e => setCustomer({ ...customer, id_proof_type: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 appearance-none shadow-sm outline-none transition-all"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 appearance-none shadow-sm outline-none transition-all"
                 >
                   <option>Aadhar</option>
                   <option>PAN Card</option>
@@ -339,13 +438,29 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
               </div>
             </label>
 
-            <label className="flex flex-col gap-1.5 w-full sm:w-2/3">
+            <label className="flex flex-col gap-1.5 w-full sm:w-2/3 z-20">
               <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">ID Number</span>
-              <input
-                value={customer.id_proof_number} onChange={e => setCustomer({ ...customer, id_proof_number: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all"
-                placeholder="Enter ID number" type="text"
-              />
+              <div className="relative">
+                <input
+                  value={customer.id_proof_number}
+                  onChange={e => {
+                    setCustomer({ ...customer, id_proof_number: e.target.value });
+                    searchCustomer(e.target.value, 'id');
+                  }}
+                  onBlur={clearSuggestions}
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400"
+                  placeholder="Enter ID number" type="text"
+                />
+                {activeSearchField === 'id' && customerSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto no-scrollbar z-50">
+                    {customerSuggestions.map(c => (
+                      <div key={c.id} className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm text-black dark:text-white" onMouseDown={() => handleSelectCustomer(c)}>
+                        <span className="font-bold text-black dark:text-white">{c.name}</span> - {c.id_proof_number}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </label>
           </div>
 
@@ -357,7 +472,8 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
                 label="Customer Doc"
                 icon="upload_file"
                 file={docFile}
-                onRemove={() => setDocFile(null)}
+                existingUrl={fetchedDocUrl}
+                onRemove={() => { setDocFile(null); setFetchedDocUrl(null); }}
                 onGallery={() => docInputRef.current?.click()}
                 onCamera={() => openCamera('doc')}
               />
@@ -391,7 +507,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
                 <div className="relative">
                   <select
                     value={jewel.jewel_type} onChange={e => updateJewel(index, 'jewel_type', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
                   >
                     <option value="" disabled>Select</option>
                     {jewelTypes.length > 0 ? jewelTypes.map(t => (
@@ -412,7 +528,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
                 <div className="relative">
                   <select
                     value={jewel.quality} onChange={e => updateJewel(index, 'quality', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
                   >
                     <option value="" disabled>Select</option>
                     {jewelQualities.length > 0 ? jewelQualities.map(q => (
@@ -434,7 +550,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
               <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Description</span>
               <input
                 value={jewel.description} onChange={e => updateJewel(index, 'description', e.target.value)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400"
                 placeholder="Item description" type="text"
               />
             </label>
@@ -443,7 +559,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
               <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Pieces</span>
               <input
                 value={jewel.pieces} onChange={e => updateJewel(index, 'pieces', e.target.value)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400"
                 placeholder="1" type="number"
               />
             </label>
@@ -453,7 +569,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
                 <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Weight (g) <span className="text-red-500">*</span></span>
                 <input
                   value={jewel.weight} onChange={e => updateJewel(index, 'weight', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all" placeholder="0.00" step="0.01" type="number" required
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="0.00" step="0.01" type="number" required
                 />
               </label>
 
@@ -461,7 +577,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
                 <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Stone Weight (g)</span>
                 <input
                   value={jewel.stone_weight} onChange={e => updateJewel(index, 'stone_weight', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all" placeholder="0.00" step="0.01" type="number"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="0.00" step="0.01" type="number"
                 />
               </label>
             </div>
@@ -478,7 +594,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
               <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Faults</span>
               <input
                 value={jewel.faults} onChange={e => updateJewel(index, 'faults', e.target.value)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all" placeholder="Any damage or faults" type="text"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="Any damage or faults" type="text"
               />
             </label>
           </div>
@@ -518,7 +634,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
             <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Loan No <span className="text-red-500">*</span></span>
             <input
               value={loan.loan_no} onChange={e => setLoan({ ...loan, loan_no: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all" type="text" placeholder="Enter Loan No" required
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" type="text" placeholder="Enter Loan No" required
             />
           </label>
 
@@ -526,7 +642,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
             <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Amount <span className="text-red-500">*</span></span>
             <input
               value={loan.amount} onChange={e => setLoan({ ...loan, amount: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all" placeholder="₹0" type="number" required
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="₹0" type="number" required
             />
           </label>
 
@@ -535,7 +651,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
               <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Date <span className="text-red-500">*</span></span>
               <input
                 value={loan.date} onChange={e => setLoan({ ...loan, date: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all" type="date" required
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" type="date" required
               />
             </label>
 
@@ -553,7 +669,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
               <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Validity Months</span>
               <input
                 value={loan.validity_months} onChange={e => setLoan({ ...loan, validity_months: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all" type="number"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" type="number"
               />
             </label>
 
@@ -593,7 +709,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
             <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Processing Fee</span>
             <input
               value={loan.processing_fee} onChange={e => setLoan({ ...loan, processing_fee: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all" placeholder="₹0" type="number"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="₹0" type="number"
             />
           </label>
 
