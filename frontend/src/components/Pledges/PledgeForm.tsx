@@ -176,7 +176,12 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
   // Loan
   const [loan, setLoan] = useState({
     loan_no: initial?.loan?.loan_no ?? "",
-    date: initial?.loan?.date ?? new Date().toISOString().split('T')[0],
+    date: initial?.loan?.date ?? (() => {
+      const d = new Date();
+      // Adjust to local timezone to ensure correct date
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().split('T')[0];
+    })(),
     amount: initial?.loan?.amount ?? "",
     interest_percentage: initial?.loan?.interest_percentage ?? "1.5%",
     validity_months: initial?.loan?.validity_months ?? "3",
@@ -187,6 +192,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
     include_processing_fee: initial?.loan?.include_processing_fee ?? true,
     interest_taken: initial?.loan?.interest_taken ?? false,
     amount_to_be_given: initial?.loan?.amount_to_be_given ?? "",
+    metal_rate: initial?.loan?.metal_rate ?? "",
   });
 
   // Jewels (Array)
@@ -325,7 +331,11 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
     // Estimated Amount = Total Net Weight * Rate/gram * (Estimation% / 100)
     const estimated = totalNetWeight * ratePerGram * (estimationPercent / 100);
 
-    setLoan(prev => ({ ...prev, estimated_amount: Math.round(estimated).toString() }));
+    setLoan(prev => ({
+      ...prev,
+      estimated_amount: Math.round(estimated).toString(),
+      metal_rate: ratePerGram.toString()
+    }));
 
   }, [jewels, loan.interest_percentage, metalRates, interestRates]);
 

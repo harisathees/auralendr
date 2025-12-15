@@ -158,6 +158,9 @@ class PledgeController extends Controller
                 if (isset($loanData['validity_months']) && $loanData['validity_months'] !== null) {
                     $loanData['validity_months'] = (int) $loanData['validity_months'];
                 }
+                if (isset($loanData['metal_rate']) && $loanData['metal_rate'] !== null) {
+                    $loanData['metal_rate'] = (float) $loanData['metal_rate'];
+                }
                 $loanData['pledge_id'] = $pledge->id;
                 Log::info('Creating loan', ['data' => $loanData]);
                 $loan = Loan::create($loanData);

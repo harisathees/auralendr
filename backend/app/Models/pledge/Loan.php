@@ -10,10 +10,21 @@ class Loan extends Model
     use HasFactory;
 
     protected $fillable = [
-        'pledge_id','loan_no','date','amount','interest_percentage',
-        'validity_months','due_date','payment_method','processing_fee',
-        'estimated_amount','include_processing_fee','interest_taken',
-        'amount_to_be_given','status'
+        'pledge_id',
+        'loan_no',
+        'date',
+        'amount',
+        'interest_percentage',
+        'validity_months',
+        'due_date',
+        'payment_method',
+        'processing_fee',
+        'estimated_amount',
+        'include_processing_fee',
+        'interest_taken',
+        'amount_to_be_given',
+        'metal_rate',
+        'status'
     ];
 
     public function pledge()
