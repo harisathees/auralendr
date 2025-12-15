@@ -16,6 +16,7 @@ interface ConfigListProps {
     onEdit: (id: number) => void;
     onDelete: (id: number) => void;
     itemNameKey?: string; // Key to display as main text, defaults to 'name'
+    renderCustomItem?: (item: ConfigItem) => React.ReactNode;
 }
 
 const ConfigList: React.FC<ConfigListProps> = ({
@@ -25,7 +26,8 @@ const ConfigList: React.FC<ConfigListProps> = ({
     onAdd,
     onEdit,
     onDelete,
-    itemNameKey = 'name'
+    itemNameKey = 'name',
+    renderCustomItem
 }) => {
     return (
         <div className="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
@@ -51,11 +53,15 @@ const ConfigList: React.FC<ConfigListProps> = ({
                     ) : (
                         items.map((item) => (
                             <div key={item.id} className="p-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
-                                <div>
-                                    <p className="font-medium text-primary-text dark:text-white">{item[itemNameKey]}</p>
-                                    {item.description && <p className="text-xs text-secondary-text">{item.description}</p>}
+                                <div className="flex-1">
+                                    {renderCustomItem ? renderCustomItem(item) : (
+                                        <>
+                                            <p className="font-medium text-primary-text dark:text-white">{item[itemNameKey]}</p>
+                                            {item.description && <p className="text-xs text-secondary-text">{item.description}</p>}
+                                        </>
+                                    )}
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 ml-4">
                                     <button
                                         onClick={() => onEdit(item.id)}
                                         className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors"

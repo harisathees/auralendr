@@ -9,6 +9,7 @@ const InterestRateForm: React.FC = () => {
     const isEdit = !!id;
 
     const [rate, setRate] = useState("");
+    const [estimationPercentage, setEstimationPercentage] = useState("");
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
@@ -27,6 +28,7 @@ const InterestRateForm: React.FC = () => {
                 if (isEdit) {
                     const res = await http.get(`/interest-rates/${id}`);
                     setRate(res.data.rate);
+                    setEstimationPercentage(res.data.estimation_percentage);
                     setJewelTypeId(res.data.jewel_type_id ? String(res.data.jewel_type_id) : "");
                 }
             } catch (err: any) {
@@ -47,6 +49,7 @@ const InterestRateForm: React.FC = () => {
         try {
             const payload = {
                 rate,
+                estimation_percentage: estimationPercentage,
                 jewel_type_id: jewelTypeId || null
             };
 
@@ -98,6 +101,21 @@ const InterestRateForm: React.FC = () => {
                             className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             required
                             placeholder="e.g. 1.50"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-secondary-text dark:text-gray-300 mb-1">
+                            Estimation Percentage (%) <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            value={estimationPercentage}
+                            onChange={(e) => setEstimationPercentage(e.target.value)}
+                            className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            required
+                            placeholder="e.g. 75.00"
                         />
                     </div>
 

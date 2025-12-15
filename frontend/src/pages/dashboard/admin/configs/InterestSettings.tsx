@@ -19,13 +19,7 @@ const InterestSettings: React.FC = () => {
         try {
             const res = await http.get("/interest-rates");
             // Map the data to have a 'name' property for display if needed, or pass custom logic
-            // We'll create a formatted display name
-            const mapped = res.data.map((r: any) => ({
-                ...r,
-                name: `${parseFloat(r.rate)}%`,
-                description: r.jewel_type ? `For ${r.jewel_type.name} Only` : 'Global (All Types)'
-            }));
-            setItems(mapped);
+            setItems(res.data);
         } catch (error) {
             console.error("Failed to fetch interest rates", error);
             showToast("Failed to load interest rates", "error");
@@ -58,6 +52,43 @@ const InterestSettings: React.FC = () => {
         }
     };
 
+    const renderItem = (item: any) => (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+            <div className="flex items-center gap-8 min-w-[200px]">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${item.jewel_type ? 'bg-primary/10 text-primary' : 'bg-purple-100 text-purple-600'}`}>
+                    <span className="material-symbols-outlined text-sm">
+                        {item.jewel_type ? 'diamond' : 'public'}
+                    </span>
+                </div>
+                <div>
+                    <span className="text-xs text-secondary-text block">Jewel Type</span>
+                    <span className="font-medium text-primary-text dark:text-white">
+                        {item.jewel_type ? item.jewel_type.name : 'Universal'}
+                    </span>
+                </div>
+                <div>
+                    <span className="text-xs text-secondary-text block">Interest</span>
+                    <span className="font-bold text-lg text-emerald-600 dark:text-emerald-400">
+                        {parseFloat(item.rate)}%
+                    </span>
+                </div>
+
+                <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
+
+                <div>
+                    <span className="text-xs text-secondary-text block">Estimation</span>
+                    <span className="font-bold text-lg text-blue-600 dark:text-blue-400">
+                        {parseFloat(item.estimation_percentage)}%
+                    </span>
+                </div>
+            </div>
+
+            <div className="flex items-center gap-6">
+
+            </div>
+        </div>
+    );
+
     return (
         <div className="p-6">
             <div className="flex items-center gap-4 mb-6">
@@ -74,10 +105,10 @@ const InterestSettings: React.FC = () => {
                 title="Interest Rates"
                 items={items}
                 loading={loading}
-                itemNameKey="name"
                 onAdd={() => navigate("/admin/configs/interest-settings/create")}
                 onEdit={(id) => navigate(`/admin/configs/interest-settings/edit/${id}`)}
                 onDelete={handleDeleteClick}
+                renderCustomItem={renderItem}
             />
 
             <ConfirmationModal

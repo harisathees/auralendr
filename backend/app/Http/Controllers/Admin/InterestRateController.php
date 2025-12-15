@@ -17,6 +17,7 @@ class InterestRateController extends Controller
     {
         $request->validate([
             'rate' => 'required|numeric',
+            'estimation_percentage' => 'required|numeric|between:0,100',
             'jewel_type_id' => 'nullable|exists:jewel_types,id'
         ]);
         return InterestRate::create($request->all());
@@ -31,6 +32,7 @@ class InterestRateController extends Controller
     {
         $request->validate([
             'rate' => 'required|numeric',
+            'estimation_percentage' => 'required|numeric|between:0,100',
             'jewel_type_id' => 'nullable|exists:jewel_types,id'
         ]);
         $interestRate->update($request->all());
