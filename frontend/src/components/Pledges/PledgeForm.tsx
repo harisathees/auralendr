@@ -252,6 +252,14 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
 
   // Automate Processing Fee Calculation
   useEffect(() => {
+    // If not including fee, force it to 0
+    if (!loan.include_processing_fee) {
+      if (loan.processing_fee !== "0") {
+        setLoan(prev => ({ ...prev, processing_fee: "0" }));
+      }
+      return;
+    }
+
     if (!loan.amount || !jewels.length || !processingFeesConfigs.length) return;
 
     const amount = parseFloat(loan.amount);
@@ -277,15 +285,10 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
       fee = maxAmount;
     }
 
-    // Update state (rounding to nearest integer)
-    // Note: We only auto-update if the user hasn't manually entered a CUSTOM value that deviates significantly?
-    // Actually, usually auto-calc overrides unless user JUST typed.
-    // A common pattern is: auto-update ONLY when dependencies (amount/jewel type) change.
-    // Since this useEffect runs on Amount/JewelType change, it will overwrite manual updates if they align with a dependency change event.
-    // If user changes Amount -> Recalc. If user edits Fee -> No recalc (until Amount changes again).
+    // Update state
     setLoan(prev => ({ ...prev, processing_fee: Math.round(fee).toString() }));
 
-  }, [loan.amount, jewels, processingFeesConfigs, jewelTypes]);
+  }, [loan.amount, jewels, processingFeesConfigs, jewelTypes, loan.include_processing_fee]);
 
   // Automate Estimated Amount Calculation
   useEffect(() => {
@@ -437,27 +440,29 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
   }, [initial]);
 
   // Recalculate everything when dependencies change
+  // Recalculate everything when dependencies change
   useEffect(() => {
     // Update amount to be given
     const amt = parseFloat(loan.amount) || 0;
     const procFee = parseFloat(loan.processing_fee) || 0;
 
-    // Simple logic: Amount Given = Amount - (Processing Fee if included) - (Interest if taken upfront?? - usually not standard logic but placeholder)
-    // User logic from Create.tsx was just displaying 'Amount to be Given'.
-    // NOTE: Create.tsx didn't have calculation logic visible for amount_to_be_given in the viewed snippet, 
-    // it just displayed it. We will assume a basic calculation or manual entry if needed, 
-    // but usually: Amount - Processing Fee (if included).
-
     let finalAmt = amt;
+
+    // Deduct Processing Fee
     if (loan.include_processing_fee) {
       finalAmt -= procFee;
     }
-    // If interest taken logic exists, apply it. (Assuming formula: Amount * Interest% / 100 ?)
-    // For now, let's keep it simple as user didn't specify math.
 
-    setLoan(prev => ({ ...prev, amount_to_be_given: finalAmt > 0 ? String(finalAmt) : "0" }));
+    // Deduct Upfront Interest if taken
+    if (loan.interest_taken) {
+      const intRate = parseFloat(loan.interest_percentage) || 0;
+      const interestAmt = amt * (intRate / 100);
+      finalAmt -= interestAmt;
+    }
 
-  }, [loan.amount, loan.processing_fee, loan.include_processing_fee, loan.interest_taken]);
+    setLoan(prev => ({ ...prev, amount_to_be_given: finalAmt > 0 ? Math.round(finalAmt).toString() : "0" }));
+
+  }, [loan.amount, loan.processing_fee, loan.include_processing_fee, loan.interest_taken, loan.interest_percentage]);
 
 
   // --- Handlers ---
