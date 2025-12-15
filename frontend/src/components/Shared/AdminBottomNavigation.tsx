@@ -74,11 +74,11 @@ const AdminBottomNavigation: React.FC = () => {
 
                 {/* Config */}
                 <Link
-                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/configurations") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/configs") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
                         }`}
-                    to="/admin/configurations"
+                    to="/admin/configs"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/configurations") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/configs") ? { fontVariationSettings: "'FILL' 1" } : {}}>
                         tune
                     </span>
                     <span className="text-xs font-medium">Config</span>
