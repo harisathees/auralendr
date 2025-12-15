@@ -369,10 +369,10 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
     const source = paymentMethods.find(p => p.name === loan.payment_method);
     if (!source) return null;
 
-    const amount = parseFloat(loan.amount_to_be_given || "0");
-    const balance = parseFloat(source.balance);
-
-    // console.log("Validation details:", { amount, balance, isSufficient: balance >= amount });
+    const amount = parseFloat(loan.amount || "0");
+    // Handle potential string formatting (remove commas if present)
+    const rawBalance = String(source.balance).replace(/,/g, '');
+    const balance = parseFloat(rawBalance);
 
     if (isNaN(amount) || isNaN(balance)) return null;
 
@@ -384,7 +384,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
         ? "Sufficient funds available"
         : "Insufficient funds in selected source"
     };
-  }, [loan.payment_method, loan.amount_to_be_given, paymentMethods]);
+  }, [loan.payment_method, loan.amount, paymentMethods]);
 
   // Auto-select first validity if current is invalid? 
   // Maybe better to just let user switch. But let's check if current is in options.
@@ -410,6 +410,16 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
       }
     }
   }, [filteredInterestOptions, loan.interest_percentage]);
+
+  // Auto-select first payment method if current is invalid
+  useEffect(() => {
+    if (paymentMethods.length > 0) {
+      const currentInOptions = paymentMethods.some(p => p.name === loan.payment_method);
+      if (!currentInOptions) {
+        setLoan(prev => ({ ...prev, payment_method: paymentMethods[0].name }));
+      }
+    }
+  }, [paymentMethods, loan.payment_method]);
 
   useEffect(() => {
     // Load metadata
@@ -944,21 +954,34 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
             <div className="relative">
               <select
                 value={loan.payment_method} onChange={e => setLoan({ ...loan, payment_method: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
+                className={`w-full rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all ${balanceValidation
+                  ? balanceValidation.isSufficient
+                    ? 'border-green-500 ring-1 ring-green-500 focus:border-green-500 focus:ring-green-500'
+                    : 'border-red-500 ring-1 ring-red-500 focus:border-red-500 focus:ring-red-500'
+                  : 'border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-1 focus:ring-primary'
+                  }`}
               >
                 <option value="" disabled>Select</option>
                 {paymentMethods.map(p => (
                   <option key={p.id} value={p.name}>
-                    {p.name} {p.show_balance ? `(₹${parseFloat(p.balance).toLocaleString()})` : ''}
+                    {p.name} {p.show_balance ? `(₹${p.balance})` : ''}
                   </option>
                 ))}
               </select>
               <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
             </div>
             {balanceValidation && (
-              <p className={`text-xs mt-1 font-medium ${balanceValidation.isSufficient ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                {balanceValidation.message}
-              </p>
+              <div className={`mt-2 p-3 rounded-lg flex items-center gap-2 border ${balanceValidation.isSufficient
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
+                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+                }`}>
+                <span className="material-symbols-outlined text-sm">
+                  {balanceValidation.isSufficient ? 'check_circle' : 'error'}
+                </span>
+                <span className="text-xs font-semibold">
+                  {balanceValidation.message}
+                </span>
+              </div>
             )}
           </label>
 
