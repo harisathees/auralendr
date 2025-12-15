@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { getPledge } from "../../api/pledgeService";
 import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import http from "../../api/http";
 import PledgeView from "../../components/Pledges/PledgeView";
 
 const View = () => {
   const { id } = useParams();
-  const [pledge, setPledge] = useState<any>(null);
+  const [data, setData] = useState<any>(null);
 
   useEffect(() => {
-    getPledge(Number(id)).then((res) => setPledge(res.data));
+    http.get(`/pledges/${id}`).then(res => setData(res.data));
   }, [id]);
 
-  return <PledgeView pledge={pledge} />;
+  if (!data) return null;
+
+  return <PledgeView data={data} />;
 };
 
 export default View;

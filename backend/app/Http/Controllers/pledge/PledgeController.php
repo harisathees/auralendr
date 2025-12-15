@@ -50,7 +50,11 @@ class PledgeController extends Controller
 
         // Check permission manually since middleware is temporarily disabled
         try {
-            if (!$user->hasPermissionTo('pledge.create', 'sanctum')) {
+            // Check roles (both Spatie roles and legacy 'role' column)
+            $isAdmin = $user->hasRole('admin') || $user->role === 'admin';
+            $isStaff = $user->hasRole('staff') || $user->role === 'staff';
+            
+            if (!$isAdmin && !$isStaff && !$user->hasPermissionTo('pledge.create', 'sanctum')) {
                 return response()->json([
                     'message' => 'You do not have permission to create pledges',
                     'error' => 'insufficient_permissions'
@@ -174,17 +178,40 @@ class PledgeController extends Controller
                     }
                 }
 
+                // Manual Validation of Files because Request validation swallows upload errors
+                foreach ($uploadedFiles as $index => $file) {
+                    if (!$file->isValid()) {
+                        return response()->json([
+                            'message' => 'File upload error',
+                            'error' => "File at index {$index} failed: " . $file->getErrorMessage()
+                        ], 422);
+                    }
+                }
+
+                // Get categories array
+                $categories = $request->input('categories', []);
+
                 // Process uploaded files
-                foreach ($uploadedFiles as $file) {
-                    $path = $file->store('pledge_media', 'public');
+                foreach ($uploadedFiles as $index => $file) {
+                    $timestamp = now()->format('Ymd_His');
+                    $loanNoSafe = preg_replace('/[^A-Za-z0-9\-]/', '', $loan->loan_no ?? 'NoLoan');
+                    
+                    // Determine category
+                    $category = $categories[$index] ?? 'uploaded_file';
+                    
+                    $extension = $file->getClientOriginalExtension();
+                    // filename format: LoanNo_Category_DateTime_UniqID.ext
+                    $filename = "{$category}_{$loanNoSafe}_{$timestamp}_" . uniqid() . ".{$extension}";
+
+                    $path = $file->storeAs('pledge_media', $filename, 'public');
 
                     MediaFile::create([
                         'customer_id' => $customer->id,
                         'pledge_id'   => $pledge->id,
                         'loan_id'     => $loan->id,
-                        'jewel_id'    => null,
+                        'jewel_id'    => null, // Explicitly null as requested
                         'type'        => explode('/', $file->getClientMimeType())[0] ?? 'file',
-                        'category'    => $request->input('file_categories.' . $file->getClientOriginalName(), 'uploaded_file'),
+                        'category'    => $category,
                         'file_path'   => $path,
                         'mime_type'   => $file->getClientMimeType(),
                         'size'        => $file->getSize(),
@@ -323,9 +350,22 @@ class PledgeController extends Controller
                     }
                 }
 
+                // Get categories array
+                $categories = $request->input('categories', []);
+
                 // Process uploaded files
-                foreach ($uploadedFiles as $file) {
-                    $path = $file->store('pledge_media', 'public');
+                foreach ($uploadedFiles as $index => $file) {
+                    $timestamp = now()->format('Ymd_His');
+                    $currentLoanNo = $pledge->loan ? $pledge->loan->loan_no : ($data['loan']['loan_no'] ?? 'NoLoan');
+                    $loanNoSafe = preg_replace('/[^A-Za-z0-9\-]/', '', $currentLoanNo);
+                    
+                    // Determine category
+                    $category = $categories[$index] ?? 'uploaded_file';
+
+                    $extension = $file->getClientOriginalExtension();
+                    $filename = "{$loanNoSafe}_{$category}_{$timestamp}_" . uniqid() . ".{$extension}";
+
+                    $path = $file->storeAs('pledge_media', $filename, 'public');
 
                     MediaFile::create([
                         'customer_id' => $pledge->customer_id,
@@ -333,7 +373,7 @@ class PledgeController extends Controller
                         'loan_id'     => $pledge->loan?->id,
                         'jewel_id'    => null,
                         'type'        => explode('/', $file->getClientMimeType())[0] ?? 'file',
-                        'category'    => $request->input('file_categories.' . $file->getClientOriginalName(), 'uploaded_file'),
+                        'category'    => $category,
                         'file_path'   => $path,
                         'mime_type'   => $file->getClientMimeType(),
                         'size'        => $file->getSize(),

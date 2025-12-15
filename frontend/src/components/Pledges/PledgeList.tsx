@@ -71,7 +71,7 @@ const PledgeList: React.FC<Props> = ({ pledges }) => {
         {filteredPledges.map((p) => (
           <div
             key={p.id}
-            onClick={() => navigate(`/ pledges / ${p.id} `)}
+            onClick={() => navigate(`/pledges/${p.id}`)}
             className="group py-5 border-b border-gray-100 dark:border-[#1f3d2e] flex items-start gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
           >
             {/* Avatar / Image */}
@@ -79,7 +79,7 @@ const PledgeList: React.FC<Props> = ({ pledges }) => {
               <img
                 alt={p.customer?.name}
                 className="h-14 w-14 rounded-full object-cover ring-2 ring-white dark:ring-[#1f3d2e] shadow-sm dark:shadow-none"
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
+                src={p.media?.find((m: any) => m.category === 'customer_image')?.url || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
               />
             </div>
 
