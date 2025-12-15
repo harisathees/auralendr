@@ -13,8 +13,6 @@ class JewelTypeController extends Controller
      */
     public function index()
     {
-        // Admin might want to see all, including inactive?
-        // For now, let's just return all or maybe sort by ID
         $types = JewelType::all();
         return response()->json($types);
     }
@@ -29,6 +27,7 @@ class JewelTypeController extends Controller
         $validated['is_active'] = true;
 
         $type = JewelType::create($validated);
+
         return response()->json($type, 201);
     }
 

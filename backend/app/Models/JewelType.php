@@ -19,4 +19,9 @@ class JewelType extends Model
     {
         return $this->hasOne(MetalRate::class);
     }
+
+    public function validities()
+    {
+        return $this->hasMany(LoanValidity::class);
+    }
 }

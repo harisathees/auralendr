@@ -30,6 +30,8 @@ const JewelQualitiesIndex = lazy(() => import("../pages/dashboard/admin/configs/
 const JewelQualityForm = lazy(() => import("../pages/dashboard/admin/configs/JewelQualityForm"));
 const JewelNamesIndex = lazy(() => import("../pages/dashboard/admin/configs/JewelNames"));
 const JewelNameForm = lazy(() => import("../pages/dashboard/admin/configs/JewelNameForm"));
+const InterestRateForm = lazy(() => import("../pages/dashboard/admin/configs/InterestRateForm"));
+const ValidityPeriodForm = lazy(() => import("../pages/dashboard/admin/configs/ValidityPeriodForm"));
 
 const AppRoutes: React.FC = () => {
   return (
@@ -94,7 +96,11 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/configs/jewel-names/create" element={<JewelNameForm />} />
         <Route path="/admin/configs/jewel-names/edit/:id" element={<JewelNameForm />} />
         <Route path="/admin/configs/interest-settings" element={<InterestSettings />} />
+        <Route path="/admin/configs/interest-settings/create" element={<InterestRateForm />} />
+        <Route path="/admin/configs/interest-settings/edit/:id" element={<InterestRateForm />} />
         <Route path="/admin/configs/validity-periods" element={<ValidityPeriods />} />
+        <Route path="/admin/configs/validity-periods/create" element={<ValidityPeriodForm />} />
+        <Route path="/admin/configs/validity-periods/edit/:id" element={<ValidityPeriodForm />} />
         <Route path="/admin/configs/processing-fees" element={<ProcessingFees />} />
         <Route path="/admin/configs/repledge-banks" element={<RepledgeBanks />} />
 

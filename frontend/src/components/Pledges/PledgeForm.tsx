@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import http from "../../api/http";
 import { AudioRecorder } from "../../components/audiocamera/AudioRecorder";
 import { CameraCapture } from "../../components/audiocamera/CameraCapture";
@@ -213,6 +213,11 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
   const [jewelNames, setJewelNames] = useState<{ id: number; name: string }[]>([]);
   const [activeSearchJewelIndex, setActiveSearchJewelIndex] = useState<number | null>(null);
 
+  // Loan Configs
+  const [interestRates, setInterestRates] = useState<{ id: number; rate: string; jewel_type_id?: number | null }[]>([]);
+  const [loanValidities, setLoanValidities] = useState<{ id: number; months: number; label?: string; jewel_type_id?: number | null }[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string }[]>([]);
+
   // Hidden File Inputs for triggering system dialogs
   const docInputRef = useRef<HTMLInputElement>(null);
   const jewelInputRef = useRef<HTMLInputElement>(null);
@@ -228,13 +233,73 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
       d.setMonth(d.getMonth() + parseInt(loan.validity_months || "3"));
       setLoan(prev => ({ ...prev, due_date: d.toISOString().split('T')[0] }));
     }
-  }, []);
+  }, [loan.date, loan.validity_months]);
+
+  // Derived: Filter Available Validity Months based on Jewel Type
+  // Logic: Check the *first* jewel's type. If it restricts validities, use those.
+  // If no jewel type selected or no restrictions, show all.
+  const firstJewelTypeName = jewels[0]?.jewel_type;
+  const selectedJewelTypeObj = jewelTypes.find(t => t.name === firstJewelTypeName);
+
+  const filteredValidityOptions = useMemo(() => {
+    // Logic: 
+    // 1. Fetch all validities where jewel_type_id match selected jewel type ID
+    // 2. ALSO fetch all validities where jewel_type_id is NULL (Globals)
+
+    if (!selectedJewelTypeObj) {
+      // If no type selected, show only Globals? Or All?
+      // Let's show only Globals to be safe, or allow user to pick type first.
+      // Usually defaults to Global.
+      return loanValidities.filter(v => !v.jewel_type_id);
+    }
+
+    return loanValidities.filter(v =>
+      !v.jewel_type_id || v.jewel_type_id === selectedJewelTypeObj.id
+    );
+  }, [selectedJewelTypeObj, loanValidities]);
+
+  const filteredInterestOptions = useMemo(() => {
+    if (!selectedJewelTypeObj) {
+      return interestRates.filter(r => !r.jewel_type_id);
+    }
+    return interestRates.filter(r =>
+      !r.jewel_type_id || r.jewel_type_id === selectedJewelTypeObj.id
+    );
+  }, [selectedJewelTypeObj, interestRates]);
+
+  // Auto-select first validity if current is invalid? 
+  // Maybe better to just let user switch. But let's check if current is in options.
+  useEffect(() => {
+    if (filteredValidityOptions.length > 0) {
+      const currentInOptions = filteredValidityOptions.some(v => String(v.months) === String(loan.validity_months));
+      if (!currentInOptions) {
+        // Default to the first allowed one
+        setLoan(prev => ({ ...prev, validity_months: String(filteredValidityOptions[0].months) }));
+      }
+    }
+  }, [filteredValidityOptions, loan.validity_months]);
+
+  // Auto-select first interest if current is invalid
+  useEffect(() => {
+    if (filteredInterestOptions.length > 0) {
+      // Check if current rate (string x.x%) matches any option
+      // option values are "1.5%" etc.
+      const currentInOptions = filteredInterestOptions.some(r => `${parseFloat(r.rate)}%` === loan.interest_percentage.trim());
+
+      if (!currentInOptions && loan.interest_percentage) {
+        setLoan(prev => ({ ...prev, interest_percentage: `${parseFloat(filteredInterestOptions[0].rate)}%` }));
+      }
+    }
+  }, [filteredInterestOptions, loan.interest_percentage]);
 
   useEffect(() => {
     // Load metadata
     http.get("/jewel-types").then(res => Array.isArray(res.data) && setJewelTypes(res.data)).catch(console.error);
     http.get("/jewel-qualities").then(res => Array.isArray(res.data) && setJewelQualities(res.data)).catch(console.error);
     http.get("/jewel-names").then(res => Array.isArray(res.data) && setJewelNames(res.data)).catch(console.error);
+    http.get("/interest-rates").then(res => Array.isArray(res.data) && setInterestRates(res.data)).catch(console.error);
+    http.get("/loan-validities").then(res => Array.isArray(res.data) && setLoanValidities(res.data)).catch(console.error);
+    http.get("/payment-methods").then(res => Array.isArray(res.data) && setPaymentMethods(res.data)).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -642,12 +707,44 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
           <h3 className="text-gray-800 dark:text-white text-xl font-bold">Loan Details</h3>
         </div>
 
+        {/* Slot 3: Evidence Audio/Media */}
+        <div className="flex flex-col gap-3 pt-2">
+          <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Media Evidence</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+            <MediaUploadBlock
+              label="Evidence (Audio)"
+              icon="mic"
+              isAudio={true}
+              file={evidenceFile}
+              onRemove={() => setEvidenceFile(null)}
+              onUpload={() => evidenceInputRef.current?.click()}
+              onRecord={() => openAudio()}
+            />
+            <MediaUploadBlock
+              label="Customer Image"
+              icon="account_box"
+              file={customerImageFile}
+              onRemove={() => setCustomerImageFile(null)}
+              onGallery={() => customerImageInputRef.current?.click()}
+              onCamera={() => openCamera('customer_image')}
+            />
+          </div>
+        </div>
+
         <div className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5">
             <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Loan No <span className="text-red-500">*</span></span>
             <input
               value={loan.loan_no} onChange={e => setLoan({ ...loan, loan_no: e.target.value })}
               className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" type="text" placeholder="Enter Loan No" required
+            />
+          </label>
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Estimated Amount</span>
+            <input
+              value={loan.estimated_amount} onChange={e => setLoan({ ...loan, estimated_amount: e.target.value })}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="₹0" type="number"
             />
           </label>
 
@@ -664,7 +761,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
               <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Date <span className="text-red-500">*</span></span>
               <input
                 value={loan.date} onChange={e => setLoan({ ...loan, date: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" type="date" required
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" type="date" required
               />
             </label>
 
@@ -680,10 +777,18 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
           <div className="grid grid-cols-2 gap-4">
             <label className="flex flex-col gap-1.5">
               <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Validity Months</span>
-              <input
-                value={loan.validity_months} onChange={e => setLoan({ ...loan, validity_months: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" type="number"
-              />
+              <div className="relative">
+                <select
+                  value={loan.validity_months} onChange={e => setLoan({ ...loan, validity_months: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
+                >
+                  <option value="" disabled>Select</option>
+                  {filteredValidityOptions.map(v => (
+                    <option key={v.id} value={v.months}>{v.label || `${v.months} Months`}</option>
+                  ))}
+                </select>
+                <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
+              </div>
             </label>
 
             <label className="flex flex-col gap-1.5">
@@ -691,12 +796,12 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
               <div className="relative">
                 <select
                   value={loan.interest_percentage} onChange={e => setLoan({ ...loan, interest_percentage: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
                 >
-                  <option>1.5%</option>
-                  <option>2.0%</option>
-                  <option>2.5%</option>
-                  <option>3.0%</option>
+                  <option value="" disabled>Select</option>
+                  {filteredInterestOptions.map(r => (
+                    <option key={r.id} value={`${parseFloat(r.rate)}%`}>{parseFloat(r.rate)}%</option>
+                  ))}
                 </select>
                 <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
               </div>
@@ -708,11 +813,12 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
             <div className="relative">
               <select
                 value={loan.payment_method} onChange={e => setLoan({ ...loan, payment_method: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
               >
-                <option>Cash</option>
-                <option>Bank Transfer</option>
-                <option>UPI</option>
+                <option value="" disabled>Select</option>
+                {paymentMethods.map(p => (
+                  <option key={p.id} value={p.name}>{p.name}</option>
+                ))}
               </select>
               <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
             </div>
@@ -726,29 +832,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
             />
           </label>
 
-          {/* Slot 3: Evidence Audio/Media */}
-          <div className="flex flex-col gap-3 pt-2">
-            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Media Evidence</span>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-              <MediaUploadBlock
-                label="Evidence (Audio/Img)"
-                icon="mic"
-                isAudio={true}
-                file={evidenceFile}
-                onRemove={() => setEvidenceFile(null)}
-                onUpload={() => evidenceInputRef.current?.click()}
-                onRecord={() => openAudio()}
-              />
-              <MediaUploadBlock
-                label="Customer Image"
-                icon="account_box"
-                file={customerImageFile}
-                onRemove={() => setCustomerImageFile(null)}
-                onGallery={() => customerImageInputRef.current?.click()}
-                onCamera={() => openCamera('customer_image')}
-              />
-            </div>
-          </div>
+
 
           {/* Existing Files Display (for Edit Mode) */}
           {existingFiles.length > 0 && (
@@ -777,9 +861,9 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
 
           {/* Styled Checkbox Tiles */}
           <div className="flex flex-col gap-3 pt-2">
-            <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer group transition-all ${loan.include_processing_fee ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+            <label className={`flex items - center justify - between p - 4 rounded - xl border cursor - pointer group transition - all ${loan.include_processing_fee ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'} `}>
               <span className="text-gray-800 dark:text-white text-base font-medium">Include Processing Fee?</span>
-              <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${loan.include_processing_fee ? 'bg-primary border-primary' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'}`}>
+              <div className={`w - 6 h - 6 rounded - full border flex items - center justify - center transition - colors ${loan.include_processing_fee ? 'bg-primary border-primary' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'} `}>
                 {loan.include_processing_fee && <span className="material-symbols-outlined text-white text-sm leading-none">check</span>}
               </div>
               <input
@@ -790,9 +874,9 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
               />
             </label>
 
-            <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer group transition-all ${loan.interest_taken ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+            <label className={`flex items - center justify - between p - 4 rounded - xl border cursor - pointer group transition - all ${loan.interest_taken ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'} `}>
               <span className="text-gray-800 dark:text-white text-base font-medium">Interest Taken?</span>
-              <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${loan.interest_taken ? 'bg-primary border-primary' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'}`}>
+              <div className={`w - 6 h - 6 rounded - full border flex items - center justify - center transition - colors ${loan.interest_taken ? 'bg-primary border-primary' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'} `}>
                 {loan.interest_taken && <span className="material-symbols-outlined text-white text-sm leading-none">check</span>}
               </div>
               <input

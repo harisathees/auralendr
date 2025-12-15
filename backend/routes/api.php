@@ -33,6 +33,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('jewel-types', JewelTypeController::class);
         Route::apiResource('jewel-qualities', JewelQualityController::class);
         Route::apiResource('jewel-names', \App\Http\Controllers\Admin\JewelNameController::class);
+        Route::apiResource('interest-rates', \App\Http\Controllers\Admin\InterestRateController::class);
+        Route::apiResource('loan-validities', \App\Http\Controllers\Admin\LoanValidityController::class);
+        Route::apiResource('payment-methods', \App\Http\Controllers\Admin\PaymentMethodController::class);
         // Route::post('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'store']);
     });
 
@@ -40,6 +43,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/jewel-types', [JewelTypeController::class, 'index']);
     Route::get('/jewel-qualities', [JewelQualityController::class, 'index']);
     Route::get('/jewel-names', [\App\Http\Controllers\Admin\JewelNameController::class, 'index']);
+    Route::get('/interest-rates', [\App\Http\Controllers\Admin\InterestRateController::class, 'index']);
+    Route::get('/loan-validities', [\App\Http\Controllers\Admin\LoanValidityController::class, 'index']);
+    Route::get('/payment-methods', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'index']);
     // Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
     Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
 
