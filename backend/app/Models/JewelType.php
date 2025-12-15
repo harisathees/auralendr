@@ -14,4 +14,9 @@ class JewelType extends Model
         'slug',
         'is_active',
     ];
+
+    public function metalRate()
+    {
+        return $this->hasOne(MetalRate::class);
+    }
 }

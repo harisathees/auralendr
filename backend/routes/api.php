@@ -14,6 +14,9 @@ Route::get('/test', function () {
     return response()->json(['status' => 'API Working']);
 });
 
+// Public Metal Rates
+Route::get('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'index']);
+
 // FOR LOGIN
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:8,1');
 
@@ -39,8 +42,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
     Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
 
+    // Pledges
+    Route::apiResource('pledges', PledgeController::class);
+
     // Metal Rates
-    Route::get('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'index']);
     Route::post('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'store']);
 
     // Money Sources

@@ -73,17 +73,24 @@ const PledgeView: React.FC<Props> = ({ data }) => {
           <h3 className="font-bold text-lg mb-3">Media Evidence</h3>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {media.map((m: any) => (
-              <div key={m.id} className="border rounded p-2">
-                {m.type === "image" ? (
-                  <img src={m.url} className="w-full h-32 object-cover rounded" />
-                ) : (
-                  <audio controls className="w-full">
-                    <source src={m.url} />
-                  </audio>
-                )}
-              </div>
-            ))}
+            {media.map((m: any) => {
+              // Helper to fix localhost image URLs (missing port)
+              const url = m.url && m.url.startsWith('http://localhost/') && !m.url.includes(':8000')
+                ? m.url.replace('http://localhost/', 'http://localhost:8000/')
+                : m.url;
+
+              return (
+                <div key={m.id} className="border rounded p-2">
+                  {m.type === "image" ? (
+                    <img src={url} className="w-full h-32 object-cover rounded" />
+                  ) : (
+                    <audio controls className="w-full">
+                      <source src={url} />
+                    </audio>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
 
