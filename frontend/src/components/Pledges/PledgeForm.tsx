@@ -730,9 +730,27 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
 
       {/* Loan Details Section */}
       <section className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-green-100 dark:border-gray-700 mb-20">
-        <div className="flex items-center gap-3 mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">
-          <span className="material-symbols-outlined text-primary">account_balance_wallet</span>
-          <h3 className="text-gray-800 dark:text-white text-xl font-bold">Loan Details</h3>
+        <div className="flex items-center justify-between mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-primary">account_balance_wallet</span>
+            <h3 className="text-gray-800 dark:text-white text-xl font-bold">Loan Details</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              value={loan.date} onChange={e => setLoan({ ...loan, date: e.target.value })}
+              className="w-27 h-9 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs px-2 shadow-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+              type="date"
+              required
+              title="Date"
+            />
+            <span className="text-gray-400 text-xs material-symbols-outlined">arrow_forward</span>
+            <input
+              value={loan.due_date} readOnly
+              className="w-27 h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-500 text-xs px-2 shadow-sm cursor-not-allowed outline-none transition-all"
+              type="date"
+              title="Due Date"
+            />
+          </div>
         </div>
 
         {/* Slot 3: Evidence Audio/Media */}
@@ -764,43 +782,35 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
             <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Loan No <span className="text-red-500">*</span></span>
             <input
               value={loan.loan_no} onChange={e => setLoan({ ...loan, loan_no: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" type="text" placeholder="Enter Loan No" required
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" type="text" placeholder="Enter Loan No" required
             />
           </label>
 
-          <label className="flex flex-col gap-1.5">
-            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Estimated Amount</span>
-            <input
-              value={loan.estimated_amount} onChange={e => setLoan({ ...loan, estimated_amount: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="₹0" type="number"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1.5">
-            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Amount <span className="text-red-500">*</span></span>
-            <input
-              value={loan.amount} onChange={e => setLoan({ ...loan, amount: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="₹0" type="number" required
-            />
-          </label>
-
-          <div className="grid grid-cols-2 gap-4">
-            <label className="flex flex-col gap-1.5">
-              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Date <span className="text-red-500">*</span></span>
+          <div className="flex gap-4">
+            <label className="flex flex-col gap-1.5 flex-1">
+              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Amount <span className="text-red-500">*</span></span>
               <input
-                value={loan.date} onChange={e => setLoan({ ...loan, date: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" type="date" required
+                value={loan.amount} onChange={e => setLoan({ ...loan, amount: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="₹0" type="number" required
               />
             </label>
 
-            <label className="flex flex-col gap-1.5">
-              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Due Date</span>
+            <label className="flex flex-col gap-1.5 w-1/3">
+              <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">Estimated Amount</span>
               <input
-                value={loan.due_date} readOnly
-                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-500 focus:outline-none h-12 px-4 shadow-sm cursor-not-allowed outline-none transition-all" type="date"
+                value={loan.estimated_amount} onChange={e => setLoan({ ...loan, estimated_amount: e.target.value })}
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400 text-sm" placeholder="₹0" type="number"
               />
             </label>
           </div>
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Processing Fee</span>
+            <input
+              value={loan.processing_fee} onChange={e => setLoan({ ...loan, processing_fee: e.target.value })}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="₹0" type="number"
+            />
+          </label>
 
           <div className="grid grid-cols-2 gap-4">
             <label className="flex flex-col gap-1.5">
@@ -859,15 +869,6 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
             )}
           </label>
 
-          <label className="flex flex-col gap-1.5">
-            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Processing Fee</span>
-            <input
-              value={loan.processing_fee} onChange={e => setLoan({ ...loan, processing_fee: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="₹0" type="number"
-            />
-          </label>
-
-
 
           {/* Existing Files Display (for Edit Mode) */}
           {existingFiles.length > 0 && (
@@ -895,11 +896,11 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
           )}
 
           {/* Styled Checkbox Tiles */}
-          <div className="flex flex-col gap-3 pt-2">
-            <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer group transition-all ${loan.include_processing_fee ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'} `}>
-              <span className="text-gray-800 dark:text-white text-base font-medium">Include Processing Fee?</span>
-              <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${loan.include_processing_fee ? 'bg-primary border-primary' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'} `}>
-                {loan.include_processing_fee && <span className="material-symbols-outlined text-white text-sm leading-none">check</span>}
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <label className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer group transition-all ${loan.include_processing_fee ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'} `}>
+              <span className="text-gray-800 dark:text-white text-sm font-medium">Include Fee?</span>
+              <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${loan.include_processing_fee ? 'bg-primary border-primary' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'} `}>
+                {loan.include_processing_fee && <span className="material-symbols-outlined text-white text-xs leading-none">check</span>}
               </div>
               <input
                 checked={loan.include_processing_fee}
@@ -909,10 +910,10 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
               />
             </label>
 
-            <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer group transition-all ${loan.interest_taken ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'} `}>
-              <span className="text-gray-800 dark:text-white text-base font-medium">Interest Taken?</span>
-              <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${loan.interest_taken ? 'bg-primary border-primary' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'} `}>
-                {loan.interest_taken && <span className="material-symbols-outlined text-white text-sm leading-none">check</span>}
+            <label className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer group transition-all ${loan.interest_taken ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'} `}>
+              <span className="text-gray-800 dark:text-white text-sm font-medium">Interest Taken?</span>
+              <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${loan.interest_taken ? 'bg-primary border-primary' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'} `}>
+                {loan.interest_taken && <span className="material-symbols-outlined text-white text-xs leading-none">check</span>}
               </div>
               <input
                 checked={loan.interest_taken}
@@ -931,7 +932,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
         </div>
       </section>
 
-      <div className="mt-2 mb-8 flex justify-center sticky bottom-4 z-20">
+      <div className="mt-2 mb-8 flex justify-center">
         <button type="submit" className="flex w-full max-w-sm px-8 items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark transition-all h-14 text-white font-bold text-lg shadow-lg shadow-primary/30 active:scale-[0.98]">
           <span className="material-symbols-outlined">save</span>
           Save Pledge
