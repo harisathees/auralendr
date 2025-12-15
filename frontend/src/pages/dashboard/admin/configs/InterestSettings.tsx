@@ -94,7 +94,7 @@ const InterestSettings: React.FC = () => {
             <div className="flex items-center gap-4 mb-6">
                 <button
                     onClick={() => navigate("/admin/configurations")}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-600 dark:text-gray-300"
                 >
                     <span className="material-symbols-outlined">arrow_back</span>
                 </button>

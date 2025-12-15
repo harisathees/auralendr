@@ -125,19 +125,19 @@ const ProcessingFees: React.FC = () => {
             <header className="flex items-center justify-between mb-6 flex-none">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
-                        <Link to="/admin/configurations" className="text-secondary-text hover:text-primary transition-colors">
+                        <Link to="/admin/configurations" className="text-secondary-text dark:text-gray-400 hover:text-primary transition-colors">
                             <span className="material-symbols-outlined">arrow_back</span>
                         </Link>
                         <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
                             Processing Fees
                         </h2>
                     </div>
-                    <p className="text-secondary-text dark:text-gray-400 ml-8">Configure fees per Branch & Jewel Type</p>
+                    {/* <p className="text-secondary-text dark:text-gray-400 ml-8">Configure fees per Branch & Jewel Type</p> */}
                 </div>
 
                 {/* Branch Selector */}
                 <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-secondary-text dark:text-gray-400">Select Branch:</span>
+                    {/* <span className="text-sm font-medium text-secondary-text dark:text-gray-400">Select Branch:</span> */}
                     <select
                         value={selectedBranchId}
                         onChange={(e) => setSelectedBranchId(e.target.value)}

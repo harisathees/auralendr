@@ -73,7 +73,7 @@ const InterestRateForm: React.FC = () => {
             <div className="flex items-center gap-4 mb-6">
                 <button
                     onClick={() => navigate("/admin/configs/interest-settings")}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-600 dark:text-gray-300"
                 >
                     <span className="material-symbols-outlined">arrow_back</span>
                 </button>
@@ -98,7 +98,7 @@ const InterestRateForm: React.FC = () => {
                             step="0.01"
                             value={rate}
                             onChange={(e) => setRate(e.target.value)}
-                            className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             required
                             placeholder="e.g. 1.50"
                         />
@@ -113,7 +113,7 @@ const InterestRateForm: React.FC = () => {
                             step="0.01"
                             value={estimationPercentage}
                             onChange={(e) => setEstimationPercentage(e.target.value)}
-                            className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             required
                             placeholder="e.g. 75.00"
                         />
@@ -127,7 +127,7 @@ const InterestRateForm: React.FC = () => {
                             <select
                                 value={jewelTypeId}
                                 onChange={(e) => setJewelTypeId(e.target.value)}
-                                className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all appearance-none"
+                                className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all appearance-none"
                             >
                                 <option value="">Global (All Types)</option>
                                 {jewelTypes.map(t => (

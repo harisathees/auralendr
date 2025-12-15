@@ -131,8 +131,8 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                         <span className="material-symbols-outlined text-[14px]">check</span>
                         {isActive ? 'Active' : 'Inactive'}
                     </div>
-                    <button onClick={onCancel} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors">
-                        <span className="material-symbols-outlined text-gray-500">close</span>
+                    <button onClick={onCancel} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500 dark:text-gray-400">
+                        <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
             </div>
@@ -141,7 +141,7 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                 <label className="flex flex-col gap-1.5">
                     <span className="text-sm font-bold text-primary-text dark:text-white">Name</span>
                     <input
-                        className="form-input w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 text-sm outline-none transition-all"
+                        className="form-input w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 text-sm outline-none transition-all"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="e.g. Shop Cash, HDFC Bank"
@@ -153,13 +153,13 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                         <span className="text-sm font-bold text-primary-text dark:text-white">Type</span>
                         <div className="relative">
                             <select
-                                className="form-select w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 text-sm outline-none appearance-none transition-all"
+                                className="form-select w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 text-sm outline-none appearance-none transition-all"
                                 value={type}
                                 onChange={(e) => setType(e.target.value)}
                             >
-                                <option value="cash">Cash</option>
-                                <option value="bank">Bank Account</option>
-                                <option value="wallet">Wallet / UPI</option>
+                                <option value="cash" className="bg-white dark:bg-gray-800">Cash</option>
+                                <option value="bank" className="bg-white dark:bg-gray-800">Bank Account</option>
+                                <option value="wallet" className="bg-white dark:bg-gray-800">Wallet / UPI</option>
                             </select>
                             <span className="material-symbols-outlined absolute right-3 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
                         </div>
@@ -177,7 +177,7 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                             <input
                                 type="number"
                                 // 👇 ADDED CLASSES HERE to hide increment/decrement arrows
-                                className="form-input w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-primary focus:ring-2 focus:ring-primary/50 h-12 pl-8 pr-12 text-sm font-semibold outline-none transition-all
+                                className="form-input w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/50 h-12 pl-8 pr-12 text-sm font-semibold outline-none transition-all
             [appearance:textfield] 
             [&::-webkit-outer-spin-button]:appearance-none 
             [&::-webkit-inner-spin-button]:appearance-none 
@@ -210,7 +210,7 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                 <label className="flex flex-col gap-1.5">
                     <span className="text-sm font-bold text-primary-text dark:text-white">Description</span>
                     <textarea
-                        className="form-textarea w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary p-4 text-sm outline-none min-h-[80px] resize-none transition-all"
+                        className="form-textarea w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary p-4 text-sm outline-none min-h-[80px] resize-none transition-all"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Optional details..."

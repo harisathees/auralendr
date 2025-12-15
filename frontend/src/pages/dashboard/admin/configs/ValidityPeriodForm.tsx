@@ -73,7 +73,7 @@ const ValidityPeriodForm: React.FC = () => {
             <div className="flex items-center gap-4 mb-6">
                 <button
                     onClick={() => navigate("/admin/configs/validity-periods")}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-600 dark:text-gray-300"
                 >
                     <span className="material-symbols-outlined">arrow_back</span>
                 </button>
@@ -97,7 +97,7 @@ const ValidityPeriodForm: React.FC = () => {
                             type="number"
                             value={months}
                             onChange={(e) => setMonths(e.target.value)}
-                            className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             required
                             placeholder="e.g. 12"
                         />
@@ -111,7 +111,7 @@ const ValidityPeriodForm: React.FC = () => {
                             <select
                                 value={jewelTypeId}
                                 onChange={(e) => setJewelTypeId(e.target.value)}
-                                className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all appearance-none"
+                                className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all appearance-none"
                             >
                                 <option value="">Global (All Types)</option>
                                 {jewelTypes.map(t => (
@@ -131,7 +131,7 @@ const ValidityPeriodForm: React.FC = () => {
                             type="text"
                             value={label}
                             onChange={(e) => setLabel(e.target.value)}
-                            className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             placeholder="e.g. 1 Year"
                         />
                     </div>
