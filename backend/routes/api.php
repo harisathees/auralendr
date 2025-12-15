@@ -42,8 +42,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('pledges/{pledge}', [PledgeController::class, 'destroy']);
     Route::get('jewel-types', [JewelTypeController::class, 'index']);
     Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
-    Route::get('jewel-types', [JewelTypeController::class, 'index']);
-    Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
 
     // Metal Rates
     Route::get('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'index']);

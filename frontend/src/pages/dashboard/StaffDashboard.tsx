@@ -118,7 +118,7 @@ const StaffDashboard: React.FC = () => {
             <div className="relative flex items-center justify-center size-20">
               <svg className="size-full -rotate-90" viewBox="0 0 36 36">
                 <path className="text-green-200 dark:text-gray-700" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3" />
-                <path className="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray="60, 100" strokeLinecap="round" strokeWidth="3" />
+                <path className="text-primary transition-all duration-1000 ease-out" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${progressPercentage}, 100`} strokeLinecap="round" strokeWidth="3" />
               </svg>
               <div className="absolute flex flex-col items-center justify-center">
                 <span className="text-primary text-xl font-bold">{completedTasks}/{totalTasks}</span>
