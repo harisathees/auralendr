@@ -10,8 +10,9 @@ class EnsureAdmin
     public function handle(Request $request, Closure $next)
     {
         $user = $request->user();
+        // Check if user exists and has role 'admin'
         if (!$user || $user->role !== 'admin') {
-            return response()->json(['message' => 'Forbidden'], 403);
+            return response()->json(['message' => 'Forbidden. User role: ' . ($user->role ?? 'none')], 403);
         }
         return $next($request);
     }

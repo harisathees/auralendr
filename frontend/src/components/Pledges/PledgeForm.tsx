@@ -216,7 +216,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
   // Loan Configs
   const [interestRates, setInterestRates] = useState<{ id: number; rate: string; jewel_type_id?: number | null }[]>([]);
   const [loanValidities, setLoanValidities] = useState<{ id: number; months: number; label?: string; jewel_type_id?: number | null }[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string }[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string; balance: string; show_balance: boolean }[]>([]);
 
   // Hidden File Inputs for triggering system dialogs
   const docInputRef = useRef<HTMLInputElement>(null);
@@ -267,6 +267,34 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
     );
   }, [selectedJewelTypeObj, interestRates]);
 
+  // Balance Validation Logic
+  // Balance Validation Logic
+  const balanceValidation = useMemo(() => {
+    // console.log("Validating Balance...", { method: loan.payment_method, amountGiven: loan.amount_to_be_given, sourceCount: paymentMethods.length });
+
+    if (!loan.payment_method) return null;
+
+    // Find selected money source
+    const source = paymentMethods.find(p => p.name === loan.payment_method);
+    if (!source) return null;
+
+    const amount = parseFloat(loan.amount_to_be_given || "0");
+    const balance = parseFloat(source.balance);
+
+    // console.log("Validation details:", { amount, balance, isSufficient: balance >= amount });
+
+    if (isNaN(amount) || isNaN(balance)) return null;
+
+    const isSufficient = balance >= amount;
+
+    return {
+      isSufficient,
+      message: isSufficient
+        ? "Sufficient funds available"
+        : "Insufficient funds in selected source"
+    };
+  }, [loan.payment_method, loan.amount_to_be_given, paymentMethods]);
+
   // Auto-select first validity if current is invalid? 
   // Maybe better to just let user switch. But let's check if current is in options.
   useEffect(() => {
@@ -299,7 +327,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
     http.get("/jewel-names").then(res => Array.isArray(res.data) && setJewelNames(res.data)).catch(console.error);
     http.get("/interest-rates").then(res => Array.isArray(res.data) && setInterestRates(res.data)).catch(console.error);
     http.get("/loan-validities").then(res => Array.isArray(res.data) && setLoanValidities(res.data)).catch(console.error);
-    http.get("/payment-methods").then(res => Array.isArray(res.data) && setPaymentMethods(res.data)).catch(console.error);
+    http.get("/money-sources").then(res => Array.isArray(res.data) && setPaymentMethods(res.data)).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -817,11 +845,18 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
               >
                 <option value="" disabled>Select</option>
                 {paymentMethods.map(p => (
-                  <option key={p.id} value={p.name}>{p.name}</option>
+                  <option key={p.id} value={p.name}>
+                    {p.name} {p.show_balance ? `(₹${parseFloat(p.balance).toLocaleString()})` : ''}
+                  </option>
                 ))}
               </select>
               <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
             </div>
+            {balanceValidation && (
+              <p className={`text-xs mt-1 font-medium ${balanceValidation.isSufficient ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                {balanceValidation.message}
+              </p>
+            )}
           </label>
 
           <label className="flex flex-col gap-1.5">
@@ -861,9 +896,9 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
 
           {/* Styled Checkbox Tiles */}
           <div className="flex flex-col gap-3 pt-2">
-            <label className={`flex items - center justify - between p - 4 rounded - xl border cursor - pointer group transition - all ${loan.include_processing_fee ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'} `}>
+            <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer group transition-all ${loan.include_processing_fee ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'} `}>
               <span className="text-gray-800 dark:text-white text-base font-medium">Include Processing Fee?</span>
-              <div className={`w - 6 h - 6 rounded - full border flex items - center justify - center transition - colors ${loan.include_processing_fee ? 'bg-primary border-primary' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'} `}>
+              <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${loan.include_processing_fee ? 'bg-primary border-primary' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'} `}>
                 {loan.include_processing_fee && <span className="material-symbols-outlined text-white text-sm leading-none">check</span>}
               </div>
               <input
@@ -874,9 +909,9 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
               />
             </label>
 
-            <label className={`flex items - center justify - between p - 4 rounded - xl border cursor - pointer group transition - all ${loan.interest_taken ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'} `}>
+            <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer group transition-all ${loan.interest_taken ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'} `}>
               <span className="text-gray-800 dark:text-white text-base font-medium">Interest Taken?</span>
-              <div className={`w - 6 h - 6 rounded - full border flex items - center justify - center transition - colors ${loan.interest_taken ? 'bg-primary border-primary' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'} `}>
+              <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${loan.interest_taken ? 'bg-primary border-primary' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500'} `}>
                 {loan.interest_taken && <span className="material-symbols-outlined text-white text-sm leading-none">check</span>}
               </div>
               <input
