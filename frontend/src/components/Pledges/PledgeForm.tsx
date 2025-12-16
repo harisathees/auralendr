@@ -686,7 +686,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
                 label="Customer Doc"
                 icon="upload_file"
                 file={docFile}
-                existingUrl={fetchedDocUrl}
+                existingUrl={fetchedDocUrl && fetchedDocUrl.startsWith('http://localhost/') && !fetchedDocUrl.includes(':8000') ? fetchedDocUrl.replace('http://localhost/', 'http://localhost:8000/') : fetchedDocUrl}
                 onRemove={() => { setDocFile(null); setFetchedDocUrl(null); }}
                 onGallery={() => docInputRef.current?.click()}
                 onCamera={() => openCamera('doc')}
@@ -1014,7 +1014,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
                       className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-red-600 z-10"
                     >&times;</button>
                     {f.type === 'image' ? (
-                      <img src={f.url} alt="existing" className="w-full h-full object-cover" />
+                      <img src={f.url && f.url.startsWith('http://localhost/') && !f.url.includes(':8000') ? f.url.replace('http://localhost/', 'http://localhost:8000/') : f.url} alt="existing" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400">
                         <span className="material-symbols-outlined text-4xl">audiotrack</span>

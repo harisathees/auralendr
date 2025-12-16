@@ -86,14 +86,14 @@ const MetalRatesCard: React.FC = () => {
                             <span className="material-symbols-outlined text-[#FDB931] text-2xl">diamond</span>
                         </div>
 
-                        <div className="text-white">
+                        <div className="text-white text-left">
                             <p className="font-medium text-sm text-white/80 tracking-wide">{dateStr}</p>
                             <p className="text-xs text-white/50">{timeStr}</p>
 
-                            <h1 className="text-3xl font-serif font-bold text-[#FDB931] mt-3 tracking-wide">
+                            <h1 className="text-5xl font-serif font-bold text-[#FDB931] mt-3 tracking-wide">
                                 AuraLendr
                             </h1>
-                            <p className="text-white/60 text-sm font-light tracking-wider">
+                            <p className="text-white/60 text-lg font-light tracking-wider">
                                 Pawn & Finance Co.
                             </p>
                         </div>

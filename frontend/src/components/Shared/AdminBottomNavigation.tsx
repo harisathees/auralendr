@@ -19,7 +19,7 @@ const AdminBottomNavigation: React.FC = () => {
                     to="/admin/dashboard"
                 >
                     <span className="material-symbols-outlined text-3xl" style={isActive("/admin/dashboard") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        home
+                        dashboard
                     </span>
                     <span className="text-xs font-bold">Home</span>
                 </Link>
@@ -31,7 +31,7 @@ const AdminBottomNavigation: React.FC = () => {
                     to="/admin/branches"
                 >
                     <span className="material-symbols-outlined text-3xl" style={isActive("/admin/branches") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        domain
+                        store
                     </span>
                     <span className="text-xs font-medium">Branches</span>
                 </Link>
@@ -67,7 +67,7 @@ const AdminBottomNavigation: React.FC = () => {
                     to="/admin/tasks"
                 >
                     <span className="material-symbols-outlined text-3xl" style={isActive("/admin/tasks") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        checklist
+                        assignment
                     </span>
                     <span className="text-xs font-bold text-center leading-none">Tasks</span>
                 </Link>
