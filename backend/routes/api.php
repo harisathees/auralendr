@@ -50,8 +50,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
     Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
 
-    // Customer Search
+    // Customer Search and List
     Route::get('/customers/search', [CustomerController::class, 'search']);
+    Route::get('/customers', [CustomerController::class, 'index']);
 
     // Pledges
     Route::apiResource('pledges', PledgeController::class);

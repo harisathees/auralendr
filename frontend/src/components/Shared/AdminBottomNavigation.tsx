@@ -38,6 +38,18 @@ const AdminBottomNavigation: React.FC = () => {
                     <span className="text-xs font-bold">Loans</span>
                 </Link>
 
+                {/* Customers */}
+                <Link
+                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/customers") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                        }`}
+                    to="/admin/customers"
+                >
+                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/customers") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                        groups
+                    </span>
+                    <span className="text-xs font-bold">Customers</span>
+                </Link>
+
                 {/* Advanced Analysis */}
                 {/* <Link
                     className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/analysis") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
