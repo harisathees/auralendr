@@ -105,6 +105,47 @@ const AdminConfigs: React.FC = () => {
                     link: "/admin/configs/processing-fees"
                 },
             ]
+        },
+        {
+            title: "Organization",
+            icon: "domain",
+            description: "Manage branches and staff access",
+            color: "text-indigo-600",
+            bg: "bg-indigo-100",
+            items: [
+                {
+                    title: "Branches",
+                    description: "Manage physical store locations",
+                    icon: "store",
+                    color: "text-indigo-600",
+                    bg: "bg-indigo-100",
+                    link: "/admin/configs/branches"
+                },
+                {
+                    title: "Users",
+                    description: "Manage system administrators and staff",
+                    icon: "people",
+                    color: "text-purple-600",
+                    bg: "bg-purple-100",
+                    link: "/admin/configs/users"
+                },
+                {
+                    title: "Brand Kit",
+                    description: "Manage logos, colors & themes",
+                    icon: "palette",
+                    color: "text-rose-600",
+                    bg: "bg-rose-100",
+                    link: "/admin/configs/brand-kit"
+                },
+                {
+                    title: "User Privileges",
+                    description: "Manage role-based access controls",
+                    icon: "admin_panel_settings",
+                    color: "text-orange-600",
+                    bg: "bg-orange-100",
+                    link: "/admin/configs/user-privileges"
+                },
+            ]
         }
     ];
 

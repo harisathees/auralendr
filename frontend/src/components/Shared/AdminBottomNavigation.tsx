@@ -24,29 +24,7 @@ const AdminBottomNavigation: React.FC = () => {
                     <span className="text-xs font-bold">Home</span>
                 </Link>
 
-                {/* Branches */}
-                <Link
-                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/branches") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
-                        }`}
-                    to="/admin/branches"
-                >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/branches") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        store
-                    </span>
-                    <span className="text-xs font-medium">Branches</span>
-                </Link>
 
-                {/* Users */}
-                <Link
-                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/users") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
-                        }`}
-                    to="/admin/users"
-                >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/users") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        people
-                    </span>
-                    <span className="text-xs font-bold">Users</span>
-                </Link>
 
                 {/* Loans */}
                 <Link

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import http from '../../../api/http';
+import http from '../../../../../api/http';
 import BranchForm from './BranchForm';
 import { useNavigate } from 'react-router-dom';
-import Toast from '../../../components/Shared/Toast';
-import ConfirmationModal from '../../../components/Shared/ConfirmationModal';
-import type { Branch } from '../../../types/models';
+import Toast from '../../../../../components/Shared/Toast';
+import ConfirmationModal from '../../../../../components/Shared/ConfirmationModal';
+import type { Branch } from '../../../../../types/models';
 
 const List: React.FC = () => {
     const navigate = useNavigate();

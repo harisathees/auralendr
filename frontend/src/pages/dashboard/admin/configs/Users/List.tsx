@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import http from '../../../api/http';
+import http from '../../../../../api/http';
 import { useNavigate } from 'react-router-dom';
-import Toast from '../../../components/Shared/Toast';
-import ConfirmationModal from '../../../components/Shared/ConfirmationModal';
+import Toast from '../../../../../components/Shared/Toast';
+import ConfirmationModal from '../../../../../components/Shared/ConfirmationModal';
 import UserForm from './UserForm';
 import type { User } from './UserForm';
 
