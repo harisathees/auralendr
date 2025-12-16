@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import http from "../../../../api/http";
 import { Link } from "react-router-dom";
+import { useToast } from "../../../../context";
 
 // Types
 interface Branch {
@@ -29,6 +30,7 @@ const ProcessingFees: React.FC = () => {
     const [selectedBranchId, setSelectedBranchId] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState<number | null>(null); // storing jewel_type_id being saved
+    const { showToast } = useToast();
 
     // Fetch initial data (Branches and Jewel Types)
     useEffect(() => {
@@ -47,6 +49,7 @@ const ProcessingFees: React.FC = () => {
                 }
             } catch (error) {
                 console.error("Failed to fetch initial data", error);
+                showToast("Failed to load initial data", "error");
             } finally {
                 setLoading(false);
             }
@@ -57,14 +60,17 @@ const ProcessingFees: React.FC = () => {
 
     // Fetch processing fees when branch changes
     useEffect(() => {
-        if (!selectedBranchId) return;
+        // if (!selectedBranchId) return; // Allow fetching if we have a strategy for "Global"
 
         const fetchFees = async () => {
             try {
-                const res = await http.get(`/processing-fees?branch_id=${selectedBranchId}`);
+                // Handle "GLOBAL" or empty branch ID
+                const branchParam = selectedBranchId === "GLOBAL" ? "null" : selectedBranchId;
+                const res = await http.get(`/processing-fees?branch_id=${branchParam}`);
                 setProcessingFees(res.data);
             } catch (error) {
                 console.error("Failed to fetch processing fees", error);
+                showToast("Failed to load processing fees", "error");
             }
         };
 
@@ -72,7 +78,8 @@ const ProcessingFees: React.FC = () => {
     }, [selectedBranchId]);
 
     const getFeeForType = (typeId: number) => {
-        const fee = processingFees.find(f => f.jewel_type_id === typeId && f.branch_id === parseInt(selectedBranchId));
+        const targetBranchId = selectedBranchId === "GLOBAL" ? null : parseInt(selectedBranchId);
+        const fee = processingFees.find(f => f.jewel_type_id === typeId && f.branch_id === targetBranchId);
         return {
             percentage: fee?.percentage || "",
             max_amount: fee?.max_amount || ""
@@ -86,7 +93,7 @@ const ProcessingFees: React.FC = () => {
         try {
             const payload = {
                 jewel_type_id: jewelTypeId,
-                branch_id: parseInt(selectedBranchId),
+                branch_id: selectedBranchId === "GLOBAL" ? null : parseInt(selectedBranchId),
                 percentage: parseFloat(percentage),
                 max_amount: maxAmount ? parseFloat(maxAmount) : null
             };
@@ -95,7 +102,8 @@ const ProcessingFees: React.FC = () => {
 
             // Update local state
             setProcessingFees(prev => {
-                const existingIndex = prev.findIndex(f => f.jewel_type_id === jewelTypeId && f.branch_id === parseInt(selectedBranchId));
+                const targetBranchId = selectedBranchId === "GLOBAL" ? null : parseInt(selectedBranchId);
+                const existingIndex = prev.findIndex(f => f.jewel_type_id === jewelTypeId && f.branch_id === targetBranchId);
                 if (existingIndex >= 0) {
                     const updated = [...prev];
                     updated[existingIndex] = res.data;
@@ -104,9 +112,11 @@ const ProcessingFees: React.FC = () => {
                     return [...prev, res.data];
                 }
             });
+            showToast("Processing fee updated successfully", "success");
 
         } catch (error) {
             console.error("Failed to save processing fee", error);
+            showToast("Failed to save processing fee", "error");
         } finally {
             setSaving(null);
         }
@@ -119,24 +129,25 @@ const ProcessingFees: React.FC = () => {
             <header className="flex items-center justify-between mb-6 flex-none">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
-                        <Link to="/admin/configurations" className="text-secondary-text hover:text-primary transition-colors">
+                        <Link to="/admin/configurations" className="text-secondary-text dark:text-gray-400 hover:text-primary transition-colors">
                             <span className="material-symbols-outlined">arrow_back</span>
                         </Link>
                         <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
                             Processing Fees
                         </h2>
                     </div>
-                    <p className="text-secondary-text dark:text-gray-400 ml-8">Configure fees per Branch & Jewel Type</p>
+                    {/* <p className="text-secondary-text dark:text-gray-400 ml-8">Configure fees per Branch & Jewel Type</p> */}
                 </div>
 
                 {/* Branch Selector */}
                 <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-secondary-text dark:text-gray-400">Select Branch:</span>
+                    {/* <span className="text-sm font-medium text-secondary-text dark:text-gray-400">Select Branch:</span> */}
                     <select
                         value={selectedBranchId}
                         onChange={(e) => setSelectedBranchId(e.target.value)}
                         className="form-select h-10 rounded-lg border-border-green bg-white dark:bg-gray-800 px-4 text-sm text-primary-text dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none shadow-sm"
                     >
+                        <option value="GLOBAL">All Branches (Global)</option>
                         {branches.map(b => (
                             <option key={b.id} value={b.id}>{b.branch_name}</option>
                         ))}

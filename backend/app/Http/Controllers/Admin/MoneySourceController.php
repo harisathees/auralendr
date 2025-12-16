@@ -11,10 +11,24 @@ class MoneySourceController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Return all sources with branches, ordered by name
-        return MoneySource::with('branches')->orderBy('name')->get();
+        $user = $request->user();
+
+        // If user is Admin, they might see all or filter by request
+        if ($user->role === 'admin') {
+            return MoneySource::with('branches')->orderBy('name')->get();
+        }
+
+        // If staff, filter by their branch
+        if ($user->branch_id) {
+            return MoneySource::whereHas('branches', function ($q) use ($user) {
+                $q->where('branches.id', $user->branch_id);
+            })->orderBy('name')->get();
+        }
+
+        // Fallback for users without branch (shouldn't happen for staff)
+        return [];
     }
 
     /**

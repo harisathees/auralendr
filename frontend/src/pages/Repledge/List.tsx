@@ -21,7 +21,7 @@ const List: React.FC = () => {
                     <p className="text-sm text-secondary-text dark:text-gray-400">Manage external re-pledged items</p>
                 </div>
                 <Link
-                    to="/repledge/create"
+                    to="/re-pledge/create"
                     className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-lg shadow-purple-600/30 transition-all"
                 >
                     <span className="material-symbols-outlined">add</span>
@@ -65,7 +65,7 @@ const List: React.FC = () => {
                             {/* Actions (stop propagation to avoid triggering row click) */}
                             <div className="flex items-center gap-2 md:opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 top-4 md:relative md:right-0 md:top-0">
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); navigate(`/repledge/${item.id}/edit`); }}
+                                    onClick={(e) => { e.stopPropagation(); navigate(`/re-pledge/${item.id}/edit`); }}
                                     className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-blue-500"
                                 >
                                     <span className="material-symbols-outlined">edit</span>

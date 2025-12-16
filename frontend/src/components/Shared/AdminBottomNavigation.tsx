@@ -19,46 +19,60 @@ const AdminBottomNavigation: React.FC = () => {
                     to="/admin/dashboard"
                 >
                     <span className="material-symbols-outlined text-3xl" style={isActive("/admin/dashboard") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        home
+                        dashboard
                     </span>
                     <span className="text-xs font-bold">Home</span>
                 </Link>
 
-                {/* Branches */}
+
+
+                {/* Loans */}
                 <Link
-                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/branches") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/loans") || isActive("/admin/pledges") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
                         }`}
-                    to="/admin/branches"
+                    to="/admin/loans"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/branches") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        domain
+                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/loans") || isActive("/admin/pledges") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                        credit_score
                     </span>
-                    <span className="text-xs font-medium">Branches</span>
+                    <span className="text-xs font-bold">Loans</span>
                 </Link>
 
-                {/* Users */}
+                {/* Customers */}
                 <Link
-                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/users") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/customers") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
                         }`}
-                    to="/admin/users"
+                    to="/admin/customers"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/users") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        people
+                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/customers") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                        groups
                     </span>
-                    <span className="text-xs font-bold">Users</span>
+                    <span className="text-xs font-bold">Customers</span>
                 </Link>
 
-                {/* Advanced Analysis */}
-                {/* <Link
-                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/analysis") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                {/* Cashflow */}
+                <Link
+                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/cashflow") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
                         }`}
-                    to="/admin/analysis"
+                    to="/admin/cashflow"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/analysis") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        analytics
+                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/cashflow") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                        timeline
                     </span>
-                    <span className="text-xs font-bold text-center leading-none">Analysis</span>
-                </Link> */}
+                    <span className="text-xs font-bold">Cashflow</span>
+                </Link>
+
+                {/* Repledges */}
+                <Link
+                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/repledges") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                        }`}
+                    to="/re-pledge/"
+                >
+                    <span className="material-symbols-outlined text-3xl" style={isActive("/re-pledge/") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                        currency_exchange
+                    </span>
+                    <span className="text-xs font-bold">Repledge</span>
+                </Link>
 
                 {/* Assign Tasks */}
                 <Link
@@ -67,18 +81,18 @@ const AdminBottomNavigation: React.FC = () => {
                     to="/admin/tasks"
                 >
                     <span className="material-symbols-outlined text-3xl" style={isActive("/admin/tasks") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        checklist
+                        assignment
                     </span>
                     <span className="text-xs font-bold text-center leading-none">Tasks</span>
                 </Link>
 
                 {/* Config */}
                 <Link
-                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/configurations") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/configs") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
                         }`}
-                    to="/admin/configurations"
+                    to="/admin/configs"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/configurations") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/configs") ? { fontVariationSettings: "'FILL' 1" } : {}}>
                         tune
                     </span>
                     <span className="text-xs font-medium">Config</span>

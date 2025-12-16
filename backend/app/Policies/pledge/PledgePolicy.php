@@ -13,7 +13,7 @@ class PledgePolicy
     public function before(User $user, $ability)
     {
         // admins bypass checks
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole('admin') || $user->role === 'admin') {
             return true;
         }
     }

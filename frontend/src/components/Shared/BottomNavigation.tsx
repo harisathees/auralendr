@@ -99,7 +99,12 @@ const BottomNavigation: React.FC = () => {
                                 </button>
 
                                 {/* Create Repledge */}
-                                <button className="flex flex-col items-center gap-2 group/btn">
+                                <button 
+                                  onClick={() => {
+                                        navigate("/re-pledge/create");
+                                        closeFab();
+                                    }}
+                                className="flex flex-col items-center gap-2 group/btn">
                                     <div className="h-14 w-14 rounded-full bg-white dark:bg-gray-800 text-purple-600 border border-gray-100 dark:border-gray-700 flex items-center justify-center shadow-lg group-hover/btn:bg-purple-600 group-hover/btn:text-white transition-colors">
                                         <span className="material-symbols-outlined">autorenew</span>
                                     </div>

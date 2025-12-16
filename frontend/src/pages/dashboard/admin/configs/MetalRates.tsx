@@ -59,7 +59,7 @@ const MetalRates: React.FC = () => {
             <header className="mb-8 flex items-center gap-4">
                 <button
                     onClick={() => window.history.back()}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-600 dark:text-gray-300"
                 >
                     <span className="material-symbols-outlined">arrow_back</span>
                 </button>
@@ -89,14 +89,14 @@ const MetalRates: React.FC = () => {
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-secondary-text mb-1">
+                                <label className="block text-sm font-medium text-secondary-text dark:text-gray-400 mb-1">
                                     Current Rate (₹)
                                 </label>
                                 <input
                                     type="number"
                                     step="0.01"
                                     defaultValue={type.metal_rate?.rate || ""}
-                                    className="w-full px-4 py-3 rounded-xl bg-background-light dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-display font-medium"
+                                    className="w-full px-4 py-3 rounded-xl bg-background-light dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-display font-medium"
                                     onBlur={(e) => {
                                         const val = e.target.value;
                                         if (val && val !== type.metal_rate?.rate) {

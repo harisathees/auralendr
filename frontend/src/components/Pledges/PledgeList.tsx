@@ -28,6 +28,15 @@ const PledgeList: React.FC<Props> = ({ pledges }) => {
     return 'text-primary bg-green-50 dark:bg-primary/20 border-green-100 dark:border-primary/30';
   };
 
+  // Helper to fix localhost image URLs (missing port)
+  const fixImageUrl = (url: string | undefined | null) => {
+    if (!url) return null;
+    if (url.startsWith('http://localhost/') && !url.includes(':8000')) {
+      return url.replace('http://localhost/', 'http://localhost:8000/');
+    }
+    return url;
+  };
+
   return (
     <div className="bg-background-light dark:bg-background-dark text-primary-text dark:text-text-main h-full flex flex-col overflow-hidden w-full relative font-display transition-colors duration-300">
 
@@ -79,7 +88,7 @@ const PledgeList: React.FC<Props> = ({ pledges }) => {
               <img
                 alt={p.customer?.name}
                 className="h-14 w-14 rounded-full object-cover ring-2 ring-white dark:ring-[#1f3d2e] shadow-sm dark:shadow-none"
-                src={p.media?.find((m: any) => m.category === 'customer_image')?.url || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
+                src={fixImageUrl(p.media?.find((m: any) => m.category === 'customer_image')?.url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
               />
             </div>
 

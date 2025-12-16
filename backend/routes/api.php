@@ -8,11 +8,15 @@ use App\Http\Controllers\pledge\PledgeController;
 use App\Http\Controllers\Admin\JewelTypeController;
 use App\Http\Controllers\Admin\JewelQualityController;
 use App\Http\Controllers\Admin\TaskController;
+use App\Http\Controllers\Admin\CustomerController;
 
 
 Route::get('/test', function () {
     return response()->json(['status' => 'API Working']);
 });
+
+// Public Metal Rates
+Route::get('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'index']);
 
 // FOR LOGIN
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:8,1');
@@ -38,22 +42,32 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('jewel-types', JewelTypeController::class);
         Route::apiResource('jewel-qualities', JewelQualityController::class);
         Route::apiResource('jewel-names', \App\Http\Controllers\Admin\JewelNameController::class);
+        Route::apiResource('interest-rates', \App\Http\Controllers\Admin\InterestRateController::class);
+        Route::apiResource('loan-validities', \App\Http\Controllers\Admin\LoanValidityController::class);
+        Route::apiResource('payment-methods', \App\Http\Controllers\Admin\PaymentMethodController::class);
         Route::post('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'store']);
         Route::apiResource('repledge-banks', \App\Http\Controllers\Repledge\RepledgeBankController::class);
     });
 
     // Shared Routes (Admin + Staff)
+    Route::get('/admin-all-loans', [App\Http\Controllers\Admin\LoanController::class, 'index']);
     Route::get('/jewel-types', [JewelTypeController::class, 'index']);
     Route::get('/jewel-qualities', [JewelQualityController::class, 'index']);
     Route::get('/jewel-names', [\App\Http\Controllers\Admin\JewelNameController::class, 'index']);
+    Route::get('/interest-rates', [\App\Http\Controllers\Admin\InterestRateController::class, 'index']);
+    Route::get('/loan-validities', [\App\Http\Controllers\Admin\LoanValidityController::class, 'index']);
+    Route::get('/payment-methods', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'index']);
     Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
     Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
 
-    
+    // Customer Search and List
+    Route::get('/customers/search', [CustomerController::class, 'search']);
+    Route::get('/customers', [CustomerController::class, 'index']);
 
+    // Pledges
+    Route::apiResource('pledges', PledgeController::class);
 
     // Metal Rates
-    Route::get('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'index']);
     Route::post('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'store']);
 
     // Money Sources

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import http from '../../../api/http';
+import http from '../../../../../api/http';
 
-import type { Branch } from '../../../types/models';
+import type { Branch } from '../../../../../types/models';
 
 interface BranchFormData {
     branch_name: string;

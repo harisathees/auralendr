@@ -8,7 +8,7 @@ const JewelQualityForm: React.FC = () => {
     const navigate = useNavigate();
     const isEdit = !!id;
 
-    const [quality, setQuality] = useState("");
+    const [name, setName] = useState("");
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
@@ -18,7 +18,7 @@ const JewelQualityForm: React.FC = () => {
             setLoading(true);
             http.get(`/jewel-qualities/${id}`)
                 .then((res) => {
-                    setQuality(res.data.quality);
+                    setName(res.data.name);
                 })
                 .catch((err) => {
                     console.error(err);
@@ -35,9 +35,9 @@ const JewelQualityForm: React.FC = () => {
 
         try {
             if (isEdit) {
-                await http.put(`/jewel-qualities/${id}`, { quality });
+                await http.put(`/jewel-qualities/${id}`, { name });
             } else {
-                await http.post("/jewel-qualities", { quality });
+                await http.post("/jewel-qualities", { name });
             }
             navigate("/admin/configs/jewel-qualities");
         } catch (err: any) {
@@ -54,7 +54,7 @@ const JewelQualityForm: React.FC = () => {
             <div className="flex items-center gap-4 mb-6">
                 <button
                     onClick={() => navigate("/admin/configs/jewel-qualities")}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-600 dark:text-gray-300"
                 >
                     <span className="material-symbols-outlined">arrow_back</span>
                 </button>
@@ -76,9 +76,9 @@ const JewelQualityForm: React.FC = () => {
                         </label>
                         <input
                             type="text"
-                            value={quality}
-                            onChange={(e) => setQuality(e.target.value)}
-                            className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             required
                             placeholder="e.g. 22k"
                         />
