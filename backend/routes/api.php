@@ -21,6 +21,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
+    // Pledge Routes
+    Route::apiResource('pledges', PledgeController::class);
+
+
+    // Repledge Routes
+    Route::get('repledges/search-loan', [\App\Http\Controllers\Repledge\RepledgeController::class, 'searchLoan']);
+    Route::apiResource('repledges', \App\Http\Controllers\Repledge\RepledgeController::class);
+
+
     // Admin-only routes
     Route::middleware('admin')->group(function () {
         Route::apiResource('branches', BranchController::class);
@@ -30,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('jewel-qualities', JewelQualityController::class);
         Route::apiResource('jewel-names', \App\Http\Controllers\Admin\JewelNameController::class);
         Route::post('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'store']);
+        Route::apiResource('repledge-banks', \App\Http\Controllers\Repledge\RepledgeBankController::class);
     });
 
     // Shared Routes (Admin + Staff)
@@ -38,6 +48,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/jewel-names', [\App\Http\Controllers\Admin\JewelNameController::class, 'index']);
     Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
     Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
+
+    
+
 
     // Metal Rates
     Route::get('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'index']);
@@ -48,7 +61,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/money-sources', [App\Http\Controllers\Admin\MoneySourceController::class, 'store']);
     Route::put('/money-sources/{id}', [App\Http\Controllers\Admin\MoneySourceController::class, 'update']);
     Route::delete('/money-sources/{id}', [App\Http\Controllers\Admin\MoneySourceController::class, 'destroy']);
-
+    
+  
     // Staff Task Routes
     Route::get('/my-tasks', [TaskController::class, 'myTasks']);
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus']);

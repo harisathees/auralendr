@@ -22,6 +22,12 @@ const ValidityPeriods = lazy(() => import("../pages/dashboard/admin/configs/Vali
 const ProcessingFees = lazy(() => import("../pages/dashboard/admin/configs/ProcessingFees"));
 const RepledgeBanks = lazy(() => import("../pages/dashboard/admin/configs/RepledgeBanks"));
 
+// Repledge Pages
+const RepledgeList = lazy(() => import("../pages/Repledge/List"));
+const RepledgeCreate = lazy(() => import("../pages/Repledge/Create"));
+const RepledgeEdit = lazy(() => import("../pages/Repledge/Edit"));
+const RepledgeView = lazy(() => import("../pages/Repledge/View"));
+
 const MetalRates = lazy(() => import("../pages/dashboard/admin/configs/MetalRates"));
 const JewelTypesIndex = lazy(() => import("../pages/dashboard/admin/configs/JewelTypes"));
 
@@ -97,6 +103,12 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/configs/validity-periods" element={<ValidityPeriods />} />
         <Route path="/admin/configs/processing-fees" element={<ProcessingFees />} />
         <Route path="/admin/configs/repledge-banks" element={<RepledgeBanks />} />
+
+        {/* Repledge Routes */}
+        <Route path="/repledge" element={<RepledgeList />} />
+        <Route path="/repledge/create" element={<RepledgeCreate />} />
+        <Route path="/repledge/:id/edit" element={<RepledgeEdit />} />
+        <Route path="/repledge/:id" element={<RepledgeView />} />
 
         {/* FAB Action Routes (if they are pages) */}
         <Route path="/admin/analysis" element={<div>Advanced Analysis Page (Placeholder)</div>} />

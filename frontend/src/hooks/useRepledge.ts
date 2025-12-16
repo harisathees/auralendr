@@ -108,20 +108,23 @@ export const useRepledge = () => {
         }
     };
 
-    // Search Loan Suggestions
-    const searchLoanSuggestions = async (query: string): Promise<LoanSuggestion[]> => {
+    // Search Loan for Repledge (Auto-fetch)
+    const searchLoan = async (loanNo: string) => {
         try {
-            const res = await http.get(`/loans/search?query=${query}`);
-            return res.data || [];
-        } catch (err) {
+            const res = await http.get(`/repledges/search-loan?query=${loanNo}`);
+            return res.data;
+        } catch (err: any) {
             console.error("Search failed", err);
-            return [];
+            // Return null or rethrow? 
+            // If 404, valid. If 500, error.
+            if (err.response && err.response.status === 404) return null;
+            throw err;
         }
     };
 
     useEffect(() => {
-        fetchRepledgeEntries();
-    }, [fetchRepledgeEntries]);
+        // fetchRepledgeEntries(); // User might only want to fetch explicitly in List page
+    }, []);
 
     return {
         loading,
@@ -133,7 +136,7 @@ export const useRepledge = () => {
         fetchLoanDetails,
         saveRepledgeEntry,
         deleteRepledgeEntry,
-        searchLoanSuggestions,
-        fetchRepledgeEntries
+        fetchRepledgeEntries,
+        searchLoan
     };
 };
