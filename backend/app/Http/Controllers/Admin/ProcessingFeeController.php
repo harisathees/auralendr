@@ -13,7 +13,11 @@ class ProcessingFeeController extends Controller
         $query = ProcessingFee::query();
 
         if ($request->has('branch_id')) {
-            $query->where('branch_id', $request->branch_id);
+            if ($request->branch_id === 'null' || is_null($request->branch_id)) {
+                $query->whereNull('branch_id');
+            } else {
+                $query->where('branch_id', $request->branch_id);
+            }
         }
 
         return response()->json($query->get());
@@ -23,7 +27,7 @@ class ProcessingFeeController extends Controller
     {
         $validated = $request->validate([
             'jewel_type_id' => 'required|exists:jewel_types,id',
-            'branch_id' => 'required|exists:branches,id',
+            'branch_id' => 'nullable|exists:branches,id',
             'percentage' => 'required|numeric|min:0',
             'max_amount' => 'nullable|numeric|min:0',
         ]);
