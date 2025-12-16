@@ -86,7 +86,7 @@ const PledgeView: React.FC<Props> = ({ data }) => {
   }, [media]);
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-black overflow-y-auto">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-black overflow-y-auto no-scrollbar">
       {/* Header */}
       <header className="flex items-center justify-between p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10 shadow-sm relative">
         <div className="flex items-center gap-3 z-10">
@@ -120,13 +120,17 @@ const PledgeView: React.FC<Props> = ({ data }) => {
           </div>
         )}
 
-        <button
-          onClick={() => navigate(`/pledges/${data.id}/edit`)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-semibold rounded-full hover:bg-primary-dark transition-colors shadow-sm z-10"
-        >
-          <span className="material-symbols-outlined text-[18px]">edit</span>
-          <span>Edit Pledge</span>
-        </button>
+        <div className="flex items-center gap-3 z-10">
+          <button
+            onClick={() => navigate(`/pledges/${data.id}/receipt`)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-full hover:bg-indigo-700 transition-colors shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[18px]">print</span>
+            <span>Receipt</span>
+          </button>
+
+
+        </div>
       </header>
 
       <main className="flex flex-col gap-6 p-4 pb-48 w-full max-w-5xl mx-auto">
@@ -256,7 +260,15 @@ const PledgeView: React.FC<Props> = ({ data }) => {
             </div>
           </div>
         </section>
-
+        <div className="flex justify-center py-8">
+          <button
+            onClick={() => navigate(`/pledges/${data.id}/edit`)}
+            className="flex items-center gap-2.5 px-8 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-dark transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
+          >
+            <span className="material-symbols-outlined text-[20px]">edit_square</span>
+            <span>Edit Pledge Details</span>
+          </button>
+        </div>
       </main>
     </div>
   );
