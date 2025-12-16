@@ -50,11 +50,11 @@ const AdminBottomNavigation: React.FC = () => {
 
                 {/* Loans */}
                 <Link
-                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/loans") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/loans") || isActive("/admin/pledges") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
                         }`}
                     to="/admin/loans"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/loans") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/loans") || isActive("/admin/pledges") ? { fontVariationSettings: "'FILL' 1" } : {}}>
                         credit_score
                     </span>
                     <span className="text-xs font-bold">Loans</span>

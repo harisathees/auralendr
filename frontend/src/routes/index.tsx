@@ -76,6 +76,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/branches" element={<BranchList />} />
         <Route path="/admin/users" element={<UsersList />} />
         <Route path="/admin/loans" element={<LoansList />} />
+        <Route path="/admin/pledges/:id" element={<View />} />
 
         {/* Configurations */}
         <Route path="/admin/configurations" element={<Navigate to="/admin/configs" replace />} />
