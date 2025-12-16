@@ -10,7 +10,12 @@ class Pledge extends Model
     use HasFactory;
 
     protected $fillable = [
-        'customer_id','branch_id','created_by','updated_by','status','reference_no'
+        'customer_id',
+        'branch_id',
+        'created_by',
+        'updated_by',
+        'status',
+        'reference_no'
     ];
 
     public function customer()
@@ -31,5 +36,15 @@ class Pledge extends Model
     public function media()
     {
         return $this->hasMany(MediaFile::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(\App\Models\BranchAndUser\Branch::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\BranchAndUser\User::class, 'created_by');
     }
 }

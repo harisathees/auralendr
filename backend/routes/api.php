@@ -37,6 +37,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('loan-validities', \App\Http\Controllers\Admin\LoanValidityController::class);
         Route::apiResource('payment-methods', \App\Http\Controllers\Admin\PaymentMethodController::class);
         Route::post('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'store']);
+        // Admin Loans View
+        Route::get('/admin-all-loans', [App\Http\Controllers\Admin\LoanController::class, 'index']);
     });
 
     // Shared Routes (Admin + Staff)

@@ -15,6 +15,7 @@ const View = lazy(() => import("../pages/Pledges/View"));
 const BranchList = lazy(() => import("../pages/admin/Branches/List"));
 const UsersList = lazy(() => import("../pages/admin/Users/List"));
 const TasksList = lazy(() => import("../pages/admin/Tasks/List"));
+const LoansList = lazy(() => import("../pages/admin/Loans/List"));
 const AdminConfigs = lazy(() => import("../pages/dashboard/admin/configs/index"));
 const MoneySources = lazy(() => import("../pages/dashboard/admin/configs/MoneySources"));
 const InterestSettings = lazy(() => import("../pages/dashboard/admin/configs/InterestSettings"));
@@ -74,6 +75,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/dashboard" element={<Dashboard />} />
         <Route path="/admin/branches" element={<BranchList />} />
         <Route path="/admin/users" element={<UsersList />} />
+        <Route path="/admin/loans" element={<LoansList />} />
 
         {/* Configurations */}
         <Route path="/admin/configurations" element={<Navigate to="/admin/configs" replace />} />
