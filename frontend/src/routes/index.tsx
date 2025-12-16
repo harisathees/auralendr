@@ -12,7 +12,7 @@ const List = lazy(() => import("../pages/Pledges/List"));
 const Create = lazy(() => import("../pages/Pledges/Create"));
 const Edit = lazy(() => import("../pages/Pledges/Edit"));
 const View = lazy(() => import("../pages/Pledges/View"));
-const NoticePrint = lazy(() => import("../pages/Pledges/NoticePrint"));
+const Receipt = lazy(() => import("../pages/Pledges/Receipt"));
 const BranchList = lazy(() => import("../pages/dashboard/admin/configs/Branches/List"));
 const UsersList = lazy(() => import("../pages/dashboard/admin/configs/Users/List"));
 const CustomersList = lazy(() => import("../pages/admin/Customers/List"));
@@ -62,7 +62,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/pledges" element={<List />} />
         <Route path="/pledges/create" element={<Create />} />
         <Route path="/pledges/:id/edit" element={<Edit />} />
-        <Route path="/pledges/:id/receipt" element={<NoticePrint />} />
+        <Route path="/pledges/:id/receipt" element={<Receipt />} />
         <Route path="/pledges/:id" element={<View />} />
       </Route>
 

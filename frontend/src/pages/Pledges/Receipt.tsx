@@ -23,7 +23,7 @@ const formatDate = (isoDateString: string) => {
     return `${day}/${month}/${year}`;
 };
 
-const NoticePrint = () => {
+const Receipt = () => {
     const { id } = useParams(); // changed from loanId to id to match typical route param
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -347,4 +347,4 @@ const fields = (data: any) => {
     ];
 };
 
-export default NoticePrint;
+export default Receipt;
