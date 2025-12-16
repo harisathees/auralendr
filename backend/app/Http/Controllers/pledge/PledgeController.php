@@ -10,6 +10,7 @@ use App\Models\pledge\Loan;
 use App\Models\pledge\Jewel;
 use App\Models\pledge\MediaFile;
 use App\Models\pledge\Customer;
+use App\Models\MoneySource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -165,6 +166,21 @@ class PledgeController extends Controller
                 Log::info('Creating loan', ['data' => $loanData]);
                 $loan = Loan::create($loanData);
                 Log::info('Loan created', ['id' => $loan->id]);
+
+                // Deduct balance from Money Source
+                if (!empty($loan->payment_method) && !empty($loan->amount_to_be_given)) {
+                    $moneySource = MoneySource::where('name', $loan->payment_method)->first();
+                    if ($moneySource) {
+                        $moneySource->decrement('balance', $loan->amount_to_be_given);
+                        Log::info('Money source balance deducted', [
+                            'source' => $moneySource->name,
+                            'deducted' => $loan->amount_to_be_given,
+                            'new_balance' => $moneySource->balance
+                        ]);
+                    } else {
+                        Log::warning('Money source not found for deduction', ['name' => $loan->payment_method]);
+                    }
+                }
 
                 // Files - Handle 'files[]' array notation from frontend
                 // When files are sent as files[], Laravel stores them as files.0, files.1, etc.
