@@ -8,6 +8,7 @@ import AdminLayout from "../layouts/AdminLayout";
 
 // Lazy load dashboard pages to enable transition animations
 const Dashboard = lazy(() => import("../pages/dashboard/Dashboard"));
+const TransactionHistory = lazy(() => import("../pages/dashboard/TransactionHistory")); // Added TransactionHistory
 const List = lazy(() => import("../pages/Pledges/List"));
 const Create = lazy(() => import("../pages/Pledges/Create"));
 const Edit = lazy(() => import("../pages/Pledges/Edit"));
@@ -65,6 +66,7 @@ const AppRoutes: React.FC = () => {
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/transactions" element={<TransactionHistory />} /> // Added route
 
         {/* Repledge Routes */}
         <Route path="/pledges" element={<List />} />

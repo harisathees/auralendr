@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const BottomNavigation: React.FC = () => {
-    const { logout } = useAuth();
+    // const { logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [fabOpen, setFabOpen] = useState(false);
@@ -66,13 +66,16 @@ const BottomNavigation: React.FC = () => {
                             <span className="text-xs font-bold">Home</span>
                         </Link>
 
-                        {/* Cashbook */}
+                        {/* Transactions */}
                         <Link
-                            className="flex flex-col items-center gap-1 text-secondary-text dark:text-gray-400 hover:text-primary transition-colors"
-                            to="#"
+                            className={`flex flex-col items-center gap-1 transition-colors ${isActive("/transactions") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                                }`}
+                            to="/transactions"
                         >
-                            <span className="material-symbols-outlined">account_balance_wallet</span>
-                            <span className="text-xs font-medium">Cashbook</span>
+                            <span className="material-symbols-outlined" style={isActive("/transactions") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                                receipt_long
+                            </span>
+                            <span className="text-xs font-medium">Transactions</span>
                         </Link>
 
                         {/* FAB Container - Centered in the notch */}
@@ -99,12 +102,12 @@ const BottomNavigation: React.FC = () => {
                                 </button>
 
                                 {/* Create Repledge */}
-                                <button 
-                                  onClick={() => {
+                                <button
+                                    onClick={() => {
                                         navigate("/re-pledge/create");
                                         closeFab();
                                     }}
-                                className="flex flex-col items-center gap-2 group/btn">
+                                    className="flex flex-col items-center gap-2 group/btn">
                                     <div className="h-14 w-14 rounded-full bg-white dark:bg-gray-800 text-purple-600 border border-gray-100 dark:border-gray-700 flex items-center justify-center shadow-lg group-hover/btn:bg-purple-600 group-hover/btn:text-white transition-colors">
                                         <span className="material-symbols-outlined">autorenew</span>
                                     </div>
