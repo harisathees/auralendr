@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import http from '../../api/http';
 import type { Task } from '../../types/models';
@@ -10,6 +10,8 @@ const StaffDashboard: React.FC = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   const fetchTasks = async () => {
     try {
@@ -35,10 +37,37 @@ const StaffDashboard: React.FC = () => {
     logout();
   };
 
-  // Calculate progress
+  // Filter tasks based on selectedDate
+  const filteredTasks = selectedDate
+    ? tasks.filter(task => {
+      if (!task.due_date) return false;
+      // Compare just the date part (YYYY-MM-DD)
+      return task.due_date.startsWith(selectedDate);
+    })
+    : tasks;
+
+  // Calculate progress (based on filtered tasks or all tasks? Usually all tasks for the day progress, but let's keep it global for now based on 'tasks')
+  // User asked for "filter the selected date tasks", so the list below should be filtered.
+  // The progress bar probably should reflect the view? Let's keep progress bar for ALL tasks for now as it says "Daily Task Progress" which usually implies "Today" or "All active".
+  // Actually, "Daily Task Progress" usually implies tasks for TODAY. But currently it calculates on ALL fetched tasks.
+  // I will leave the progress bar logic on 'tasks' (all fetched) to avoid confusion unless requested.
+
   const completedTasks = tasks.filter(t => t.status === 'completed').length;
   const totalTasks = tasks.length;
   const progressPercentage = totalTasks === 0 ? 0 : (completedTasks / totalTasks) * 100;
+
+  const handleDateIconClick = () => {
+    dateInputRef.current?.showPicker();
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedDate(e.target.value);
+  };
+
+  const clearDateFilter = () => {
+    setSelectedDate("");
+    if (dateInputRef.current) dateInputRef.current.value = "";
+  };
 
   return (
     <div className="flex flex-col h-full overflow-y-auto bg-background-light dark:bg-background-dark group/design-root font-display scrollbar-hide">
@@ -96,9 +125,27 @@ const StaffDashboard: React.FC = () => {
           {/* Theme Toggle - Logic moved to ThemeContext, but button remains here */}
           <ThemeToggle />
 
-          <button className="flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-transparent text-primary-text dark:text-gray-100">
-            <span className="material-symbols-outlined">calendar_today</span>
-          </button>
+          <div className="relative">
+            <input
+              type="date"
+              ref={dateInputRef}
+              onChange={handleDateChange}
+              className="absolute opacity-0 w-0 h-0 top-10 right-0"
+              style={{ visibility: 'hidden', position: 'absolute' }}
+            />
+            <button
+              onClick={handleDateIconClick}
+              className={`flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full ${selectedDate ? 'bg-primary text-white' : 'bg-transparent text-primary-text dark:text-gray-100'} transition-colors`}
+            >
+              <span className="material-symbols-outlined">calendar_today</span>
+            </button>
+            {selectedDate && (
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+              </span>
+            )}
+          </div>
           <button className="relative flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-transparent text-primary-text dark:text-gray-100">
             <span className="material-symbols-outlined">notifications</span>
             <span className="absolute top-2 right-2 flex size-2.5 rounded-full bg-primary ring-2 ring-background-light dark:ring-background-dark" />
@@ -131,7 +178,19 @@ const StaffDashboard: React.FC = () => {
         {/* Task List */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-primary-text dark:text-white">Assigned Tasks</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-bold text-primary-text dark:text-white">
+                {selectedDate ? `Tasks for ${new Date(selectedDate).toLocaleDateString()}` : "Assigned Tasks"}
+              </h3>
+              {selectedDate && (
+                <button
+                  onClick={clearDateFilter}
+                  className="text-xs font-medium text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-md transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
             <button
               onClick={fetchTasks}
               className="p-2 -mr-2 text-gray-500 hover:text-primary transition-colors"
@@ -150,8 +209,21 @@ const StaffDashboard: React.FC = () => {
               <span className="material-symbols-outlined text-4xl text-gray-300">checklist</span>
               <p className="text-sm font-medium text-gray-500">No tasks assigned</p>
             </div>
+          ) : filteredTasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-60 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+              <span className="material-symbols-outlined text-4xl text-gray-300">event_busy</span>
+              <p className="text-sm font-medium text-gray-500">No tasks found for this date</p>
+              {selectedDate && (
+                <button
+                  onClick={clearDateFilter}
+                  className="text-primary hover:underline text-sm"
+                >
+                  Clear filter
+                </button>
+              )}
+            </div>
           ) : (
-            tasks.map((task) => (
+            filteredTasks.map((task) => (
               <TaskAccordion
                 key={task.id}
                 task={task}

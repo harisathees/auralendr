@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+
 
 const BottomNavigation: React.FC = () => {
     // const { logout } = useAuth();
@@ -61,7 +61,7 @@ const BottomNavigation: React.FC = () => {
                             to="/dashboard"
                         >
                             <span className="material-symbols-outlined" style={isActive("/dashboard") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                                home
+                                dashboard
                             </span>
                             <span className="text-xs font-bold">Home</span>
                         </Link>
@@ -138,19 +138,23 @@ const BottomNavigation: React.FC = () => {
                             to="/pledges"
                         >
                             <span className="material-symbols-outlined" style={isActive("/pledges") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                                inventory_2
+                                credit_score
                             </span>
                             <span className="text-xs font-bold">Loans</span>
                         </Link>
 
-                        {/* Reports */}
+                        {/* Repledges */}
                         <Link
-                            className="flex flex-col items-center gap-1 text-secondary-text dark:text-gray-400 hover:text-primary transition-colors"
-                            to="#"
+                            className={`flex flex-col items-center gap-1 transition-colors ${isActive("/re-pledge") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                                }`}
+                            to="/re-pledge"
                         >
-                            <span className="material-symbols-outlined">bar_chart</span>
-                            <span className="text-xs font-medium">Reports</span>
+                            <span className="material-symbols-outlined" style={isActive("/re-pledge") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                                sync_lock
+                            </span>
+                            <span className="text-xs font-bold">Repledges</span>
                         </Link>
+
                     </div>
                 </div>
             </div>

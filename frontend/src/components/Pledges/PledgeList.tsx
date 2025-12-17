@@ -1,25 +1,72 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import http from "../../api/http";
 
 interface Props {
   pledges: any[];
+  searchTerm: string;
+  onSearchChange: (term: string) => void;
+  loading: boolean;
 }
 
-const PledgeList: React.FC<Props> = ({ pledges }) => {
+const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, loading }) => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredPledges = useMemo(() => {
-    return pledges.filter((p) => {
-      const term = searchTerm.toLowerCase();
-      return (
-        p.customer?.name?.toLowerCase().includes(term) ||
-        p.loan?.loan_no?.toLowerCase().includes(term) ||
-        p.customer?.mobile_no?.includes(term) ||
-        String(p.id).includes(term)
-      );
-    });
-  }, [pledges, searchTerm]);
+  // Autocomplete State
+  const [inputValue, setInputValue] = useState(searchTerm);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Sync input value if parent updates searchTerm (e.g. clear)
+  useEffect(() => {
+    setInputValue(searchTerm);
+  }, [searchTerm]);
+
+  // Handle outside click to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Fetch Suggestions
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (inputValue.length > 1 && inputValue !== searchTerm) {
+        http.get('/pledges', { params: { search: inputValue, suggestions: true } })
+          .then(res => {
+            setSuggestions(res.data.data || []);
+            setShowDropdown(true);
+          })
+          .catch(console.error);
+      } else {
+        setSuggestions([]);
+        setShowDropdown(false);
+      }
+    }, 300); // 300ms debounce for suggestions
+
+    return () => clearTimeout(timer);
+  }, [inputValue, searchTerm]);
+
+  const handleSelectSuggestion = (loanNo: string) => {
+    setInputValue(loanNo);
+    onSearchChange(loanNo); // Trigger parent search
+    setShowDropdown(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      onSearchChange(inputValue);
+      setShowDropdown(false);
+    }
+  };
+
+  // Helper for random color or logic based on status
 
 
   // Helper for random color or logic based on status
@@ -51,8 +98,8 @@ const PledgeList: React.FC<Props> = ({ pledges }) => {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative w-full group">
+        {/* Search Bar - Autocomplete */}
+        <div className="relative w-full group" ref={searchRef}>
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <span className="material-symbols-outlined text-secondary-text dark:text-text-muted">search</span>
           </div>
@@ -60,24 +107,51 @@ const PledgeList: React.FC<Props> = ({ pledges }) => {
             className="block w-full p-3 pl-11 pr-12 text-sm text-primary-text dark:text-white bg-white dark:bg-dark-surface border border-gray-200 dark:border-transparent rounded-xl placeholder-secondary-text dark:placeholder-text-muted focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-sm outline-none"
             placeholder="Search by name, phone, or loan no..."
             type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => inputValue.length > 1 && setShowDropdown(true)}
           />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer">
-            <span className="material-symbols-outlined text-primary">tune</span>
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer" onClick={() => { setInputValue(''); onSearchChange(''); }}>
+            {inputValue ? <span className="material-symbols-outlined text-gray-400 hover:text-gray-600">close</span> : <span className="material-symbols-outlined text-primary">tune</span>}
           </div>
+
+          {/* Suggestions Dropdown */}
+          {showDropdown && suggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#1C1C1E] rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 max-h-60 overflow-y-auto z-50">
+              {suggestions.map((s) => (
+                <div
+                  key={s.id}
+                  className="p-3 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer border-b border-gray-50 dark:border-gray-800/50 last:border-0"
+                  onClick={() => handleSelectSuggestion(s.loan_no)}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-primary-text dark:text-gray-200 text-sm">{s.loan_no}</span>
+                    <span className="text-xs text-gray-500">{s.customer_name}</span>
+                  </div>
+                  {s.mobile_no && <div className="text-xs text-gray-400 mt-0.5">{s.mobile_no}</div>}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
       {/* Main Content: List */}
       <main className="flex-1 overflow-y-auto no-scrollbar relative px-5 pb-24">
-        {filteredPledges.length === 0 && (
+        {loading && (
+          <div className="text-center py-10">
+            <span className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></span>
+          </div>
+        )}
+
+        {!loading && pledges.length === 0 && (
           <div className="text-center text-secondary-text dark:text-text-muted py-10">
             No pledges found matching your search.
           </div>
         )}
 
-        {filteredPledges.map((p) => (
+        {!loading && pledges.map((p) => (
           <div
             key={p.id}
             onClick={() => navigate(`/pledges/${p.id}`)}

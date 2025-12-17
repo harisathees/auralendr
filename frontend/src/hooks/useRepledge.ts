@@ -22,6 +22,10 @@ export interface RepledgeEntry {
     due_date: string | null;
     status: string;
     created_at: string;
+    source?: {
+        id: number;
+        name: string;
+    } | null;
 }
 
 export interface LoanDetails {
@@ -112,7 +116,7 @@ export const useRepledge = () => {
     // Search Loan for Repledge (Auto-fetch)
     const searchLoanSuggestions = async (loanNo: string) => {
         try {
-            const res = await http.get(`/repledges/search-loan?query=${loanNo}`);
+            const res = await http.get(`/repledge-loans/search?query=${loanNo}`);
             return res.data;
         } catch (err: any) {
             console.error("Search failed", err);

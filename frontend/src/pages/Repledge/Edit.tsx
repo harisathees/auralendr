@@ -50,7 +50,7 @@ const Edit: React.FC = () => {
                 <h1 className="text-xl font-bold text-primary-text dark:text-white">Edit Repledge</h1>
             </header>
 
-            <main className="flex-1 overflow-y-auto p-6 max-w-5xl mx-auto w-full">
+            <main className="flex-1 overflow-y-auto no-scrollbar p-6 max-w-5xl mx-auto w-full">
                 <RepledgeForm initialData={initialData} onSubmit={handleSubmit} onCancel={() => navigate(-1)} />
             </main>
         </div>

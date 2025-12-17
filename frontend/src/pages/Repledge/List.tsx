@@ -33,7 +33,7 @@ const List: React.FC = () => {
                 <div className="grid gap-4">
                     {repledgeEntries.map((item) => (
                         <div key={item.id} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-purple-200 dark:hover:border-purple-900 transition-colors group relative cursor-pointer"
-                            onClick={() => navigate(`/repledge/${item.id}`)}> {/* Making row clickable to view */}
+                            onClick={() => navigate(`/re-pledge/${item.id}`)}> {/* Making row clickable to view */}
 
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400 font-bold text-lg">
@@ -48,7 +48,7 @@ const List: React.FC = () => {
                             <div className="flex flex-wrap gap-6 items-center flex-1 md:justify-end">
                                 <div className="flex flex-col">
                                     <span className="text-xs text-gray-400 font-bold uppercase">Bank</span>
-                                    <span className="font-semibold text-gray-700 dark:text-gray-300">{(item as any).bank?.name || 'Unknown'}</span>
+                                    <span className="font-semibold text-gray-700 dark:text-gray-300">{item.source?.name || 'Unknown'}</span>
                                 </div>
                                 <div className="flex flex-col">
                                     <span className="text-xs text-gray-400 font-bold uppercase">Amount</span>

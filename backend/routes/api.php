@@ -30,7 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     // Repledge Routes
-    Route::get('repledges/search-loan', [\App\Http\Controllers\Repledge\RepledgeController::class, 'searchLoan']);
+    Route::get('repledge-loans/search', [\App\Http\Controllers\Repledge\RepledgeController::class, 'searchLoan']);
     Route::apiResource('repledges', \App\Http\Controllers\Repledge\RepledgeController::class);
 
 

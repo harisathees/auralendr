@@ -14,13 +14,15 @@ class RepledgeController extends Controller
 {
     public function searchLoan(Request $request)
     {
-        $loanNo = $request->query('query');
+        $loanNo = trim($request->query('query'));
         if (!$loanNo) {
             return response()->json([], 200);
         }
 
         $user = $request->user();
 
+        // Use 'like' for case-insensitive/whitespace tolerance if DB collation allows, or just clean match.
+        // Also ensure we eager load what we need.
         $loan = Loan::where('loan_no', $loanNo)
             ->whereHas('pledge', function ($query) use ($user) {
                 if (!$user->hasRole('admin')) {
@@ -31,15 +33,28 @@ class RepledgeController extends Controller
             ->first();
 
         if (!$loan) {
-            return response()->json(['message' => 'Loan not found'], 404);
+            // Fallback: Try searching pledge by id if input looks like numeric ID (optional, but good for robust search)
+            // Or try case-insensitive
+            $loan = Loan::where('loan_no', 'LIKE', $loanNo)
+                ->whereHas('pledge', function ($query) use ($user) {
+                    if (!$user->hasRole('admin')) {
+                        $query->where('branch_id', $user->branch_id);
+                    }
+                })
+                ->with(['pledge.jewels'])
+                ->first();
+        }
+
+        if (!$loan) {
+            return response()->json(['message' => 'Loan not found or access denied'], 404);
         }
 
         // Aggregate Weights
-        $grossWeight = $loan->pledge->jewels->sum('weight'); // 'weight' is gross weight in Jewel model?
-        // Jewel model has 'weight', 'stone_weight', 'net_weight'.
-        // Let's assume 'weight' is gross.
-        $netWeight = $loan->pledge->jewels->sum('net_weight');
-        $stoneWeight = $loan->pledge->jewels->sum('stone_weight');
+        // Ensure jewels exist
+        $jewels = $loan->pledge->jewels ?? collect([]);
+        $grossWeight = $jewels->sum('weight');
+        $netWeight = $jewels->sum('net_weight');
+        $stoneWeight = $jewels->sum('stone_weight');
 
         return response()->json([
             'id' => $loan->id,

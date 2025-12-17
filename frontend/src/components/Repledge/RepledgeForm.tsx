@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRepledgeSource } from "../../hooks/useRepledgeSource";
 import { useRepledge } from "../../hooks/useRepledge";
 import { useToast } from "../../context";
+import http from "../../api/http"; // Direct HTTP for suggestions
 
 interface RepledgeItem {
     id?: string;
@@ -23,11 +24,9 @@ interface Props {
     initialData?: any;
     onSubmit: (data: any) => Promise<void>;
     loading?: boolean;
-    onCancel?: () => void;
-    onSettingsClick?: () => void;
 }
 
-const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false, onCancel, onSettingsClick }) => {
+const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false }) => {
     const { sources, loading: sourcesLoading } = useRepledgeSource();
     const { searchLoanSuggestions: searchLoan } = useRepledge();
     const { showToast } = useToast();
@@ -42,6 +41,7 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
     const [globalValidity, setGlobalValidity] = useState(0);
     const [globalPostInt, setGlobalPostInt] = useState(0);
     const [globalPaymentMethod, setGlobalPaymentMethod] = useState("");
+    const [isBankDetailsOpen, setIsBankDetailsOpen] = useState(false); // Default collapsed
 
     const [items, setItems] = useState<RepledgeItem[]>([{
         id: 'init_1',
@@ -51,6 +51,90 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
         interestPercent: 0, validityPeriod: 0, afterInterestPercent: 0,
         paymentMethod: ""
     }]);
+
+    // Autocomplete State per item logic? Or simplify to active index tracking
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [activeSuggestionIndex, setActiveSuggestionIndex] = useState<number | null>(null);
+    const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
+    const fetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isSelectingRef = useRef(false); // Ref to track if user is selecting a suggestion
+
+    const fetchSuggestions = (query: string, index: number) => {
+        if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
+
+        if (query.length < 2) {
+            setSuggestions([]);
+            setIsFetchingSuggestions(false);
+            return;
+        }
+
+        setIsFetchingSuggestions(true);
+        setActiveSuggestionIndex(index); // Ensure we know which index we are loading for
+
+        fetchTimeoutRef.current = setTimeout(async () => {
+            try {
+                const res = await http.get('/pledges', { params: { search: query, suggestions: true } });
+                setSuggestions(res.data.data || []);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setIsFetchingSuggestions(false);
+            }
+        }, 300); // 300ms debounce
+    };
+
+    // Unified fetch logic
+    const fetchAndPopulateLoan = async (loanNo: string, index: number) => {
+        if (!loanNo) return;
+        try {
+            const loan = await searchLoan(loanNo);
+            if (loan) {
+                setItems(prev => {
+                    const newItems = [...prev];
+                    const item = newItems[index]; // Use fresh state if possible in setState callback
+                    // Wait, we need to merge with existing generic item structure
+                    newItems[index] = {
+                        ...item, // Keep existing ID/key
+                        loanId: loan.id,
+                        loanNo: loan.loan_no, // Update loanNo in case of partial match
+                        amount: loan.amount,
+                        processingFee: Math.round(Math.min(Number(loan.amount) * 0.0012, 200)),
+                        grossWeight: loan.gross_weight,
+                        netWeight: loan.net_weight,
+                        stoneWeight: loan.stone_weight,
+                        interestPercent: globalInterest,
+                        validityPeriod: globalValidity,
+                        afterInterestPercent: globalPostInt,
+                        paymentMethod: globalPaymentMethod,
+                    };
+                    return newItems;
+                });
+                showToast("Loan details fetched", "success");
+            } else {
+                showToast("Loan not found", "error");
+            }
+        } catch (e) {
+            showToast("Failed to fetch loan", "error");
+        }
+    };
+
+    const handleSelectSuggestion = (suggestion: any, index: number) => {
+        isSelectingRef.current = true; // Signal that we are selecting
+
+        // Directly update state and fetch
+        setItems(prev => {
+            const newItems = [...prev];
+            newItems[index] = { ...newItems[index], loanNo: suggestion.loan_no };
+            return newItems;
+        });
+        setSuggestions([]);
+        setActiveSuggestionIndex(null);
+
+        // Fetch immediately with the KNOWN valid loan number
+        fetchAndPopulateLoan(suggestion.loan_no, index).finally(() => {
+            isSelectingRef.current = false; // Reset after a bit (safe measure)
+        });
+    };
 
     // Common Input Class matching Create Pledge
     const inputClass = "w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-purple-600 focus:ring-1 focus:ring-purple-600 h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400";
@@ -145,36 +229,26 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
         });
     };
 
+    const handleLoanInputChange = (index: number, value: string) => {
+        handleItemChange(index, "loanNo", value);
+        fetchSuggestions(value, index);
+    };
+
     const handleLoanBlur = async (index: number) => {
+        // If we are selecting a suggestion, skip the generic blur fetch to avoid race condition
+        if (isSelectingRef.current) {
+            isSelectingRef.current = false;
+            return;
+        }
+
+        // Slight delay to check if isSelectingRef gets set by mousedown?
+        // No, mousedown happens before blur usually. 
+        // We rely on the fact that handleSelectSuggestion runs and we pass correct scope.
+
         const loanNo = items[index].loanNo;
-        if (!loanNo) return;
-        try {
-            const loan = await searchLoan(loanNo);
-            if (loan) {
-                setItems(prev => {
-                    const newItems = [...prev];
-                    const item = newItems[index];
-                    newItems[index] = {
-                        ...item,
-                        loanId: loan.id,
-                        amount: loan.amount,
-                        processingFee: Math.round(Math.min(Number(loan.amount) * 0.0012, 200)),
-                        grossWeight: loan.gross_weight,
-                        netWeight: loan.net_weight,
-                        stoneWeight: loan.stone_weight,
-                        interestPercent: globalInterest,
-                        validityPeriod: globalValidity,
-                        afterInterestPercent: globalPostInt,
-                        paymentMethod: globalPaymentMethod,
-                    };
-                    return newItems;
-                });
-                showToast("Loan details fetched", "success");
-            } else {
-                showToast("Loan not found or branch mismatch", "error");
-            }
-        } catch (e) {
-            showToast("Failed to fetch loan", "error");
+        // Only fetch if loanNo is present and NOT fully fetched (optimization? or just always fetch)
+        if (loanNo && loanNo.length > 3) { // rudimentary check
+            fetchAndPopulateLoan(loanNo, index);
         }
     };
 
@@ -224,33 +298,31 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
     };
 
     return (
-        <div className="flex flex-col gap-6 p-4 pb-24 w-full h-full bg-[#f7f8fc] dark:bg-[#1F1B2E]">
-            {/* Top Bar */}
-            <div className="sticky top-0 z-50 flex items-center bg-[#f7f8fc] dark:bg-[#1F1B2E] p-4 pb-2 justify-between border-b border-gray-100/50 dark:border-gray-800/50 backdrop-blur-md bg-opacity-95 -mx-4 -mt-4 mb-2">
-                <h2 className="text-gray-900 dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] flex-1 text-center pl-12">
-                    {initialData ? "Edit Re-Pledge" : "Re-Pledge Entry"}
-                </h2>
-                <div className="flex w-12 items-center justify-end">
-                    {onSettingsClick ? (
-                        <button type="button" onClick={onSettingsClick} className="flex items-center justify-center rounded-xl h-10 w-10 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                            <span className="material-symbols-outlined text-2xl">settings</span>
-                        </button>
-                    ) : (
-                        <button type="button" onClick={onCancel} className="flex items-center justify-center rounded-xl h-10 w-10 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                            <span className="material-symbols-outlined text-2xl">close</span>
-                        </button>
-                    )}
-                </div>
-            </div>
+        <div className="flex flex-col gap-5 p-4 pb-96 w-full max-w-5xl mx-auto h-full bg-[#f7f8fc] dark:bg-[#1F1B2E]">
+
 
             {/* Bank Details Card */}
-            <div className="flex flex-col rounded-xl bg-white dark:bg-gray-900 p-5 shadow-sm border border-gray-100 dark:border-gray-800">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Bank Details</h3>
-                    <span className="material-symbols-outlined text-purple-600">account_balance</span>
-                </div>
-                <div className="space-y-4">
-                    <label className="flex flex-col w-full gap-1.5">
+            {/* Bank Details Card */}
+            <div className="flex flex-col rounded-xl bg-white dark:bg-gray-900 shadow-sm border border-gray-100 dark:border-gray-800">
+                {/* Always Visible Part */}
+                <div className="p-5 pb-2">
+                    <div
+                        className="flex items-center justify-between cursor-pointer mb-4 group"
+                        onClick={() => setIsBankDetailsOpen(!isBankDetailsOpen)}
+                    >
+                        <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-purple-600">account_balance</span>
+                            <h3 className="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Bank Details</h3>
+                        </div>
+                        <span
+                            className={`material-symbols-outlined text-gray-400 transition-transform duration-300 group-hover:text-purple-600 ${isBankDetailsOpen ? 'rotate-180' : ''}`}
+                        >
+                            expand_more
+                        </span>
+                    </div>
+
+                    {/* Bank Selection - Always Visible */}
+                    <label className="flex flex-col w-full gap-1.5 mb-2">
                         <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Bank</span>
                         <div className="relative">
                             <select value={bankId} onChange={handleBankChange} className={selectClass}>
@@ -262,51 +334,47 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                             <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
                         </div>
                     </label>
+                </div>
 
-                    <div className="flex gap-4">
-                        <label className="flex flex-col flex-1 min-w-0 gap-1.5">
-                            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Interest %</span>
-                            <input type="number" value={globalInterest} onChange={(e) => setGlobalInterest(parseFloat(e.target.value) || 0)} className={inputClass} placeholder="e.g. 12" />
-                        </label>
-                        <label className="flex flex-col flex-1 min-w-0 gap-1.5">
-                            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Validity (Mo)</span>
-                            <input type="number" value={globalValidity} onChange={(e) => setGlobalValidity(parseFloat(e.target.value) || 0)} className={inputClass} placeholder="e.g. 6" />
-                        </label>
-                    </div>
+                {/* Collapsible Content with Smooth Grid Animation */}
+                <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isBankDetailsOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                    <div className="overflow-hidden">
+                        <div className="p-5 pt-2 space-y-4 border-t border-gray-100 dark:border-gray-800 mt-2">
+                            <div className="flex gap-4">
+                                <label className="flex flex-col flex-1 min-w-0 gap-1.5">
+                                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Interest %</span>
+                                    <input type="number" value={globalInterest} onChange={(e) => setGlobalInterest(parseFloat(e.target.value) || 0)} className={inputClass} placeholder="e.g. 12" />
+                                </label>
+                                <label className="flex flex-col flex-1 min-w-0 gap-1.5">
+                                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Validity (Mo)</span>
+                                    <input type="number" value={globalValidity} onChange={(e) => setGlobalValidity(parseFloat(e.target.value) || 0)} className={inputClass} placeholder="e.g. 6" />
+                                </label>
+                            </div>
 
-                    <div className="flex gap-4">
-                        <label className="flex flex-col flex-1 min-w-0 gap-1.5">
-                            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Post-Int %</span>
-                            <input type="number" value={globalPostInt} onChange={(e) => setGlobalPostInt(parseFloat(e.target.value) || 0)} className={inputClass} placeholder="e.g. 18" />
-                        </label>
-                        <label className="flex flex-col flex-1 min-w-0 gap-1.5">
-                            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Payment</span>
-                            <input type="text" value={globalPaymentMethod} onChange={(e) => setGlobalPaymentMethod(e.target.value)} className={inputClass} placeholder="e.g. Cash" />
-                        </label>
-                    </div>
+                            <div className="flex gap-4">
+                                <label className="flex flex-col flex-1 min-w-0 gap-1.5">
+                                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Post-Int %</span>
+                                    <input type="number" value={globalPostInt} onChange={(e) => setGlobalPostInt(parseFloat(e.target.value) || 0)} className={inputClass} placeholder="e.g. 18" />
+                                </label>
+                                <label className="flex flex-col flex-1 min-w-0 gap-1.5">
+                                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Payment</span>
+                                    <input type="text" value={globalPaymentMethod} onChange={(e) => setGlobalPaymentMethod(e.target.value)} className={inputClass} placeholder="e.g. Cash" />
+                                </label>
+                            </div>
 
-                    <div className="flex gap-4">
-                        <label className="flex flex-col flex-1 min-w-0 gap-1.5">
-                            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Start Date</span>
-                            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={inputClass} />
-                        </label>
-                        <label className="flex flex-col flex-1 min-w-0 gap-1.5">
-                            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">End Date</span>
-                            <input type="date" value={endDate} readOnly className={`${inputClass} bg-gray-50 dark:bg-gray-700 text-gray-500`} />
-                        </label>
-                    </div>
+                            <div className="flex gap-4">
+                                <label className="flex flex-col flex-1 min-w-0 gap-1.5">
+                                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Start Date</span>
+                                    <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={inputClass} />
+                                </label>
+                                <label className="flex flex-col flex-1 min-w-0 gap-1.5">
+                                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">End Date</span>
+                                    <input type="date" value={endDate} readOnly className={`${inputClass} bg-gray-50 dark:bg-gray-700 text-gray-500`} />
+                                </label>
+                            </div>
 
-                    <label className="flex flex-col w-full gap-1.5">
-                        <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Status</span>
-                        <div className="relative">
-                            <select value={status} onChange={(e) => setStatus(e.target.value)} className={selectClass}>
-                                <option value="active">Active</option>
-                                <option value="closed">Closed</option>
-                                <option value="pending">Pending</option>
-                            </select>
-                            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-purple-600 pointer-events-none">check_circle</span>
                         </div>
-                    </label>
+                    </div>
                 </div>
             </div>
 
@@ -334,14 +402,46 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                                 <input
                                     type="text"
                                     value={item.loanNo}
-                                    onChange={(e) => handleItemChange(index, "loanNo", e.target.value)}
-                                    onBlur={() => handleLoanBlur(index)}
+                                    onChange={(e) => handleLoanInputChange(index, e.target.value)}
+                                    onBlur={() => {
+                                        // Delay blur to allow click on suggestion (kept for non-suggestion clicks)
+                                        // But if selectingRef is true, we skip via handleLoanBlur
+                                        setTimeout(() => {
+                                            setActiveSuggestionIndex(null);
+                                            handleLoanBlur(index);
+                                        }, 200);
+                                    }}
                                     className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 focus:ring-purple-600`}
                                     placeholder="Search by Ln. no"
+                                    autoComplete="off"
                                 />
-                                <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center bg-purple-600 rounded-lg text-white pointer-events-none">
-                                    <span className="material-symbols-outlined text-sm">search</span>
+                                <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center pointer-events-none">
+                                    {activeSuggestionIndex === index && isFetchingSuggestions ? (
+                                        <span className="inline-block animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></span>
+                                    ) : (
+                                        <div className="bg-purple-600 rounded-lg text-white h-full w-full flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-sm">search</span>
+                                        </div>
+                                    )}
                                 </button>
+
+                                {/* Suggestions Dropdown */}
+                                {activeSuggestionIndex === index && suggestions.length > 0 && (
+                                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#2E2842] rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto z-50">
+                                        {suggestions.map((s) => (
+                                            <div
+                                                key={s.id}
+                                                className="p-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer border-b border-gray-50 dark:border-gray-700/50 last:border-0"
+                                                onClick={() => handleSelectSuggestion(s, index)}
+                                            >
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-bold text-gray-900 dark:text-white text-sm">{s.loan_no}</span>
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400">{s.customer_name}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -354,21 +454,21 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                             <label className="flex flex-col min-w-0 gap-1.5">
                                 <span className="text-gray-400 text-sm font-medium truncate">Gross Wt.</span>
                                 <div className="relative">
-                                    <input type="number" value={item.grossWeight || ''} readOnly className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 opacity-80`} placeholder="0.00" />
+                                    <input type="number" value={item.grossWeight ?? ''} readOnly className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 opacity-80`} placeholder="0.00" />
                                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">g</span>
                                 </div>
                             </label>
                             <label className="flex flex-col min-w-0 gap-1.5">
                                 <span className="text-gray-400 text-sm font-medium truncate">Stone Wt.</span>
                                 <div className="relative">
-                                    <input type="number" value={item.stoneWeight || ''} readOnly className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 opacity-80`} placeholder="0.00" />
+                                    <input type="number" value={item.stoneWeight ?? ''} readOnly className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 opacity-80`} placeholder="0.00" />
                                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">g</span>
                                 </div>
                             </label>
                             <label className="flex flex-col min-w-0 gap-1.5">
                                 <span className="text-gray-400 text-sm font-medium truncate">Net Wt.</span>
                                 <div className="relative">
-                                    <input type="number" value={item.netWeight || ''} readOnly className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 opacity-80`} placeholder="0.00" />
+                                    <input type="number" value={item.netWeight ?? ''} readOnly className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 opacity-80`} placeholder="0.00" />
                                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">g</span>
                                 </div>
                             </label>
@@ -379,14 +479,14 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                                 <span className="text-gray-400 text-sm font-medium">Amount</span>
                                 <div className="relative">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
-                                    <input type="number" value={item.amount || ''} onChange={(e) => handleItemChange(index, "amount", e.target.value)} className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 pl-8 focus:ring-purple-600 font-bold`} placeholder="0.00" />
+                                    <input type="number" value={item.amount ?? ''} onChange={(e) => handleItemChange(index, "amount", e.target.value)} className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 pl-8 focus:ring-purple-600 font-bold`} placeholder="0.00" />
                                 </div>
                             </label>
                             <label className="flex flex-col min-w-0 gap-1.5">
                                 <span className="text-gray-400 text-sm font-medium">Proc. Fee</span>
                                 <div className="relative">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
-                                    <input type="number" value={item.processingFee || ''} onChange={(e) => handleItemChange(index, "processingFee", e.target.value)} className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 pl-8 focus:ring-purple-600`} placeholder="0.00" />
+                                    <input type="number" value={item.processingFee ?? ''} onChange={(e) => handleItemChange(index, "processingFee", e.target.value)} className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 pl-8 focus:ring-purple-600`} placeholder="0.00" />
                                 </div>
                             </label>
                         </div>
@@ -394,13 +494,33 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                 </div>
             ))}
 
-            <div className="flex gap-3 pt-2">
-                <button type="button" onClick={addItem} className="flex-1 h-14 rounded-xl border-2 border-purple-600/20 bg-transparent text-purple-600 text-base font-bold flex items-center justify-center gap-2 hover:bg-purple-600/5 transition-colors">
-                    <span className="material-symbols-outlined">add</span>
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4 pb-2">
+                <button
+                    type="button"
+                    onClick={addItem}
+                    className="flex-1 h-14 rounded-xl border-2 border-dashed border-purple-600/30 bg-purple-600/5 text-purple-600 text-base font-bold flex items-center justify-center gap-2 hover:bg-purple-600/10 hover:border-purple-600 transition-all active:scale-[0.98]"
+                >
+                    <span className="material-symbols-outlined">add_circle</span>
                     Add Another
                 </button>
-                <button type="button" onClick={handleSubmit} disabled={loading} className="flex-[2] h-14 rounded-xl bg-purple-600 text-white text-base font-bold shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 hover:bg-purple-600/90 transition-colors disabled:opacity-70">
-                    {loading ? "Saving..." : "Save Entry"}
+                <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="flex-[2] h-14 rounded-xl bg-purple-600 text-white text-base font-bold shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 hover:bg-purple-700 active:scale-[0.98] transition-all disabled:opacity-70 disabled:hover:scale-100"
+                >
+                    {loading ? (
+                        <>
+                            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <span>Saving...</span>
+                        </>
+                    ) : (
+                        <>
+                            <span className="material-symbols-outlined">save</span>
+                            Save Entry
+                        </>
+                    )}
                 </button>
             </div>
 

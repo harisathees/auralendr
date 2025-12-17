@@ -36,6 +36,35 @@ class PledgeController extends Controller
             $query->where('branch_id', $user->branch_id);
         }
 
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                // Search Customer Name or Mobile
+                $q->whereHas('customer', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('mobile_no', 'like', "%{$search}%");
+                })
+                    // Search Loan Number
+                    ->orWhereHas('loan', function ($q) use ($search) {
+                        $q->where('loan_no', 'like', "%{$search}%");
+                    })
+                    // Search Pledge ID
+                    ->orWhere('id', $search);
+            });
+        }
+
+        // Lightweight Suggestions Mode
+        if ($request->query('suggestions')) {
+            $results = $query->take(10)->get()->map(function ($pledge) {
+                return [
+                    'id' => $pledge->id,
+                    'loan_no' => $pledge->loan->loan_no ?? 'No Loan No',
+                    'customer_name' => $pledge->customer->name ?? 'Unknown',
+                    'mobile_no' => $pledge->customer->mobile_no ?? '',
+                ];
+            });
+            return response()->json(['data' => $results]);
+        }
+
         $perPage = (int) $request->query('per_page', 20);
 
         return response()->json($query->orderByDesc('id')->paginate($perPage));

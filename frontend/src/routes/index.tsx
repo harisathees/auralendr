@@ -74,14 +74,13 @@ const AppRoutes: React.FC = () => {
         <Route path="/pledges/:id/edit" element={<Edit />} />
         <Route path="/pledges/:id/receipt" element={<Receipt />} />
         <Route path="/pledges/:id" element={<View />} />
+
+        {/* Repledge Routes */}
+        <Route path="/re-pledge" element={<RepledgeList />} />
+        <Route path="/re-pledge/create" element={<RepledgeCreate />} />
+        <Route path="/re-pledge/:id/edit" element={<RepledgeEdit />} />
+        <Route path="/re-pledge/:id" element={<RepledgeView />} />
       </Route>
-
-      {/* Repledge Routes */}
-      <Route path="/re-pledge" element={<RepledgeList />} />
-      <Route path="/re-pledge/create" element={<RepledgeCreate />} />
-      <Route path="/re-pledge/:id/edit" element={<RepledgeEdit />} />
-      <Route path="/re-pledge/:id" element={<RepledgeView />} />
-
 
       {/* Admin Routes */}
       <Route
