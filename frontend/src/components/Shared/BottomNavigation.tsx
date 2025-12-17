@@ -66,32 +66,47 @@ const BottomNavigation: React.FC = () => {
                             <span className="text-xs font-bold">Home</span>
                         </Link>
 
-                        {/* Transactions */}
+                        {/* Loans (Includes Repledges tab) */}
                         <Link
-                            className={`flex flex-col items-center gap-1 transition-colors ${isActive("/transactions") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                            className={`flex flex-col items-center gap-1 transition-colors ${isActive("/pledges") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
                                 }`}
-                            to="/transactions"
+                            to="/pledges"
                         >
-                            <span className="material-symbols-outlined" style={isActive("/transactions") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                                receipt_long
+                            <span className="material-symbols-outlined" style={isActive("/pledges") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                                credit_score
                             </span>
-                            <span className="text-xs font-medium">Transactions</span>
+                            <span className="text-xs font-bold">Loans</span>
                         </Link>
 
                         {/* FAB Container - Centered in the notch */}
                         <div className="relative flex justify-center items-end h-full group -top-4">
                             {/* FAB Menu */}
                             <div
-                                className={`absolute bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-4 transition-all duration-300 transform origin-bottom ${fabOpen ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                                className={`absolute bottom-28 left-1/2 -translate-x-1/2 flex items-center gap-6 transition-all duration-300 transform origin-bottom ${fabOpen ? "scale-100 opacity-100" : "scale-0 opacity-0"
                                     }`}
                             >
-                                {/* Create Pledge */}
+                                {/* Create Repledge */}
+                                <button
+                                    onClick={() => {
+                                        navigate("/re-pledge/create");
+                                        closeFab();
+                                    }}
+                                    className={`flex flex-col items-center gap-2 group/btn transition-transform duration-300 delay-100 ${fabOpen ? "translate-y-0" : "translate-y-4"}`}>
+                                    <div className="h-14 w-14 rounded-full bg-white dark:bg-gray-800 text-purple-600 border border-gray-100 dark:border-gray-700 flex items-center justify-center shadow-lg group-hover/btn:bg-purple-600 group-hover/btn:text-white transition-colors">
+                                        <span className="material-symbols-outlined">autorenew</span>
+                                    </div>
+                                    <span className="text-xs font-bold text-primary-text dark:text-white bg-card-light dark:bg-gray-800 px-2 py-1 rounded-md shadow-sm whitespace-nowrap">
+                                        Create Repledge
+                                    </span>
+                                </button>
+
+                                {/* Create Pledge (Center) */}
                                 <button
                                     onClick={() => {
                                         navigate("/pledges/create");
                                         closeFab();
                                     }}
-                                    className="flex flex-col items-center gap-2 group/btn"
+                                    className={`flex flex-col items-center gap-2 group/btn transition-transform duration-300 delay-75 ${fabOpen ? "translate-y-0" : "translate-y-4"}`}
                                 >
                                     <div className="h-14 w-14 rounded-full bg-white dark:bg-gray-800 text-primary border border-gray-100 dark:border-gray-700 flex items-center justify-center shadow-lg group-hover/btn:bg-primary group-hover/btn:text-white transition-colors">
                                         <span className="material-symbols-outlined">local_offer</span>
@@ -101,18 +116,18 @@ const BottomNavigation: React.FC = () => {
                                     </span>
                                 </button>
 
-                                {/* Create Repledge */}
+                                {/* Add Transaction */}
                                 <button
                                     onClick={() => {
-                                        navigate("/re-pledge/create");
+                                        navigate("/transactions");
                                         closeFab();
                                     }}
-                                    className="flex flex-col items-center gap-2 group/btn">
-                                    <div className="h-14 w-14 rounded-full bg-white dark:bg-gray-800 text-purple-600 border border-gray-100 dark:border-gray-700 flex items-center justify-center shadow-lg group-hover/btn:bg-purple-600 group-hover/btn:text-white transition-colors">
-                                        <span className="material-symbols-outlined">autorenew</span>
+                                    className={`flex flex-col items-center gap-2 group/btn transition-transform duration-300 delay-150 ${fabOpen ? "translate-y-0" : "translate-y-4"}`}>
+                                    <div className="h-14 w-14 rounded-full bg-white dark:bg-gray-800 text-amber-600 border border-gray-100 dark:border-gray-700 flex items-center justify-center shadow-lg group-hover/btn:bg-amber-600 group-hover/btn:text-white transition-colors">
+                                        <span className="material-symbols-outlined">post_add</span>
                                     </div>
                                     <span className="text-xs font-bold text-primary-text dark:text-white bg-card-light dark:bg-gray-800 px-2 py-1 rounded-md shadow-sm whitespace-nowrap">
-                                        Create Repledge
+                                        Add Transaction
                                     </span>
                                 </button>
                             </div>
@@ -131,28 +146,28 @@ const BottomNavigation: React.FC = () => {
                             </button>
                         </div>
 
-                        {/* Loans */}
+                        {/* Transactions */}
                         <Link
-                            className={`flex flex-col items-center gap-1 transition-colors ${isActive("/pledges") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                            className={`flex flex-col items-center gap-1 transition-colors ${isActive("/transactions") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
                                 }`}
-                            to="/pledges"
+                            to="/transactions"
                         >
-                            <span className="material-symbols-outlined" style={isActive("/pledges") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                                credit_score
+                            <span className="material-symbols-outlined" style={isActive("/transactions") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                                receipt_long
                             </span>
-                            <span className="text-xs font-bold">Loans</span>
+                            <span className="text-xs font-bold">Transactions</span>
                         </Link>
 
-                        {/* Repledges */}
+                        {/* Privileges (Includes Notice printing link) */}
                         <Link
-                            className={`flex flex-col items-center gap-1 transition-colors ${isActive("/re-pledge") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                            className={`flex flex-col items-center gap-1 transition-colors ${isActive("/privileges") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
                                 }`}
-                            to="/re-pledge"
+                            to="/privileges"
                         >
-                            <span className="material-symbols-outlined" style={isActive("/re-pledge") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                                sync_lock
+                            <span className="material-symbols-outlined" style={isActive("/privileges") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                                security
                             </span>
-                            <span className="text-xs font-bold">Repledges</span>
+                            <span className="text-xs font-bold">Privileges</span>
                         </Link>
 
                     </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import http from "../../api/http";
+import { useRepledge } from "../../hooks/useRepledge";
 
 interface Props {
   pledges: any[];
@@ -11,6 +12,14 @@ interface Props {
 
 const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, loading }) => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'loans' | 'repledges'>('loans');
+  const { repledgeEntries, fetchRepledgeEntries, loading: repledgeLoading } = useRepledge();
+
+  useEffect(() => {
+    if (activeTab === 'repledges') {
+      fetchRepledgeEntries();
+    }
+  }, [activeTab, fetchRepledgeEntries]);
 
   // Autocomplete State
   const [inputValue, setInputValue] = useState(searchTerm);
@@ -67,9 +76,6 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
   };
 
   // Helper for random color or logic based on status
-
-
-  // Helper for random color or logic based on status
   const getStatusColor = (status: string) => {
     if (status === 'closed') return 'text-red-500 bg-red-100 dark:bg-red-500/20 border-red-200 dark:border-red-500/30';
     return 'text-primary bg-green-50 dark:bg-primary/20 border-green-100 dark:border-primary/30';
@@ -89,13 +95,35 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
 
       {/* Header Section */}
       <header className="flex-none pt-12 pb-4 px-5 bg-background-light dark:bg-background-dark z-10 transition-colors duration-300">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold tracking-tight text-primary-text dark:text-white">Loans</h1>
           <div className="bg-white dark:bg-dark-surface border border-gray-200 dark:border-[#1f3d2e] px-3 py-1.5 rounded-full flex items-center shadow-sm dark:shadow-none">
             <span className="text-primary text-xs font-bold uppercase tracking-wider">
-              {pledges.length} Loans
+              {activeTab === 'loans' ? pledges.length : repledgeEntries.length} items
             </span>
           </div>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="flex bg-gray-100 dark:bg-gray-800/50 p-1 rounded-xl mb-6">
+          <button
+            onClick={() => setActiveTab('loans')}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'loans'
+              ? 'bg-white dark:bg-gray-700 text-primary shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+              }`}
+          >
+            Pledges
+          </button>
+          <button
+            onClick={() => setActiveTab('repledges')}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'repledges'
+              ? 'bg-white dark:bg-gray-700 text-purple-600 shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+              }`}
+          >
+            Repledges
+          </button>
         </div>
 
         {/* Search Bar - Autocomplete */}
@@ -139,62 +167,130 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
 
       {/* Main Content: List */}
       <main className="flex-1 overflow-y-auto no-scrollbar relative px-5 pb-24">
-        {loading && (
+        {(loading || (activeTab === 'repledges' && repledgeLoading)) && (
           <div className="text-center py-10">
             <span className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></span>
           </div>
         )}
 
-        {!loading && pledges.length === 0 && (
-          <div className="text-center text-secondary-text dark:text-text-muted py-10">
-            No pledges found matching your search.
-          </div>
-        )}
+        {/* Pledges List */}
+        {activeTab === 'loans' && !loading && (
+          <div className="grid gap-4 mt-2">
+            {pledges.length === 0 && (
+              <div className="text-center text-secondary-text dark:text-text-muted py-10">
+                No pledges found matching your search.
+              </div>
+            )}
+            {pledges.map((p, index) => (
+              <div
+                key={p.id}
+                onClick={() => navigate(`/pledges/${p.id}`)}
+                className="group relative bg-white dark:bg-card-dark rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none border border-gray-100 dark:border-gray-800/50 flex flex-col p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-300 animate-in fade-in"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <div className="flex items-start gap-4">
+                  {/* Avatar / Image - Simplified */}
+                  <div className="flex-shrink-0 relative">
+                    <img
+                      alt={p.customer?.name}
+                      className="h-14 w-14 rounded-full object-cover bg-gray-100 dark:bg-gray-800"
+                      src={fixImageUrl(p.media?.find((m: any) => m.category === 'customer_image')?.url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
+                    />
+                  </div>
 
-        {!loading && pledges.map((p) => (
-          <div
-            key={p.id}
-            onClick={() => navigate(`/pledges/${p.id}`)}
-            className="group py-5 border-b border-gray-100 dark:border-[#1f3d2e] flex items-start gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-          >
-            {/* Avatar / Image */}
-            <div className="flex-shrink-0 relative">
-              <img
-                alt={p.customer?.name}
-                className="h-14 w-14 rounded-full object-cover ring-2 ring-white dark:ring-[#1f3d2e] shadow-sm dark:shadow-none"
-                src={fixImageUrl(p.media?.find((m: any) => m.category === 'customer_image')?.url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
-              />
-            </div>
+                  <div className="flex-1 min-w-0">
+                    {/* Header Row: Name & Status */}
+                    <div className="flex justify-between items-start gap-2">
+                      <h3 className="text-base font-bold text-primary-text dark:text-white truncate leading-tight">
+                        {p.customer?.name || 'Unknown'}
+                      </h3>
+                      <div className={`flex-shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(p.status)}`}>
+                        {p.status || 'Active'}
+                      </div>
+                    </div>
 
-            <div className="flex-1 min-w-0 flex flex-col h-full justify-between gap-1">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-base font-medium text-primary-text dark:text-white truncate pr-2">
-                    {p.customer?.name || 'Unknown'}
-                  </h3>
-                  <p className="text-xs text-secondary-text dark:text-text-muted font-medium mt-0.5">
-                    {p.loan?.date || 'No Date'}
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <div className={`h-6 w-6 rounded-full flex items-center justify-center border ${getStatusColor(p.status)}`}>
-                    <span className={`text-[10px] font-bold ${p.status === 'closed' ? 'text-red-500' : 'text-primary'}`}>
-                      {p.status ? p.status.charAt(0).toUpperCase() : 'A'}
-                    </span>
+                    {/* Meta Row: Loan No & Date */}
+                    <div className="flex items-center gap-2 mt-1 min-w-0">
+                      <span className="text-sm font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                        {p.loan?.loan_no || `#${p.id}`}
+                      </span>
+                      <span className="text-xs text-secondary-text dark:text-gray-500 font-medium truncate">
+                        • {p.loan?.date ? new Date(p.loan.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No Date'}
+                      </span>
+                    </div>
+
+                    {/* Footer Row: Label & Amount */}
+                    <div className="flex justify-end items-end mt-2">
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-base font-bold text-primary leading-none whitespace-nowrap">
+                          ₹{Number(p.loan?.amount || 0).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="flex justify-between items-end mt-2">
-                <p className="text-xs text-secondary-text dark:text-text-muted">
-                  Loan No. <span className="text-primary-text dark:text-gray-400 font-medium">{p.loan?.loan_no || `#${p.id} `}</span>
-                </p>
-                <p className="text-sm font-semibold text-primary">
-                  ₹{Number(p.loan?.amount || 0).toLocaleString()}
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
-        ))}
+        )}
+
+        {/* Repledges List */}
+        {activeTab === 'repledges' && !repledgeLoading && (
+          <div className="grid gap-4 mt-2">
+            {repledgeEntries.length === 0 && (
+              <div className="text-center text-secondary-text dark:text-text-muted py-10">
+                No repledges found.
+              </div>
+            )}
+            {repledgeEntries.map((item, index) => (
+              <div
+                key={item.id}
+                onClick={() => navigate(`/re-pledge/${item.id}`)}
+                className="group relative bg-white dark:bg-card-dark rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none border border-gray-100 dark:border-gray-800/50 flex flex-col p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-300 animate-in fade-in"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 relative">
+                    <div className="h-14 w-14 rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400 font-bold text-lg border border-purple-100 dark:border-purple-800/30">
+                      {item.loan_no.slice(-2)}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    {/* Header Row: Loan No & Status */}
+                    <div className="flex justify-between items-start gap-2">
+                      <h3 className="text-base font-bold text-primary-text dark:text-white truncate leading-tight">
+                        {item.loan_no}
+                      </h3>
+                      <div className={`flex-shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${item.status === 'active' ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 border-purple-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                        {item.status}
+                      </div>
+                    </div>
+
+                    {/* Meta Row: Re-No & Source & Date */}
+                    <div className="flex items-center gap-2 mt-1 min-w-0">
+                      <span className="text-sm font-bold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                        RE: {item.re_no}
+                      </span>
+                      <span className="text-xs text-secondary-text dark:text-gray-500 font-medium truncate">
+                        • {item.source?.name || 'Unknown'} • {item.start_date ? new Date(item.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No Date'}
+                      </span>
+                    </div>
+
+                    {/* Footer Row: Label & Amount */}
+                    <div className="flex justify-end items-end mt-2">
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-base font-bold text-purple-600 leading-none whitespace-nowrap">
+                          ₹{Number(item.amount).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </main>
 
       {/* Global Bottom Navigation - Moved to Layout */}
