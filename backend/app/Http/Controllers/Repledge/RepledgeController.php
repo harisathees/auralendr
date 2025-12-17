@@ -53,7 +53,7 @@ class RepledgeController extends Controller
 
     public function index()
     {
-        $repledges = Repledge::with('bank')->latest()->paginate(20);
+        $repledges = Repledge::with('source')->latest()->paginate(20);
         return response()->json($repledges);
     }
 
@@ -67,22 +67,19 @@ class RepledgeController extends Controller
             foreach ($validated['items'] as $item) {
                 // Auto-link loan if not provided but loan_no exists (optional logic)
                 if (empty($item['loan_id']) && !empty($item['loan_no'])) {
-                     $loan = Loan::where('loan_no', $item['loan_no'])->first();
-                     if ($loan) {
-                         $item['loan_id'] = $loan->id;
-                     }
+                    $loan = Loan::where('loan_no', $item['loan_no'])->first();
+                    if ($loan) {
+                        $item['loan_id'] = $loan->id;
+                    }
                 }
 
                 // Merge common parent fields into item
                 $repledgeData = array_merge($item, [
-                    'bank_id' => $validated['bank_id'],
+                    'repledge_source_id' => $validated['repledge_source_id'],
                     'status' => $validated['status'] ?? 'active',
                     'start_date' => $validated['start_date'] ?? null,
                     'end_date' => $validated['end_date'] ?? null,
                     'due_date' => $validated['due_date'] ?? null,
-                    // If items don't have specific interest, use parent? 
-                    // Usually items inherit from bank unless overridden. 
-                    // Frontend should pass them in items usually, but let's allow fallback if needed or keep frontend strict.
                 ]);
 
                 $createdRepledges[] = Repledge::create($repledgeData);
@@ -94,7 +91,7 @@ class RepledgeController extends Controller
 
     public function show(Repledge $repledge)
     {
-        return response()->json($repledge->load('bank', 'loan'));
+        return response()->json($repledge->load('source', 'loan'));
     }
 
     public function update(UpdateRepledgeRequest $request, Repledge $repledge)

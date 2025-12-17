@@ -22,12 +22,12 @@ class StoreRepledgeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'bank_id' => 'required|exists:repledge_banks,id',
+            'repledge_source_id' => 'required|exists:repledge_sources,id',
             'status' => 'nullable|in:active,closed',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
             'due_date' => 'nullable|date',
-            
+
             // Validate items array
             'items' => 'required|array|min:1',
             'items.*.loan_no' => 'required|string',

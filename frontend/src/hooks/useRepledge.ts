@@ -11,7 +11,8 @@ export interface RepledgeEntry {
     stone_weight: number;
     amount: number;
     processing_fee: number;
-    bank_id: string | null;
+    bank_id?: string | null; // Deprecated, use repledge_source_id
+    repledge_source_id: string | null;
     interest_percent: number;
     validity_period: number;
     after_interest_percent: number;
@@ -109,7 +110,7 @@ export const useRepledge = () => {
     };
 
     // Search Loan for Repledge (Auto-fetch)
-    const searchLoan = async (loanNo: string) => {
+    const searchLoanSuggestions = async (loanNo: string) => {
         try {
             const res = await http.get(`/repledges/search-loan?query=${loanNo}`);
             return res.data;
@@ -137,6 +138,6 @@ export const useRepledge = () => {
         saveRepledgeEntry,
         deleteRepledgeEntry,
         fetchRepledgeEntries,
-        searchLoan
+        searchLoanSuggestions
     };
 };

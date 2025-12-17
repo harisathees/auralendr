@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useRepledgeBanks } from "../../hooks/useRepledgeBanks";
+import { useRepledgeSource } from "../../hooks/useRepledgeSource";
 import { useRepledge } from "../../hooks/useRepledge";
 import { useToast } from "../../context";
 
@@ -28,8 +28,8 @@ interface Props {
 
 const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false, onCancel }) => {
     // USE CORRECT HOOK HERE
-    const { banks } = useRepledgeBanks();
-    const { searchLoan } = useRepledge();
+    const { sources, loading: sourcesLoading } = useRepledgeSource();
+    const { searchLoanSuggestions: searchLoan } = useRepledge();
     const { showToast } = useToast();
 
     // Global (Bank) State
@@ -65,32 +65,32 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
         const selectedId = e.target.value;
         setBankId(selectedId);
 
-        // Find selected bank from list
-        const bank = banks.find(b => b.id.toString() === selectedId);
+        // Find selected source from list
+        const source = sources.find(b => b.id.toString() === selectedId);
 
-        if (bank) {
+        if (source) {
             // Auto-populate Info
-            setGlobalInterest(bank.default_interest || 0);
-            setGlobalValidity(bank.validity_months || 0);
-            setGlobalPostInt(bank.post_validity_interest || 0);
-            setGlobalPaymentMethod(bank.payment_method || "");
+            setGlobalInterest(source.default_interest || 0);
+            setGlobalValidity(source.validity_months || 0);
+            setGlobalPostInt(source.post_validity_interest || 0);
+            setGlobalPaymentMethod(source.payment_method || "");
 
             // Auto Update End Date
             if (startDate) {
-                const end = addMonths(new Date(startDate), bank.validity_months || 0);
+                const end = addMonths(new Date(startDate), source.validity_months || 0);
                 setEndDate(end.toISOString().split('T')[0]);
             }
 
-            // Update existing items with bank defaults
+            // Update existing items with source defaults
             setItems(prevItems => prevItems.map(item => ({
                 ...item,
-                interestPercent: bank.default_interest || 0,
-                validityPeriod: bank.validity_months || 0,
-                afterInterestPercent: bank.post_validity_interest || 0,
-                paymentMethod: bank.payment_method || ""
+                interestPercent: source.default_interest || 0,
+                validityPeriod: source.validity_months || 0,
+                afterInterestPercent: source.post_validity_interest || 0,
+                paymentMethod: source.payment_method || ""
             })));
         } else {
-            // Reset if no bank selected
+            // Reset if no source selected
             setGlobalInterest(0);
             setGlobalValidity(0);
             setGlobalPostInt(0);
@@ -108,13 +108,13 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
 
     // Initial Data Population (Edit Mode)
     useEffect(() => {
-        if (initialData && banks.length > 0) {
-            setBankId(initialData.bank_id?.toString() || "");
+        if (initialData && sources.length > 0) {
+            setBankId(initialData.repledge_source_id?.toString() || "");
             setStatus(initialData.status || "active");
             setStartDate(initialData.start_date ? initialData.start_date.split('T')[0] : "");
             setEndDate(initialData.end_date ? initialData.end_date.split('T')[0] : "");
 
-            // Set Global Defaults from Initial Data (or Bank)
+            // Set Global Defaults from Initial Data (or Source)
             setGlobalInterest(initialData.interest_percent || 0);
             setGlobalValidity(initialData.validity_period || 0);
             setGlobalPostInt(initialData.after_interest_percent || 0);
@@ -138,7 +138,7 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                 paymentMethod: initialData.payment_method || ""
             }]);
         }
-    }, [initialData, banks]);
+    }, [initialData, sources]);
 
     // Item Handler
     const handleItemChange = (index: number, field: keyof RepledgeItem, value: any) => {
@@ -219,13 +219,14 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
 
         // Prepare payload
         const payload = {
-            bank_id: bankId,
+            repledge_source_id: bankId,
             status,
             start_date: startDate,
             end_date: endDate,
             items: items.map(item => ({
                 loan_no: item.loanNo,
                 re_no: item.reNo,
+                repledge_source_id: bankId || null,
                 loan_id: item.loanId,
                 amount: item.amount,
                 processing_fee: item.processingFee,
@@ -244,24 +245,24 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Global Bank Section */}
+            {/* Global Source Section */}
             <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
                 <h3 className="text-lg font-bold mb-4 text-primary-text dark:text-white flex items-center gap-2">
                     <span className="material-symbols-outlined text-purple-600">account_balance</span>
-                    Banks
+                    Sources
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <label className="flex flex-col gap-1.5">
-                        <span className="text-xs font-bold text-gray-500 uppercase">Bank</span>
+                        <span className="text-xs font-bold text-gray-500 uppercase">Source</span>
                         <select
                             value={bankId}
                             onChange={handleBankChange}
                             required
                             className="form-select h-10 rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm"
                         >
-                            <option value="">Select Bank</option>
-                            {banks.map(b => (
+                            <option disabled value="">{sourcesLoading ? "Loading sources..." : "Select Source"}</option>
+                            {sources.map(b => (
                                 <option key={b.id} value={b.id}>{b.name} {b.branch ? `(${b.branch})` : ''}</option>
                             ))}
                         </select>

@@ -59,8 +59,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
     Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
 
-    // Repledge Banks (Shared for read/write as configured in controller)
-    Route::apiResource('repledge-banks', \App\Http\Controllers\Repledge\RepledgeBankController::class);
+    // Repledge Sources (Shared for read/write as configured in controller)
+    Route::apiResource('repledge-sources', \App\Http\Controllers\Repledge\RepledgeSourceController::class);
 
     // Customer Search and List
     Route::get('/customers/search', [CustomerController::class, 'search']);

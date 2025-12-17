@@ -34,12 +34,12 @@ const AdminConfigs: React.FC = () => {
                         link: "/admin/configs/metal-rates"
                     },
                     {
-                        title: "Banks to Repledge",
+                        title: "Repledge Sources",
                         description: "Manage repledge institutions",
                         icon: "account_balance",
                         color: "text-cyan-600",
                         bg: "bg-cyan-100",
-                        link: "/admin/configs/repledge-banks"
+                        link: "/admin/configs/repledge-sources"
                     },
                 ]
             },
@@ -201,7 +201,7 @@ const AdminConfigs: React.FC = () => {
             }
         ];
 
-        // Filter out Repledge Banks if not admin
+        // Filter const RepledgeSources = lazy(() => import('./RepledgeSources'));
         return groups.map(group => ({
             ...group,
             items: group.items.filter(item => {

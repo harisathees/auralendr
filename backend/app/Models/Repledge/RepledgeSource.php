@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 
-class RepledgeBank extends Model
+class RepledgeSource extends Model
 {
     use HasFactory;
 
@@ -15,11 +15,11 @@ class RepledgeBank extends Model
     // Relationship to branches
     public function branches()
     {
-        return $this->belongsToMany(\App\Models\BranchAndUser\Branch::class, 'branch_repledge_banks');
+        return $this->belongsToMany(\App\Models\BranchAndUser\Branch::class, 'branch_repledge_sources');
     }
 
     public function repledges()
     {
-        return $this->hasMany(Repledge::class, 'bank_id');
+        return $this->hasMany(Repledge::class, 'repledge_source_id');
     }
 }

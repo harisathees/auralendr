@@ -3,22 +3,22 @@
 namespace App\Http\Controllers\Repledge;
 
 use App\Http\Controllers\Controller;
-use App\Models\Repledge\RepledgeBank;
+use App\Models\Repledge\RepledgeSource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class RepledgeBankController extends Controller
+class RepledgeSourceController extends Controller
 {
     public function index(Request $request)
     {
         $user = $request->user();
 
         if ($user->role === 'admin') {
-            return response()->json(RepledgeBank::with('branches')->get());
+            return response()->json(RepledgeSource::with('branches')->get());
         }
 
         if ($user->branch_id) {
-            return response()->json(RepledgeBank::whereHas('branches', function ($q) use ($user) {
+            return response()->json(RepledgeSource::whereHas('branches', function ($q) use ($user) {
                 $q->where('branches.id', $user->branch_id);
             })->get());
         }
@@ -40,23 +40,23 @@ class RepledgeBankController extends Controller
             'branch_ids.*' => 'exists:branches,id'
         ]);
 
-        // Remove branch_ids from data to be saved in repledge_banks table
-        $bankData = collect($validated)->except(['branch_ids'])->toArray();
-        $bank = RepledgeBank::create($bankData);
+        // Remove branch_ids from data to be saved in table
+        $sourceData = collect($validated)->except(['branch_ids'])->toArray();
+        $source = RepledgeSource::create($sourceData);
 
         if (isset($validated['branch_ids'])) {
-            $bank->branches()->sync($validated['branch_ids']);
+            $source->branches()->sync($validated['branch_ids']);
         }
 
-        return response()->json($bank->load('branches'), 201);
+        return response()->json($source->load('branches'), 201);
     }
 
-    public function show(RepledgeBank $repledgeBank)
+    public function show(RepledgeSource $repledgeSource)
     {
-        return response()->json($repledgeBank->load('branches'));
+        return response()->json($repledgeSource->load('branches'));
     }
 
-    public function update(Request $request, RepledgeBank $repledgeBank)
+    public function update(Request $request, RepledgeSource $repledgeSource)
     {
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
@@ -70,20 +70,20 @@ class RepledgeBankController extends Controller
             'branch_ids.*' => 'exists:branches,id'
         ]);
 
-        // Remove branch_ids from data to be saved in repledge_banks table
-        $bankData = collect($validated)->except(['branch_ids'])->toArray();
-        $repledgeBank->update($bankData);
+        // Remove branch_ids from data to be saved in table
+        $sourceData = collect($validated)->except(['branch_ids'])->toArray();
+        $repledgeSource->update($sourceData);
 
         if (isset($validated['branch_ids'])) {
-            $repledgeBank->branches()->sync($validated['branch_ids']);
+            $repledgeSource->branches()->sync($validated['branch_ids']);
         }
 
-        return response()->json($repledgeBank->load('branches'));
+        return response()->json($repledgeSource->load('branches'));
     }
 
-    public function destroy(RepledgeBank $repledgeBank)
+    public function destroy(RepledgeSource $repledgeSource)
     {
-        $repledgeBank->delete();
+        $repledgeSource->delete();
         return response()->json(null, 204);
     }
 }

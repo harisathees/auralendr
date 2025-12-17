@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useRepledge, type LoanSuggestion } from "../../hooks/useRepledge";
-import { useBanks } from "../../hooks/useBank";
+import { useRepledgeSource } from "../../hooks/useRepledgeSource";
 import { useNavigate } from "react-router-dom";
 
 // ---------------------- TYPES ----------------------
@@ -57,7 +57,7 @@ const Repledge: React.FC = () => {
         searchLoanSuggestions,
     } = useRepledge();
 
-    const { banks, loading: banksLoading, createBank } = useBanks();
+    const { sources, loading: sourcesLoading, createSource } = useRepledgeSource();
 
     const [formTemplate, setFormTemplate] = useState<FormTemplateData>({
         bankId: "",
@@ -152,18 +152,18 @@ const Repledge: React.FC = () => {
     }, [currentForm?.startDate, currentForm?.validityPeriod, activeFormIndex]);
 
     // Handlers
-    const handleBankSelectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const handleSourceSelectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const bankId = e.target.value;
-        const selectedBank = banks.find(b => b.id.toString() === bankId.toString());
+        const selectedSource = sources.find(b => b.id.toString() === bankId.toString());
         setForms(currentForms => {
             const newForms = [...currentForms];
             const formToUpdate = { ...newForms[activeFormIndex] };
             formToUpdate.bankId = bankId;
-            if (selectedBank) {
-                formToUpdate.interestPercent = selectedBank.default_interest || 0;
-                formToUpdate.validityPeriod = selectedBank.validity_months || 0;
-                formToUpdate.afterInterestPercent = selectedBank.post_validity_interest || 0;
-                formToUpdate.paymentMethod = selectedBank.payment_method || "";
+            if (selectedSource) {
+                formToUpdate.interestPercent = selectedSource.default_interest || 0;
+                formToUpdate.validityPeriod = selectedSource.validity_months || 0;
+                formToUpdate.afterInterestPercent = selectedSource.post_validity_interest || 0;
+                formToUpdate.paymentMethod = selectedSource.payment_method || "";
             } else {
                 formToUpdate.interestPercent = 0;
                 formToUpdate.validityPeriod = 0;
@@ -229,9 +229,9 @@ const Repledge: React.FC = () => {
         setForms(updatedForms);
     };
 
-    const getBankName = (bankId: string) => {
-        const bank = banks.find(b => b.id.toString() === bankId.toString());
-        return bank ? bank.name : "N/A";
+    const getSourceName = (sourceId: string) => {
+        const source = sources.find(b => b.id.toString() === sourceId.toString());
+        return source ? source.name : "N/A";
     };
 
     const handleSave = async () => {
@@ -247,7 +247,7 @@ const Repledge: React.FC = () => {
                         stone_weight: form.stoneWeight,
                         amount: form.amount,
                         processing_fee: form.processingFee,
-                        bank_id: form.bankId || null,
+                        repledge_source_id: form.bankId || null,
                         interest_percent: form.interestPercent,
                         validity_period: form.validityPeriod,
                         after_interest_percent: form.afterInterestPercent,
@@ -324,13 +324,13 @@ const Repledge: React.FC = () => {
                             <div className="relative">
                                 <select
                                     value={currentForm.bankId}
-                                    onChange={handleBankSelectionChange}
+                                    onChange={handleSourceSelectionChange}
                                     className="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-[#f7f8fc] dark:bg-gray-900 h-10 px-4 pr-10 text-sm font-medium focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition-colors appearance-none text-[#1F1B2E] dark:text-white"
                                 >
-                                    <option disabled value="">{banksLoading ? "Loading banks..." : "Select a bank"}</option>
-                                    {banks.map((bank) => (
-                                        <option key={bank.id} value={bank.id}>
-                                            {bank.name} {bank.branch ? `- ${bank.branch}` : ''}
+                                    <option disabled value="">{sourcesLoading ? "Loading sources..." : "Select a source"}</option>
+                                    {sources.map((source) => (
+                                        <option key={source.id} value={source.id}>
+                                            {source.name} {source.branch ? `- ${source.branch}` : ''}
                                         </option>
                                     ))}
                                 </select>
@@ -609,7 +609,7 @@ const Repledge: React.FC = () => {
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
                                             <h4 className="text-[#1F1B2E] dark:text-white font-bold text-sm">{entry.loan_no} ... {entry.re_no}</h4>
-                                            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mt-0.5">Bank: {getBankName(entry.bank_id || '')}</p>
+                                            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mt-0.5">Source: {getSourceName(entry.repledge_source_id || '')}</p>
                                         </div>
                                         <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide ${entry.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
                                             {entry.status}
@@ -641,18 +641,18 @@ const Repledge: React.FC = () => {
                                 </button>
                             </div>
 
-                            <QuickAddBankForm onBankAdded={() => { alert("New bank added!"); }} createBank={createBank} loading={loading} />
+                            <QuickAddSourceForm onSourceAdded={() => { alert("New source added!"); }} createSource={createSource} loading={loading} />
 
                             <div className="mt-6">
                                 <h4 className="font-bold text-[#1F1B2E] mb-3">Available Banks</h4>
                                 <div className="space-y-2">
-                                    {banks.map((bank) => (
-                                        <div key={bank.id} className="flex justify-between items-center p-3 bg-[#f7f8fc] dark:bg-gray-700 rounded-xl border border-gray-100 dark:border-gray-600">
+                                    {sources.map((source) => (
+                                        <div key={source.id} className="flex justify-between items-center p-3 bg-[#f7f8fc] dark:bg-gray-700 rounded-xl border border-gray-100 dark:border-gray-600">
                                             <div>
-                                                <div className="font-bold text-[#1F1B2E] dark:text-white text-sm">{bank.name}</div>
-                                                {bank.branch && <div className="text-xs text-gray-500 dark:text-gray-400">{bank.branch}</div>}
+                                                <div className="font-bold text-[#1F1B2E] dark:text-white text-sm">{source.name}</div>
+                                                {source.branch && <div className="text-xs text-gray-500 dark:text-gray-400">{source.branch}</div>}
                                             </div>
-                                            <span className="text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-600/10 dark:bg-purple-900/30 px-2 py-1 rounded-md">{bank.default_interest}%</span>
+                                            <span className="text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-600/10 dark:bg-purple-900/30 px-2 py-1 rounded-md">{source.default_interest}%</span>
                                         </div>
                                     ))}
                                 </div>
@@ -666,8 +666,8 @@ const Repledge: React.FC = () => {
     );
 };
 
-// ---------------------- QUICK ADD BANK FORM ----------------------
-const QuickAddBankForm = ({ onBankAdded, createBank, loading }: { onBankAdded: () => void, createBank: Function, loading: boolean }) => {
+// ---------------------- QUICK ADD SOURCE FORM ----------------------
+const QuickAddSourceForm = ({ onSourceAdded, createSource, loading }: { onSourceAdded: () => void, createSource: Function, loading: boolean }) => {
 
     const [formData, setFormData] = useState({
         name: '', code: '', branch: '', defaultInterest: '',
@@ -677,25 +677,25 @@ const QuickAddBankForm = ({ onBankAdded, createBank, loading }: { onBankAdded: (
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.name.trim()) {
-            alert("Bank name is required.");
+            alert("Source name is required.");
             return;
         }
-        await createBank(formData);
+        await createSource(formData);
         setFormData({ name: '', code: '', branch: '', defaultInterest: '', validityMonths: '', postValidityInterest: '', paymentMethod: '' });
-        onBankAdded();
+        onSourceAdded();
     };
 
     return (
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700/50">
-            <h4 className="font-semibold mb-3 text-gray-800 dark:text-gray-200">Quick Add Bank</h4>
+            <h4 className="font-semibold mb-3 text-gray-800 dark:text-gray-200">Quick Add Source</h4>
             <form onSubmit={handleSubmit} className="space-y-3">
                 <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-500 uppercase">Bank Name *</label>
+                    <label className="text-xs font-medium text-gray-500 uppercase">Source Name *</label>
                     <input placeholder="e.g. State Bank of India" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} required className="w-full h-9 px-2 rounded border border-gray-300 dark:border-gray-600 text-sm outline-none" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-500 uppercase">Bank Code</label>
+                        <label className="text-xs font-medium text-gray-500 uppercase">Source Code</label>
                         <input placeholder="Optional" value={formData.code} onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))} className="w-full h-9 px-2 rounded border border-gray-300 dark:border-gray-600 text-sm outline-none" />
                     </div>
                     <div className="space-y-1.5">
@@ -722,7 +722,7 @@ const QuickAddBankForm = ({ onBankAdded, createBank, loading }: { onBankAdded: (
                     <input placeholder="e.g. Online" value={formData.paymentMethod} onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value }))} className="w-full h-9 px-2 rounded border border-gray-300 dark:border-gray-600 text-sm outline-none" />
                 </div>
                 <button type="submit" disabled={loading || !formData.name.trim()} className="w-full h-10 bg-black text-white rounded font-medium hover:bg-gray-800 transition">
-                    {loading ? 'Adding...' : 'Add Bank'}
+                    {loading ? 'Adding...' : 'Add Source'}
                 </button>
             </form>
         </div>

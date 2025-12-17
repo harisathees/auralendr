@@ -46,7 +46,7 @@ export interface MoneySource {
     branches?: any[]; // Simplified for now
 }
 
-export interface RepledgeBank {
+export interface RepledgeSource {
     id: number;
     name: string;
     code: string | null;
@@ -64,7 +64,7 @@ export interface Repledge {
     id: number;
     loan_no: string;
     re_no: string;
-    bank_id: number;
+    repledge_source_id: number;
     amount: string;
     processing_fee: string;
     interest_percent: number;
@@ -74,7 +74,7 @@ export interface Repledge {
     end_date?: string;
     due_date?: string;
     status: 'active' | 'closed';
-    bank?: RepledgeBank;
+    source?: RepledgeSource;
     created_at?: string;
     updated_at?: string;
 }
