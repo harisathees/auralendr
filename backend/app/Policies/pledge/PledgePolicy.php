@@ -31,11 +31,13 @@ class PledgePolicy
 
     public function update(User $user, Pledge $pledge): bool
     {
-        return $user->branch_id !== null && $user->branch_id === $pledge->branch_id && $user->can('pledge.update');
+        $isStaff = $user->hasRole('staff') || $user->role === 'staff';
+        return $user->branch_id !== null && $user->branch_id === $pledge->branch_id && ($isStaff || $user->can('pledge.update'));
     }
 
     public function delete(User $user, Pledge $pledge): bool
     {
-        return $user->branch_id !== null && $user->branch_id === $pledge->branch_id && $user->can('pledge.delete');
+        $isStaff = $user->hasRole('staff') || $user->role === 'staff';
+        return $user->branch_id !== null && $user->branch_id === $pledge->branch_id && ($isStaff || $user->can('pledge.delete'));
     }
 }

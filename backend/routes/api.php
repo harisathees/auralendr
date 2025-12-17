@@ -80,6 +80,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/money-source-types', [\App\Http\Controllers\MoneySourceTypeController::class, 'index']);
 
 
+    // Transactions
+    Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index']);
+
     // Staff Task Routes
     Route::get('/my-tasks', [TaskController::class, 'myTasks']);
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus']);
