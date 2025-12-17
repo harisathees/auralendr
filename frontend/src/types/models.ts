@@ -57,6 +57,7 @@ export interface RepledgeBank {
     payment_method: string | null;
     created_at?: string;
     updated_at?: string;
+    branches?: Branch[];
 }
 
 export interface Repledge {

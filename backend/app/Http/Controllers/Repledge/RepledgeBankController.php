@@ -9,9 +9,21 @@ use Illuminate\Support\Facades\DB;
 
 class RepledgeBankController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(RepledgeBank::all());
+        $user = $request->user();
+
+        if ($user->role === 'admin') {
+            return response()->json(RepledgeBank::with('branches')->get());
+        }
+
+        if ($user->branch_id) {
+            return response()->json(RepledgeBank::whereHas('branches', function ($q) use ($user) {
+                $q->where('branches.id', $user->branch_id);
+            })->get());
+        }
+
+        return response()->json([]);
     }
 
     public function store(Request $request)
@@ -24,16 +36,24 @@ class RepledgeBankController extends Controller
             'validity_months' => 'nullable|integer|min:0',
             'post_validity_interest' => 'nullable|numeric|min:0',
             'payment_method' => 'nullable|string',
+            'branch_ids' => 'nullable|array',
+            'branch_ids.*' => 'exists:branches,id'
         ]);
 
-        $bank = RepledgeBank::create($validated);
+        // Remove branch_ids from data to be saved in repledge_banks table
+        $bankData = collect($validated)->except(['branch_ids'])->toArray();
+        $bank = RepledgeBank::create($bankData);
 
-        return response()->json($bank, 201);
+        if (isset($validated['branch_ids'])) {
+            $bank->branches()->sync($validated['branch_ids']);
+        }
+
+        return response()->json($bank->load('branches'), 201);
     }
 
     public function show(RepledgeBank $repledgeBank)
     {
-        return response()->json($repledgeBank);
+        return response()->json($repledgeBank->load('branches'));
     }
 
     public function update(Request $request, RepledgeBank $repledgeBank)
@@ -46,11 +66,19 @@ class RepledgeBankController extends Controller
             'validity_months' => 'nullable|integer|min:0',
             'post_validity_interest' => 'nullable|numeric|min:0',
             'payment_method' => 'nullable|string',
+            'branch_ids' => 'nullable|array',
+            'branch_ids.*' => 'exists:branches,id'
         ]);
 
-        $repledgeBank->update($validated);
+        // Remove branch_ids from data to be saved in repledge_banks table
+        $bankData = collect($validated)->except(['branch_ids'])->toArray();
+        $repledgeBank->update($bankData);
 
-        return response()->json($repledgeBank);
+        if (isset($validated['branch_ids'])) {
+            $repledgeBank->branches()->sync($validated['branch_ids']);
+        }
+
+        return response()->json($repledgeBank->load('branches'));
     }
 
     public function destroy(RepledgeBank $repledgeBank)

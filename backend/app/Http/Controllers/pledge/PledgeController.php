@@ -171,6 +171,9 @@ class PledgeController extends Controller
                 if (!empty($loan->payment_method) && !empty($loan->amount_to_be_given)) {
                     $moneySource = MoneySource::where('name', $loan->payment_method)->first();
                     if ($moneySource) {
+                        if (!$moneySource->is_outbound) {
+                            throw new \Exception("The selected payment method '{$moneySource->name}' is not allowed for outbound transactions.");
+                        }
                         $moneySource->decrement('balance', $loan->amount_to_be_given);
                         Log::info('Money source balance deducted', [
                             'source' => $moneySource->name,

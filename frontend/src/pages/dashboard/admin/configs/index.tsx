@@ -1,202 +1,215 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../../../context/AuthContext";
 
 const AdminConfigs: React.FC = () => {
-
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
 
     const [expandedGroup, setExpandedGroup] = React.useState<string | null>(null);
 
-    const configGroups = [
-        {
-            title: "Financials",
-            icon: "account_balance_wallet",
-            description: "Payment methods, taxes & bank settings",
-            color: "text-green-600",
-            bg: "bg-green-100",
-            items: [
-                {
-                    title: "Payment Methods",
-                    description: "Manage cash, bank accounts, and wallets",
-                    icon: "payments",
-                    color: "text-green-600",
-                    bg: "bg-green-100",
-                    link: "/admin/configs/money-sources"
-                },
-                {
-                    title: "Metal Rates",
-                    description: "Set daily gold and silver rates",
-                    icon: "currency_rupee",
-                    color: "text-amber-600",
-                    bg: "bg-amber-100",
-                    link: "/admin/configs/metal-rates"
-                },
-                {
-                    title: "Banks to Repledge",
-                    description: "Manage repledge institutions",
-                    icon: "account_balance",
-                    color: "text-cyan-600",
-                    bg: "bg-cyan-100",
-                    link: "/admin/configs/repledge-banks"
-                },
-            ]
-        },
-        {
-            title: "Jewel Management",
-            icon: "diamond",
-            description: "Types, qualities & item names",
-            color: "text-blue-600",
-            bg: "bg-blue-100",
-            items: [
-                {
-                    title: "Jewel Types",
-                    description: "Gold, Silver, Platinum...",
-                    icon: "diamond",
-                    color: "text-blue-600",
-                    bg: "bg-blue-100",
-                    link: "/admin/configs/jewel-types"
-                },
-                {
-                    title: "Jewel Qualities",
-                    description: "22k, 24k, 925...",
-                    icon: "verified",
-                    color: "text-purple-600",
-                    bg: "bg-purple-100",
-                    link: "/admin/configs/jewel-qualities"
-                },
-                {
-                    title: "Jewel Names",
-                    description: "Ring, Chain, Bangle...",
-                    icon: "category",
-                    color: "text-pink-600",
-                    bg: "bg-pink-100",
-                    link: "/admin/configs/jewel-names"
-                },
-            ]
-        },
-        {
-            title: "Loan Configuration",
-            icon: "settings_suggest",
-            description: "Interest, validity & fees",
-            color: "text-purple-600",
-            bg: "bg-purple-100",
-            items: [
-                {
-                    title: "Interest Settings",
-                    description: "Configure loan interest rates",
-                    icon: "percent",
-                    color: "text-indigo-600",
-                    bg: "bg-indigo-100",
-                    link: "/admin/configs/interest-settings"
-                },
-                {
-                    title: "Validity Months",
-                    description: "Set loan validity periods",
-                    icon: "event_repeat",
-                    color: "text-teal-600",
-                    bg: "bg-teal-100",
-                    link: "/admin/configs/validity-periods"
-                },
-                {
-                    title: "Loan Processing Fee",
-                    description: "Manage document charges",
-                    icon: "post_add",
-                    color: "text-orange-600",
-                    bg: "bg-orange-100",
-                    link: "/admin/configs/processing-fees"
-                },
-            ]
-        },
-        {
-            title: "Organization",
-            icon: "domain",
-            description: "Manage branches and staff access",
-            color: "text-indigo-600",
-            bg: "bg-indigo-100",
-            items: [
-                {
-                    title: "Branches",
-                    description: "Manage physical store locations",
-                    icon: "store",
-                    color: "text-indigo-600",
-                    bg: "bg-indigo-100",
-                    link: "/admin/configs/branches"
-                },
-                {
-                    title: "Users",
-                    description: "Manage system administrators and staff",
-                    icon: "people",
-                    color: "text-purple-600",
-                    bg: "bg-purple-100",
-                    link: "/admin/configs/users"
-                },
-                {
-                    title: "Brand Kit",
-                    description: "Manage logos, colors & themes",
-                    icon: "palette",
-                    color: "text-rose-600",
-                    bg: "bg-rose-100",
-                    link: "/admin/configs/brand-kit"
-                },
-                {
-                    title: "User Privileges",
-                    description: "Manage role-based access controls",
-                    icon: "admin_panel_settings",
-                    color: "text-orange-600",
-                    bg: "bg-orange-100",
-                    link: "/admin/configs/user-privileges"
-                },
-            ]
-        },
-        {
-            title: "Templates",
-            icon: "description",
-            description: "Manage message & document templates",
-            color: "text-teal-600",
-            bg: "bg-teal-100",
-            items: [
-                {
-                    title: "SMS Templates",
-                    description: "Edit SMS notification content",
-                    icon: "sms",
-                    color: "text-blue-600",
-                    bg: "bg-blue-100",
-                    link: "/admin/configs/templates/sms"
-                },
-                {
-                    title: "WhatsApp Templates",
-                    description: "Edit WhatsApp message content",
-                    icon: "whatsapp_logo",
-                    color: "text-green-600",
-                    bg: "bg-green-100",
-                    link: "/admin/configs/templates/whatsapp"
-                },
-                {
-                    title: "Receipt Templates",
-                    description: "Customize payment receipts",
-                    icon: "receipt",
-                    color: "text-gray-600",
-                    bg: "bg-gray-100",
-                    link: "/admin/configs/templates/receipt"
-                },
-                {
-                    title: "Due Notice",
-                    description: "Customize due payment notices",
-                    icon: "event_note",
-                    color: "text-red-600",
-                    bg: "bg-red-100",
-                    link: "/admin/configs/templates/due-notice"
-                },
-                {
-                    title: "Annual Notice",
-                    description: "Customize annual reminders",
-                    icon: "calendar_today",
-                    color: "text-orange-600",
-                    bg: "bg-orange-100",
-                    link: "/admin/configs/templates/annual-notice"
-                },
-            ]
-        }
-    ];
+    const configGroups = useMemo(() => {
+        const groups = [
+            {
+                title: "Financials",
+                icon: "account_balance_wallet",
+                description: "Payment methods, taxes & bank settings",
+                color: "text-green-600",
+                bg: "bg-green-100",
+                items: [
+                    {
+                        title: "Payment Methods",
+                        description: "Manage cash, bank accounts, and wallets",
+                        icon: "payments",
+                        color: "text-green-600",
+                        bg: "bg-green-100",
+                        link: "/admin/configs/money-sources"
+                    },
+                    {
+                        title: "Metal Rates",
+                        description: "Set daily gold and silver rates",
+                        icon: "currency_rupee",
+                        color: "text-amber-600",
+                        bg: "bg-amber-100",
+                        link: "/admin/configs/metal-rates"
+                    },
+                    {
+                        title: "Banks to Repledge",
+                        description: "Manage repledge institutions",
+                        icon: "account_balance",
+                        color: "text-cyan-600",
+                        bg: "bg-cyan-100",
+                        link: "/admin/configs/repledge-banks"
+                    },
+                ]
+            },
+            {
+                title: "Jewel Management",
+                icon: "diamond",
+                description: "Types, qualities & item names",
+                color: "text-blue-600",
+                bg: "bg-blue-100",
+                items: [
+                    {
+                        title: "Jewel Types",
+                        description: "Gold, Silver, Platinum...",
+                        icon: "diamond",
+                        color: "text-blue-600",
+                        bg: "bg-blue-100",
+                        link: "/admin/configs/jewel-types"
+                    },
+                    {
+                        title: "Jewel Qualities",
+                        description: "22k, 24k, 925...",
+                        icon: "verified",
+                        color: "text-purple-600",
+                        bg: "bg-purple-100",
+                        link: "/admin/configs/jewel-qualities"
+                    },
+                    {
+                        title: "Jewel Names",
+                        description: "Ring, Chain, Bangle...",
+                        icon: "category",
+                        color: "text-pink-600",
+                        bg: "bg-pink-100",
+                        link: "/admin/configs/jewel-names"
+                    },
+                ]
+            },
+            {
+                title: "Loan Configuration",
+                icon: "settings_suggest",
+                description: "Interest, validity & fees",
+                color: "text-purple-600",
+                bg: "bg-purple-100",
+                items: [
+                    {
+                        title: "Interest Settings",
+                        description: "Configure loan interest rates",
+                        icon: "percent",
+                        color: "text-indigo-600",
+                        bg: "bg-indigo-100",
+                        link: "/admin/configs/interest-settings"
+                    },
+                    {
+                        title: "Validity Months",
+                        description: "Set loan validity periods",
+                        icon: "event_repeat",
+                        color: "text-teal-600",
+                        bg: "bg-teal-100",
+                        link: "/admin/configs/validity-periods"
+                    },
+                    {
+                        title: "Loan Processing Fee",
+                        description: "Manage document charges",
+                        icon: "post_add",
+                        color: "text-orange-600",
+                        bg: "bg-orange-100",
+                        link: "/admin/configs/processing-fees"
+                    },
+                ]
+            },
+            {
+                title: "Organization",
+                icon: "domain",
+                description: "Manage branches and staff access",
+                color: "text-indigo-600",
+                bg: "bg-indigo-100",
+                items: [
+                    {
+                        title: "Branches",
+                        description: "Manage physical store locations",
+                        icon: "store",
+                        color: "text-indigo-600",
+                        bg: "bg-indigo-100",
+                        link: "/admin/configs/branches"
+                    },
+                    {
+                        title: "Users",
+                        description: "Manage system administrators and staff",
+                        icon: "people",
+                        color: "text-purple-600",
+                        bg: "bg-purple-100",
+                        link: "/admin/configs/users"
+                    },
+                    {
+                        title: "Brand Kit",
+                        description: "Manage logos, colors & themes",
+                        icon: "palette",
+                        color: "text-rose-600",
+                        bg: "bg-rose-100",
+                        link: "/admin/configs/brand-kit"
+                    },
+                    {
+                        title: "User Privileges",
+                        description: "Manage role-based access controls",
+                        icon: "admin_panel_settings",
+                        color: "text-orange-600",
+                        bg: "bg-orange-100",
+                        link: "/admin/configs/user-privileges"
+                    },
+                ]
+            },
+            {
+                title: "Templates",
+                icon: "description",
+                description: "Manage message & document templates",
+                color: "text-teal-600",
+                bg: "bg-teal-100",
+                items: [
+                    {
+                        title: "SMS Templates",
+                        description: "Edit SMS notification content",
+                        icon: "sms",
+                        color: "text-blue-600",
+                        bg: "bg-blue-100",
+                        link: "/admin/configs/templates/sms"
+                    },
+                    {
+                        title: "WhatsApp Templates",
+                        description: "Edit WhatsApp message content",
+                        icon: "whatsapp_logo",
+                        color: "text-green-600",
+                        bg: "bg-green-100",
+                        link: "/admin/configs/templates/whatsapp"
+                    },
+                    {
+                        title: "Receipt Templates",
+                        description: "Customize payment receipts",
+                        icon: "receipt",
+                        color: "text-gray-600",
+                        bg: "bg-gray-100",
+                        link: "/admin/configs/templates/receipt"
+                    },
+                    {
+                        title: "Due Notice",
+                        description: "Customize due payment notices",
+                        icon: "event_note",
+                        color: "text-red-600",
+                        bg: "bg-red-100",
+                        link: "/admin/configs/templates/due-notice"
+                    },
+                    {
+                        title: "Annual Notice",
+                        description: "Customize annual reminders",
+                        icon: "calendar_today",
+                        color: "text-orange-600",
+                        bg: "bg-orange-100",
+                        link: "/admin/configs/templates/annual-notice"
+                    },
+                ]
+            }
+        ];
+
+        // Filter out Repledge Banks if not admin
+        return groups.map(group => ({
+            ...group,
+            items: group.items.filter(item => {
+                if (item.title === "Banks to Repledge" && !isAdmin) return false;
+                return true;
+            })
+        }));
+    }, [isAdmin]);
 
     const renderIcon = (iconName: string, colorClass: string) => {
         if (iconName === 'whatsapp_logo') {

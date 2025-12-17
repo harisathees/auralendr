@@ -232,7 +232,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
   // Loan Configs
   const [interestRates, setInterestRates] = useState<{ id: number; rate: string; jewel_type_id?: number | null; estimation_percentage?: string }[]>([]);
   const [loanValidities, setLoanValidities] = useState<{ id: number; months: number; label?: string; jewel_type_id?: number | null }[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string; balance: string; show_balance: boolean }[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string; balance: string; show_balance: boolean; is_outbound?: boolean }[]>([]);
   const [metalRates, setMetalRates] = useState<{ name: string; metal_rate?: { rate: string } }[]>([]);
   const [processingFeesConfigs, setProcessingFeesConfigs] = useState<{ jewel_type_id: number; percentage: string; max_amount: string | null }[]>([]);
 
@@ -441,7 +441,11 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
     http.get("/jewel-names").then(res => Array.isArray(res.data) && setJewelNames(res.data)).catch(console.error);
     http.get("/interest-rates").then(res => Array.isArray(res.data) && setInterestRates(res.data)).catch(console.error);
     http.get("/loan-validities").then(res => Array.isArray(res.data) && setLoanValidities(res.data)).catch(console.error);
-    http.get("/money-sources").then(res => Array.isArray(res.data) && setPaymentMethods(res.data)).catch(console.error);
+    http.get("/money-sources").then(res => {
+      if (Array.isArray(res.data)) {
+        setPaymentMethods(res.data.filter((m: any) => m.is_outbound));
+      }
+    }).catch(console.error);
     http.get("/metal-rates").then(res => Array.isArray(res.data) && setMetalRates(res.data)).catch(console.error); // Added this line
   }, []);
 

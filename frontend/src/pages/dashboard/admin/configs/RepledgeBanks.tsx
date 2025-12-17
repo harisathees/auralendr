@@ -72,13 +72,8 @@ const RepledgeBanks: React.FC = () => {
             {/* Header */}
             <header className="flex justify-between items-center p-4">
                 <button
-<<<<<<< HEAD
                     onClick={() => navigate('/admin/configs')}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-=======
-                    onClick={() => navigate("/admin/configurations")}
                     className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-600 dark:text-gray-300"
->>>>>>> a6596b9cfcb8ac2b6c70db90686b4d1485209886
                 >
                     <span className="material-symbols-outlined text-secondary-text dark:text-white">arrow_back</span>
                 </button>

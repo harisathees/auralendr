@@ -12,24 +12,10 @@ class RepledgeBank extends Model
 
     protected $guarded = [];
 
-    /**
-     * The "booted" method of the model.
-     *
-     * @return void
-     */
-    protected static function booted()
+    // Relationship to branches
+    public function branches()
     {
-        static::addGlobalScope('branch', function (Builder $builder) {
-            if (auth()->check() && auth()->user()->branch_id) {
-                $builder->where('branch_id', auth()->user()->branch_id);
-            }
-        });
-
-        static::creating(function ($model) {
-            if (auth()->check() && auth()->user()->branch_id) {
-                $model->branch_id = auth()->user()->branch_id;
-            }
-        });
+        return $this->belongsToMany(\App\Models\BranchAndUser\Branch::class, 'branch_repledge_banks');
     }
 
     public function repledges()

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import http from "../../../../api/http";
-import type { RepledgeBank } from "../../../../types/models";
+import type { RepledgeBank, Branch } from "../../../../types/models";
 
 interface RepledgeBankFormProps {
     initialData: RepledgeBank | null;
@@ -17,9 +17,23 @@ const RepledgeBankForm: React.FC<RepledgeBankFormProps> = ({ initialData, onSucc
     const [postValidityInterest, setPostValidityInterest] = useState("");
     const [paymentMethod, setPaymentMethod] = useState("");
 
+    // Branch assignment
+    const [availableBranches, setAvailableBranches] = useState<Branch[]>([]);
+    const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
+
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
+        // Fetch available branches
+        http.get("/branches").then(res => {
+            if (Array.isArray(res.data)) {
+                setAvailableBranches(res.data);
+            } else if (res.data.data && Array.isArray(res.data.data)) {
+                // Handle paginated response if any
+                setAvailableBranches(res.data.data);
+            }
+        }).catch(err => console.error("Failed to fetch branches", err));
+
         if (initialData) {
             setName(initialData.name);
             setCode(initialData.code || "");
@@ -28,6 +42,11 @@ const RepledgeBankForm: React.FC<RepledgeBankFormProps> = ({ initialData, onSucc
             setValidityMonths(String(initialData.validity_months));
             setPostValidityInterest(String(initialData.post_validity_interest));
             setPaymentMethod(initialData.payment_method || "");
+
+            // Set selected branches
+            if (initialData.branches) {
+                setSelectedBranchIds(initialData.branches.map(b => b.id));
+            }
         } else {
             setName("");
             setCode("");
@@ -36,8 +55,17 @@ const RepledgeBankForm: React.FC<RepledgeBankFormProps> = ({ initialData, onSucc
             setValidityMonths("0");
             setPostValidityInterest("0");
             setPaymentMethod("");
+            setSelectedBranchIds([]);
         }
     }, [initialData]);
+
+    const toggleBranch = (branchId: number) => {
+        setSelectedBranchIds(prev =>
+            prev.includes(branchId)
+                ? prev.filter(id => id !== branchId)
+                : [...prev, branchId]
+        );
+    };
 
     const handleSubmit = async () => {
         if (!name) return;
@@ -51,6 +79,7 @@ const RepledgeBankForm: React.FC<RepledgeBankFormProps> = ({ initialData, onSucc
             validity_months: parseInt(validityMonths) || 0,
             post_validity_interest: parseFloat(postValidityInterest) || 0,
             payment_method: paymentMethod,
+            branch_ids: selectedBranchIds
         };
 
         try {
@@ -153,6 +182,29 @@ const RepledgeBankForm: React.FC<RepledgeBankFormProps> = ({ initialData, onSucc
                             placeholder="e.g. Cash"
                         />
                     </label>
+                </div>
+
+                {/* Branch Selection */}
+                <div className="flex flex-col gap-2 pt-2">
+                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Assign to Branches</span>
+                    <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+                        {availableBranches.length === 0 ? (
+                            <p className="text-xs text-gray-500 col-span-2 text-center py-2">No branches available</p>
+                        ) : (
+                            availableBranches.map(branch => (
+                                <label key={branch.id} className="flex items-center gap-2 p-2 hover:bg-white dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-gray-100 dark:hover:border-gray-600">
+                                    <input
+                                        type="checkbox"
+                                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                                        checked={selectedBranchIds.includes(branch.id)}
+                                        onChange={() => toggleBranch(branch.id)}
+                                    />
+                                    <span className="text-sm text-gray-700 dark:text-gray-200">{branch.branch_name}</span>
+                                </label>
+                            ))
+                        )}
+                    </div>
+                    <p className="text-xs text-gray-500">Selected branches will have access to this repledge bank.</p>
                 </div>
 
                 <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex-shrink-0">

@@ -20,7 +20,7 @@ export const useBanks = () => {
     const fetchBanks = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await http.get('/banks');
+            const res = await http.get('/repledge-banks');
             setBanks(res.data || []);
         } catch (err: any) {
             console.error("Failed to fetch banks", err);
@@ -33,7 +33,7 @@ export const useBanks = () => {
     const createBank = async (data: Partial<Bank>) => {
         setLoading(true);
         try {
-            const res = await http.post('/banks', data);
+            const res = await http.post('/repledge-banks', data);
             setBanks(prev => [...prev, res.data]);
             return res.data;
         } catch (err: any) {

@@ -46,7 +46,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('loan-validities', \App\Http\Controllers\Admin\LoanValidityController::class);
         Route::apiResource('payment-methods', \App\Http\Controllers\Admin\PaymentMethodController::class);
         Route::post('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'store']);
-        Route::apiResource('repledge-banks', \App\Http\Controllers\Repledge\RepledgeBankController::class);
     });
 
     // Shared Routes (Admin + Staff)
@@ -59,6 +58,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/payment-methods', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'index']);
     Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
     Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
+
+    // Repledge Banks (Shared for read/write as configured in controller)
+    Route::apiResource('repledge-banks', \App\Http\Controllers\Repledge\RepledgeBankController::class);
 
     // Customer Search and List
     Route::get('/customers/search', [CustomerController::class, 'search']);
@@ -75,8 +77,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/money-sources', [App\Http\Controllers\Admin\MoneySourceController::class, 'store']);
     Route::put('/money-sources/{id}', [App\Http\Controllers\Admin\MoneySourceController::class, 'update']);
     Route::delete('/money-sources/{id}', [App\Http\Controllers\Admin\MoneySourceController::class, 'destroy']);
-    
-  
+
+
     // Staff Task Routes
     Route::get('/my-tasks', [TaskController::class, 'myTasks']);
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus']);
