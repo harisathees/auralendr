@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Repledge;
 use App\Http\Controllers\Controller;
 use App\Models\Repledge\Repledge;
 use App\Models\Pledge\Loan;
+use App\Models\MoneySource;
 use Illuminate\Http\Request;
 use App\Http\Requests\Repledge\StoreRepledgeRequest;
 use App\Http\Requests\Repledge\UpdateRepledgeRequest;
@@ -49,6 +50,18 @@ class RepledgeController extends Controller
             return response()->json(['message' => 'Loan not found or access denied'], 404);
         }
 
+        // Check if loan is already repledged
+        $existingRepledge = Repledge::where('loan_id', $loan->id)
+            ->where('status', 'active')
+            ->first();
+
+        if ($existingRepledge) {
+            return response()->json([
+                'message' => "Loan #{$loan->loan_no} is already repledged and is currently active.",
+                'error' => 'loan_already_repledged'
+            ], 400);
+        }
+
         // Aggregate Weights
         // Ensure jewels exist
         $jewels = $loan->pledge->jewels ?? collect([]);
@@ -79,6 +92,7 @@ class RepledgeController extends Controller
         $createdRepledges = [];
 
         DB::transaction(function () use ($validated, &$createdRepledges) {
+            // Process items in original order (1, 2, 3...)
             foreach ($validated['items'] as $item) {
                 // Auto-link loan if not provided but loan_no exists (optional logic)
                 if (empty($item['loan_id']) && !empty($item['loan_no'])) {
@@ -97,7 +111,37 @@ class RepledgeController extends Controller
                     'due_date' => $validated['due_date'] ?? null,
                 ]);
 
-                $createdRepledges[] = Repledge::create($repledgeData);
+                $repledge = Repledge::create($repledgeData);
+                $createdRepledges[] = $repledge;
+
+                // Increment balance of Money Source
+                if (!empty($repledge->payment_method) && !empty($repledge->amount)) {
+                    $moneySource = MoneySource::where('name', $repledge->payment_method)->first();
+                    if ($moneySource) {
+                        if (!$moneySource->is_inbound) {
+                            throw new \Exception("The selected payment method '{$moneySource->name}' is not allowed for inbound transactions.");
+                        }
+
+                        // Net inflow = Amount - Processing Fee
+                        $netAmount = (float) $repledge->amount - (float) ($repledge->processing_fee ?? 0);
+
+                        if ($netAmount > 0) {
+                            $moneySource->increment('balance', $netAmount);
+
+                            \Illuminate\Support\Facades\Log::info('Repledge money source balance incremented', [
+                                'repledge_id' => $repledge->id,
+                                'source' => $moneySource->name,
+                                'incremented' => $netAmount,
+                                'new_balance' => $moneySource->balance
+                            ]);
+                        }
+                    } else {
+                        \Illuminate\Support\Facades\Log::warning('Money source not found for repledge increment', [
+                            'name' => $repledge->payment_method,
+                            'repledge_id' => $repledge->id
+                        ]);
+                    }
+                }
             }
         });
 

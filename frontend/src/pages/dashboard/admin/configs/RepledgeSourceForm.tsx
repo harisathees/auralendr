@@ -10,7 +10,7 @@ interface RepledgeSourceFormProps {
 
 const RepledgeSourceForm: React.FC<RepledgeSourceFormProps> = ({ initialData, onSuccess, onCancel }) => {
     const [name, setName] = useState("");
-    const [code, setCode] = useState("");
+    const [description, setDescription] = useState("");
     const [branchName, setBranchName] = useState(""); // This is the 'branch' text field in DB
     const [defaultInterest, setDefaultInterest] = useState("");
     const [validityMonths, setValidityMonths] = useState("");
@@ -46,7 +46,7 @@ const RepledgeSourceForm: React.FC<RepledgeSourceFormProps> = ({ initialData, on
 
         if (initialData) {
             setName(initialData.name);
-            setCode(initialData.code || "");
+            setDescription(initialData.description || "");
             setBranchName(initialData.branch || "");
             setDefaultInterest(String(initialData.default_interest));
             setValidityMonths(String(initialData.validity_months));
@@ -59,7 +59,7 @@ const RepledgeSourceForm: React.FC<RepledgeSourceFormProps> = ({ initialData, on
             }
         } else {
             setName("");
-            setCode("");
+            setDescription("");
             setBranchName("");
             setDefaultInterest("0");
             setValidityMonths("0");
@@ -83,7 +83,7 @@ const RepledgeSourceForm: React.FC<RepledgeSourceFormProps> = ({ initialData, on
         setLoading(true);
         const payload = {
             name,
-            code,
+            description,
             branch: branchName,
             default_interest: parseFloat(defaultInterest) || 0,
             validity_months: parseInt(validityMonths) || 0,
@@ -130,12 +130,12 @@ const RepledgeSourceForm: React.FC<RepledgeSourceFormProps> = ({ initialData, on
 
                 <div className="grid grid-cols-2 gap-4">
                     <label className="flex flex-col gap-1.5">
-                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Source Code</span>
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Description</span>
                         <input
                             className="form-input w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 text-sm outline-none transition-all"
-                            value={code}
-                            onChange={(e) => setCode(e.target.value)}
-                            placeholder="Optional"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Optional description"
                         />
                     </label>
                     <label className="flex flex-col gap-1.5">

@@ -15,6 +15,7 @@ const MoneySources: React.FC = () => {
     // Modal State
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingSource, setEditingSource] = useState<MoneySource | null>(null);
+    const [isViewOnly, setIsViewOnly] = useState(false);
 
     // Delete Modal State
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -59,11 +60,19 @@ const MoneySources: React.FC = () => {
     };
 
     const handleOpenCreate = () => {
+        setIsViewOnly(false);
         setEditingSource(null);
         setIsFormOpen(true);
     };
 
     const handleOpenEdit = (source: MoneySource) => {
+        setIsViewOnly(false);
+        setEditingSource(source);
+        setIsFormOpen(true);
+    };
+
+    const handleOpenView = (source: MoneySource) => {
+        setIsViewOnly(true);
         setEditingSource(source);
         setIsFormOpen(true);
     };
@@ -114,7 +123,11 @@ const MoneySources: React.FC = () => {
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 px-2">
                             {sources.map((source) => (
-                                <div key={source.id} className="bg-white dark:bg-gray-900 rounded-[2rem] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group border border-gray-100 dark:border-gray-800">
+                                <div
+                                    key={source.id}
+                                    onClick={() => handleOpenView(source)}
+                                    className="bg-white dark:bg-gray-900 rounded-[2rem] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group border border-gray-100 dark:border-gray-800 cursor-pointer"
+                                >
                                     {/* Visual Header */}
                                     <div className="relative h-40 flex items-center justify-center bg-green-50 dark:bg-green-900/20">
 
@@ -216,6 +229,7 @@ const MoneySources: React.FC = () => {
                             initialData={editingSource}
                             onSuccess={handleFormSuccess}
                             onCancel={() => setIsFormOpen(false)}
+                            isReadOnly={isViewOnly}
                         />
                     </div>
                 </div>

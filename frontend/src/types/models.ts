@@ -56,7 +56,7 @@ export interface MoneySourceType {
 export interface RepledgeSource {
     id: number;
     name: string;
-    code: string | null;
+    description: string | null;
     branch: string | null; // legacy field name in DB for branch name text
     default_interest: number;
     validity_months: number;

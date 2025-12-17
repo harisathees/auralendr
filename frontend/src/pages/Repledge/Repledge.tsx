@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useRepledge } from "../../hooks/useRepledge";
 import { useRepledgeSource } from "../../hooks/useRepledgeSource";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../context";
 import RepledgeForm from "../../components/Repledge/RepledgeForm";
 
 const Repledge: React.FC = () => {
@@ -16,6 +17,7 @@ const Repledge: React.FC = () => {
     // Note: useRepledgeSource hook is used inside RepledgeForm for listing, 
     // but we use it here for Bank Management Modal if needed.
     const { createSource: createSourceOrigin, sources } = useRepledgeSource();
+    const { showToast } = useToast();
 
     const [showBankManagement, setShowBankManagement] = useState(false);
 
@@ -52,14 +54,21 @@ const Repledge: React.FC = () => {
                 return saveRepledgeEntry(entry);
             }));
 
-            alert('Entries saved successfully!');
-            // Ideally reset form. RepledgeForm might handle reset or we can key it to force re-render.
-            // But RepledgeForm handles submit internally? No, calls onSubmit. 
-            // We can navigate back or show success.
+            showToast('Entries saved successfully!', 'success');
             navigate(-1);
-        } catch (e) {
+        } catch (e: any) {
             console.error("Save failed:", e);
-            alert('Failed to save entries.');
+            // Handle Laravel style validation errors
+            const errors = e.response?.data?.errors;
+            let firstError = "";
+            if (errors) {
+                const firstKey = Object.keys(errors)[0];
+                if (firstKey && Array.isArray(errors[firstKey]) && errors[firstKey].length > 0) {
+                    firstError = errors[firstKey][0];
+                }
+            }
+            const errorMsg = firstError || e.response?.data?.message || 'Failed to save entries.';
+            showToast(errorMsg, 'error');
         }
     };
 

@@ -30,7 +30,7 @@ class RepledgeSourceController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:50',
+            'description' => 'nullable|string|max:255',
             'branch' => 'nullable|string|max:255',
             'default_interest' => 'nullable|numeric|min:0',
             'validity_months' => 'nullable|integer|min:0',
@@ -60,7 +60,7 @@ class RepledgeSourceController extends Controller
     {
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'code' => 'nullable|string|max:50',
+            'description' => 'nullable|string|max:255',
             'branch' => 'nullable|string|max:255',
             'default_interest' => 'nullable|numeric|min:0',
             'validity_months' => 'nullable|integer|min:0',
