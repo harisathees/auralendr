@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import http from "../../../../api/http";
-import type { MoneySource, Branch } from "../../../../types/models";
+import type { MoneySource, Branch, MoneySourceType } from "../../../../types/models";
 
 interface MoneySourceFormProps {
     initialData: MoneySource | null;
@@ -24,10 +24,14 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
     const [availableBranches, setAvailableBranches] = useState<Branch[]>([]);
     const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
 
+    // Dynamic Types
+    const [moneySourceTypes, setMoneySourceTypes] = useState<MoneySourceType[]>([]);
+
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         fetchBranches();
+        fetchMoneySourceTypes();
     }, []);
 
     const fetchBranches = async () => {
@@ -36,6 +40,15 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
             setAvailableBranches(res.data);
         } catch (err) {
             console.error("Failed to fetch branches");
+        }
+    };
+
+    const fetchMoneySourceTypes = async () => {
+        try {
+            const res = await http.get("/money-source-types");
+            setMoneySourceTypes(res.data);
+        } catch (err) {
+            console.error("Failed to fetch money source types");
         }
     };
 
@@ -157,9 +170,9 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                                 value={type}
                                 onChange={(e) => setType(e.target.value)}
                             >
-                                <option value="cash" className="bg-white dark:bg-gray-800">Cash</option>
-                                <option value="bank" className="bg-white dark:bg-gray-800">Bank Account</option>
-                                <option value="wallet" className="bg-white dark:bg-gray-800">Wallet / UPI</option>
+                                {moneySourceTypes.map(t => (
+                                    <option key={t.id} value={t.value} className="bg-white dark:bg-gray-800">{t.name}</option>
+                                ))}
                             </select>
                             <span className="material-symbols-outlined absolute right-3 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
                         </div>

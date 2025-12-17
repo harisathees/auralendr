@@ -46,6 +46,13 @@ export interface MoneySource {
     branches?: any[]; // Simplified for now
 }
 
+export interface MoneySourceType {
+    id: number;
+    name: string;
+    value: string;
+    icon: string | null;
+}
+
 export interface RepledgeSource {
     id: number;
     name: string;

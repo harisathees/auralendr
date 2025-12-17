@@ -77,6 +77,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/money-sources', [App\Http\Controllers\Admin\MoneySourceController::class, 'store']);
     Route::put('/money-sources/{id}', [App\Http\Controllers\Admin\MoneySourceController::class, 'update']);
     Route::delete('/money-sources/{id}', [App\Http\Controllers\Admin\MoneySourceController::class, 'destroy']);
+    Route::get('/money-source-types', [\App\Http\Controllers\MoneySourceTypeController::class, 'index']);
 
 
     // Staff Task Routes
