@@ -4,7 +4,7 @@ import { useRepledge } from "../../hooks/useRepledge";
 import { useToast } from "../../context";
 
 interface RepledgeItem {
-    id?: string; // specific row ID for UI key
+    id?: string;
     loanId: string;
     loanNo: string;
     reNo: string;
@@ -20,31 +20,29 @@ interface RepledgeItem {
 }
 
 interface Props {
-    initialData?: any; // For Edit mode (might need adaptation for multi-row edit)
+    initialData?: any;
     onSubmit: (data: any) => Promise<void>;
     loading?: boolean;
     onCancel?: () => void;
+    onSettingsClick?: () => void;
 }
 
-const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false, onCancel }) => {
-    // USE CORRECT HOOK HERE
+const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false, onCancel, onSettingsClick }) => {
     const { sources, loading: sourcesLoading } = useRepledgeSource();
     const { searchLoanSuggestions: searchLoan } = useRepledge();
     const { showToast } = useToast();
 
-    // Global (Bank) State
+    // Global State
     const [bankId, setBankId] = useState("");
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
     const [endDate, setEndDate] = useState("");
     const [status, setStatus] = useState("active");
 
-    // Global Bank Config defaults (fetched)
     const [globalInterest, setGlobalInterest] = useState(0);
     const [globalValidity, setGlobalValidity] = useState(0);
     const [globalPostInt, setGlobalPostInt] = useState(0);
     const [globalPaymentMethod, setGlobalPaymentMethod] = useState("");
 
-    // Items State
     const [items, setItems] = useState<RepledgeItem[]>([{
         id: 'init_1',
         loanId: "", loanNo: "", reNo: "",
@@ -54,34 +52,34 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
         paymentMethod: ""
     }]);
 
+    // Common Input Class matching Create Pledge
+    const inputClass = "w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-purple-600 focus:ring-1 focus:ring-purple-600 h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400";
+
+    // Select Class (similar to input but with appearance-none if needed, though we supply icon)
+    const selectClass = "w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-purple-600 focus:ring-1 focus:ring-purple-600 h-12 px-4 shadow-sm outline-none transition-all appearance-none";
+
     const addMonths = (date: Date, months: number): Date => {
         const d = new Date(date);
         d.setMonth(d.getMonth() + months);
         return d;
     };
 
-    // Bank Change Handler
     const handleBankChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedId = e.target.value;
         setBankId(selectedId);
-
-        // Find selected source from list
         const source = sources.find(b => b.id.toString() === selectedId);
 
         if (source) {
-            // Auto-populate Info
             setGlobalInterest(source.default_interest || 0);
             setGlobalValidity(source.validity_months || 0);
             setGlobalPostInt(source.post_validity_interest || 0);
             setGlobalPaymentMethod(source.payment_method || "");
 
-            // Auto Update End Date
             if (startDate) {
                 const end = addMonths(new Date(startDate), source.validity_months || 0);
                 setEndDate(end.toISOString().split('T')[0]);
             }
 
-            // Update existing items with source defaults
             setItems(prevItems => prevItems.map(item => ({
                 ...item,
                 interestPercent: source.default_interest || 0,
@@ -90,7 +88,6 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                 paymentMethod: source.payment_method || ""
             })));
         } else {
-            // Reset if no source selected
             setGlobalInterest(0);
             setGlobalValidity(0);
             setGlobalPostInt(0);
@@ -98,7 +95,6 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
         }
     };
 
-    // Date Change
     useEffect(() => {
         if (startDate && globalValidity > 0) {
             const end = addMonths(new Date(startDate), globalValidity);
@@ -106,22 +102,17 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
         }
     }, [startDate, globalValidity]);
 
-    // Initial Data Population (Edit Mode)
     useEffect(() => {
         if (initialData && sources.length > 0) {
             setBankId(initialData.repledge_source_id?.toString() || "");
             setStatus(initialData.status || "active");
             setStartDate(initialData.start_date ? initialData.start_date.split('T')[0] : "");
             setEndDate(initialData.end_date ? initialData.end_date.split('T')[0] : "");
-
-            // Set Global Defaults from Initial Data (or Source)
             setGlobalInterest(initialData.interest_percent || 0);
             setGlobalValidity(initialData.validity_period || 0);
             setGlobalPostInt(initialData.after_interest_percent || 0);
             setGlobalPaymentMethod(initialData.payment_method || "");
 
-            // Populate Item
-            // Edit mode usually handles one item at a time based on current backend "show" response which is single repledge
             setItems([{
                 id: initialData.id,
                 loanId: initialData.loan_id || "",
@@ -140,14 +131,11 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
         }
     }, [initialData, sources]);
 
-    // Item Handler
     const handleItemChange = (index: number, field: keyof RepledgeItem, value: any) => {
         setItems(prev => {
             const newItems = [...prev];
-            // If amount changes, update processing fee?
             if (field === 'amount') {
                 const amt = parseFloat(value) || 0;
-                // Calculate fee: e.g. 0.12% capped at 200 (example logic)
                 const fee = Math.round(Math.min(amt * 0.0012, 200));
                 newItems[index] = { ...newItems[index], [field]: value, processingFee: fee };
             } else {
@@ -157,28 +145,23 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
         });
     };
 
-    // Loan Fetch Handler
     const handleLoanBlur = async (index: number) => {
         const loanNo = items[index].loanNo;
         if (!loanNo) return;
-
         try {
             const loan = await searchLoan(loanNo);
             if (loan) {
                 setItems(prev => {
                     const newItems = [...prev];
-                    const item = newItems[index]; // current item
+                    const item = newItems[index];
                     newItems[index] = {
                         ...item,
                         loanId: loan.id,
-                        // Defaults to loan amount, but editable
                         amount: loan.amount,
                         processingFee: Math.round(Math.min(Number(loan.amount) * 0.0012, 200)),
                         grossWeight: loan.gross_weight,
                         netWeight: loan.net_weight,
                         stoneWeight: loan.stone_weight,
-
-                        // Inherit from global
                         interestPercent: globalInterest,
                         validityPeriod: globalValidity,
                         afterInterestPercent: globalPostInt,
@@ -216,8 +199,6 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
-        // Prepare payload
         const payload = {
             repledge_source_id: bankId,
             status,
@@ -230,7 +211,7 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                 loan_id: item.loanId,
                 amount: item.amount,
                 processing_fee: item.processingFee,
-                net_weight: item.netWeight, // Read-only in UI, sent to backend
+                net_weight: item.netWeight,
                 gross_weight: item.grossWeight,
                 stone_weight: item.stoneWeight,
                 interest_percent: item.interestPercent,
@@ -239,240 +220,214 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                 payment_method: item.paymentMethod,
             }))
         };
-
         onSubmit(payload);
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Global Source Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                <h3 className="text-lg font-bold mb-4 text-primary-text dark:text-white flex items-center gap-2">
+        <div className="flex flex-col gap-6 p-4 pb-24 w-full h-full bg-[#f7f8fc] dark:bg-[#1F1B2E]">
+            {/* Top Bar */}
+            <div className="sticky top-0 z-50 flex items-center bg-[#f7f8fc] dark:bg-[#1F1B2E] p-4 pb-2 justify-between border-b border-gray-100/50 dark:border-gray-800/50 backdrop-blur-md bg-opacity-95 -mx-4 -mt-4 mb-2">
+                <h2 className="text-gray-900 dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] flex-1 text-center pl-12">
+                    {initialData ? "Edit Re-Pledge" : "Re-Pledge Entry"}
+                </h2>
+                <div className="flex w-12 items-center justify-end">
+                    {onSettingsClick ? (
+                        <button type="button" onClick={onSettingsClick} className="flex items-center justify-center rounded-xl h-10 w-10 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <span className="material-symbols-outlined text-2xl">settings</span>
+                        </button>
+                    ) : (
+                        <button type="button" onClick={onCancel} className="flex items-center justify-center rounded-xl h-10 w-10 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <span className="material-symbols-outlined text-2xl">close</span>
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* Bank Details Card */}
+            <div className="flex flex-col rounded-xl bg-white dark:bg-gray-900 p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Bank Details</h3>
                     <span className="material-symbols-outlined text-purple-600">account_balance</span>
-                    Sources
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <label className="flex flex-col gap-1.5">
-                        <span className="text-xs font-bold text-gray-500 uppercase">Source</span>
-                        <select
-                            value={bankId}
-                            onChange={handleBankChange}
-                            required
-                            className="form-select h-10 rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm"
-                        >
-                            <option disabled value="">{sourcesLoading ? "Loading sources..." : "Select Source"}</option>
-                            {sources.map(b => (
-                                <option key={b.id} value={b.id}>{b.name} {b.branch ? `(${b.branch})` : ''}</option>
-                            ))}
-                        </select>
-                    </label>
-
-                    <label className="flex flex-col gap-1.5">
-                        <span className="text-xs font-bold text-gray-500 uppercase">Payment Method</span>
-                        <input
-                            // Auto-filled but editable
-                            value={globalPaymentMethod}
-                            onChange={(e) => setGlobalPaymentMethod(e.target.value)}
-                            className="form-input h-10 rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm"
-                            placeholder="e.g. Cash"
-                        />
-                    </label>
-
-                    <label className="flex flex-col gap-1.5">
-                        <span className="text-xs font-bold text-gray-500 uppercase">Status</span>
-                        <select
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value)}
-                            className="form-select h-10 rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm"
-                        >
-                            <option value="active">Active</option>
-                            <option value="closed">Closed / Settled</option>
-                        </select>
-                    </label>
-
-                    <label className="flex flex-col gap-1.5">
-                        <span className="text-xs font-bold text-gray-500 uppercase">Interest %</span>
-                        <input
-                            type="number"
-                            value={globalInterest}
-                            onChange={(e) => setGlobalInterest(parseFloat(e.target.value) || 0)}
-                            className="form-input h-10 rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm"
-                            placeholder="0.00"
-                        />
-                    </label>
-
-                    <label className="flex flex-col gap-1.5">
-                        <span className="text-xs font-bold text-gray-500 uppercase">Validity (Months)</span>
-                        <input
-                            type="number"
-                            value={globalValidity}
-                            onChange={(e) => setGlobalValidity(parseFloat(e.target.value) || 0)}
-                            className="form-input h-10 rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm"
-                            placeholder="0"
-                        />
-                    </label>
-
-                    <label className="flex flex-col gap-1.5">
-                        <span className="text-xs font-bold text-gray-500 uppercase">Post-Valid Interest %</span>
-                        <input
-                            type="number"
-                            value={globalPostInt}
-                            onChange={(e) => setGlobalPostInt(parseFloat(e.target.value) || 0)}
-                            className="form-input h-10 rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm"
-                            placeholder="0.00"
-                        />
-                    </label>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-50 dark:border-gray-700/50">
-                    <label className="flex flex-col gap-1.5">
-                        <span className="text-xs font-bold text-gray-500 uppercase">Start Date</span>
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={e => setStartDate(e.target.value)}
-                            className="form-input h-10 rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm"
-                        />
+                <div className="space-y-4">
+                    <label className="flex flex-col w-full gap-1.5">
+                        <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Bank</span>
+                        <div className="relative">
+                            <select value={bankId} onChange={handleBankChange} className={selectClass}>
+                                <option disabled value="">{sourcesLoading ? "Loading..." : "Select a bank"}</option>
+                                {sources.map(b => (
+                                    <option key={b.id} value={b.id}>{b.name}</option>
+                                ))}
+                            </select>
+                            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                        </div>
                     </label>
 
-                    <label className="flex flex-col gap-1.5">
-                        <span className="text-xs font-bold text-gray-500 uppercase">End Date (Auto)</span>
-                        <input
-                            type="date"
-                            value={endDate}
-                            readOnly
-                            className="form-input h-10 rounded-lg border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-sm text-gray-500 cursor-not-allowed"
-                        />
+                    <div className="flex gap-4">
+                        <label className="flex flex-col flex-1 min-w-0 gap-1.5">
+                            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Interest %</span>
+                            <input type="number" value={globalInterest} onChange={(e) => setGlobalInterest(parseFloat(e.target.value) || 0)} className={inputClass} placeholder="e.g. 12" />
+                        </label>
+                        <label className="flex flex-col flex-1 min-w-0 gap-1.5">
+                            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Validity (Mo)</span>
+                            <input type="number" value={globalValidity} onChange={(e) => setGlobalValidity(parseFloat(e.target.value) || 0)} className={inputClass} placeholder="e.g. 6" />
+                        </label>
+                    </div>
+
+                    <div className="flex gap-4">
+                        <label className="flex flex-col flex-1 min-w-0 gap-1.5">
+                            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Post-Int %</span>
+                            <input type="number" value={globalPostInt} onChange={(e) => setGlobalPostInt(parseFloat(e.target.value) || 0)} className={inputClass} placeholder="e.g. 18" />
+                        </label>
+                        <label className="flex flex-col flex-1 min-w-0 gap-1.5">
+                            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Payment</span>
+                            <input type="text" value={globalPaymentMethod} onChange={(e) => setGlobalPaymentMethod(e.target.value)} className={inputClass} placeholder="e.g. Cash" />
+                        </label>
+                    </div>
+
+                    <div className="flex gap-4">
+                        <label className="flex flex-col flex-1 min-w-0 gap-1.5">
+                            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Start Date</span>
+                            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={inputClass} />
+                        </label>
+                        <label className="flex flex-col flex-1 min-w-0 gap-1.5">
+                            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">End Date</span>
+                            <input type="date" value={endDate} readOnly className={`${inputClass} bg-gray-50 dark:bg-gray-700 text-gray-500`} />
+                        </label>
+                    </div>
+
+                    <label className="flex flex-col w-full gap-1.5">
+                        <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Status</span>
+                        <div className="relative">
+                            <select value={status} onChange={(e) => setStatus(e.target.value)} className={selectClass}>
+                                <option value="active">Active</option>
+                                <option value="closed">Closed</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-purple-600 pointer-events-none">check_circle</span>
+                        </div>
                     </label>
                 </div>
             </div>
 
-            {/* Items Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-primary-text dark:text-white flex items-center gap-2">
-                        <span className="material-symbols-outlined text-purple-600">list_alt</span>
-                        Items to Repledge
-                    </h3>
-                    <button type="button" onClick={addItem} className="text-sm font-bold text-purple-600 hover:bg-purple-50 px-3 py-1.5 rounded-lg transition-colors">
-                        + Add Item
-                    </button>
-                </div>
+            {/* Item Details Cards */}
+            {items.map((item, index) => (
+                <div key={item.id || index} className="flex flex-col rounded-xl bg-[#2E2842] p-5 shadow-lg relative group">
+                    <div className="flex items-center justify-between mb-5 border-b border-gray-600/30 pb-3">
+                        <h3 className="text-white text-lg font-bold leading-tight tracking-[-0.015em]">Item Details {items.length > 1 ? `#${index + 1}` : ''}</h3>
+                        <div className="flex gap-2">
+                            {items.length > 1 && (
+                                <button type="button" onClick={() => removeItem(index)} className="bg-red-500/20 p-1.5 rounded-lg hover:bg-red-500/40 transition-colors">
+                                    <span className="material-symbols-outlined text-red-400 text-xl block">delete</span>
+                                </button>
+                            )}
+                            <div className="bg-purple-600/20 p-1.5 rounded-lg">
+                                <span className="material-symbols-outlined text-purple-600 text-xl block">diamond</span>
+                            </div>
+                        </div>
+                    </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="text-xs font-bold text-gray-500 uppercase border-b border-gray-100 dark:border-gray-700">
-                                <th className="p-3 min-w-[150px]">Loan No</th>
-                                <th className="p-3 min-w-[150px]">To Re-Pledge No</th>
-                                <th className="p-3 min-w-[100px]">Gross Wt</th>
-                                <th className="p-3 min-w-[100px]">Stone Wt</th>
-                                <th className="p-3 min-w-[100px]">Net Wt</th>
-                                <th className="p-3 min-w-[120px]">Amount</th>
-                                <th className="p-3 min-w-[120px]">Proc. Fee</th>
-                                <th className="p-3 w-[50px]"></th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                            {items.map((item, index) => (
-                                <tr key={item.id || index} className="group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                    <td className="p-2">
-                                        <input
-                                            value={item.loanNo}
-                                            onChange={(e) => handleItemChange(index, "loanNo", e.target.value)}
-                                            onBlur={() => handleLoanBlur(index)}
-                                            placeholder="Ext Loan No"
-                                            className="form-input w-full h-9 rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
-                                        />
-                                    </td>
-                                    <td className="p-2">
-                                        <input
-                                            value={item.reNo}
-                                            onChange={(e) => handleItemChange(index, "reNo", e.target.value)}
-                                            placeholder="Re-Pledge No"
-                                            required
-                                            className="form-input w-full h-9 rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
-                                        />
-                                    </td>
-                                    <td className="p-2">
-                                        <input
-                                            value={item.grossWeight || ''}
-                                            readOnly
-                                            placeholder="0.000"
-                                            className="form-input w-full h-9 rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 text-sm cursor-not-allowed"
-                                        />
-                                    </td>
-                                    <td className="p-2">
-                                        <input
-                                            value={item.stoneWeight || ''}
-                                            readOnly
-                                            placeholder="0.000"
-                                            className="form-input w-full h-9 rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 text-sm cursor-not-allowed"
-                                        />
-                                    </td>
-                                    <td className="p-2">
-                                        <input
-                                            value={item.netWeight || ''}
-                                            readOnly
-                                            placeholder="0.000"
-                                            className="form-input w-full h-9 rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-500 text-sm font-bold cursor-not-allowed"
-                                        />
-                                    </td>
-                                    <td className="p-2">
-                                        <input
-                                            type="number"
-                                            value={item.amount}
-                                            onChange={(e) => handleItemChange(index, "amount", e.target.value)}
-                                            className="form-input w-full h-9 rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-bold text-purple-600 focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
-                                        />
-                                    </td>
-                                    <td className="p-2">
-                                        <input
-                                            type="number"
-                                            value={item.processingFee}
-                                            onChange={(e) => handleItemChange(index, "processingFee", e.target.value)}
-                                            className="form-input w-full h-9 rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-500"
-                                        />
-                                    </td>
-                                    <td className="p-2 text-center">
-                                        {items.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => removeItem(index)}
-                                                className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors"
-                                                title="Remove Item"
-                                            >
-                                                <span className="material-symbols-outlined text-[20px]">delete</span>
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                    <div className="space-y-4">
+                        <div className="flex flex-col w-full gap-1.5">
+                            <label className="text-gray-400 text-sm font-medium">Original Loan No.</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={item.loanNo}
+                                    onChange={(e) => handleItemChange(index, "loanNo", e.target.value)}
+                                    onBlur={() => handleLoanBlur(index)}
+                                    className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 focus:ring-purple-600`}
+                                    placeholder="Search by Ln. no"
+                                />
+                                <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center bg-purple-600 rounded-lg text-white pointer-events-none">
+                                    <span className="material-symbols-outlined text-sm">search</span>
+                                </button>
+                            </div>
+                        </div>
 
-            <div className="flex justify-end gap-3">
-                {onCancel && (
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="px-6 py-2 rounded-xl font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                    >
-                        Cancel
-                    </button>
-                )}
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-8 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-lg shadow-purple-600/30 transition-all disabled:opacity-70"
-                >
-                    {loading ? "Saving..." : "Save Repledges"}
+                        <label className="flex flex-col w-full gap-1.5">
+                            <span className="text-gray-400 text-sm font-medium">Re-Pledge No.</span>
+                            <input type="text" value={item.reNo} onChange={(e) => handleItemChange(index, "reNo", e.target.value)} className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 focus:ring-purple-600`} placeholder="Enter Re-pledge number" />
+                        </label>
+
+                        <div className="grid grid-cols-3 gap-4">
+                            <label className="flex flex-col min-w-0 gap-1.5">
+                                <span className="text-gray-400 text-sm font-medium truncate">Gross Wt.</span>
+                                <div className="relative">
+                                    <input type="number" value={item.grossWeight || ''} readOnly className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 opacity-80`} placeholder="0.00" />
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">g</span>
+                                </div>
+                            </label>
+                            <label className="flex flex-col min-w-0 gap-1.5">
+                                <span className="text-gray-400 text-sm font-medium truncate">Stone Wt.</span>
+                                <div className="relative">
+                                    <input type="number" value={item.stoneWeight || ''} readOnly className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 opacity-80`} placeholder="0.00" />
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">g</span>
+                                </div>
+                            </label>
+                            <label className="flex flex-col min-w-0 gap-1.5">
+                                <span className="text-gray-400 text-sm font-medium truncate">Net Wt.</span>
+                                <div className="relative">
+                                    <input type="number" value={item.netWeight || ''} readOnly className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 opacity-80`} placeholder="0.00" />
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">g</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <label className="flex flex-col min-w-0 gap-1.5">
+                                <span className="text-gray-400 text-sm font-medium">Amount</span>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
+                                    <input type="number" value={item.amount || ''} onChange={(e) => handleItemChange(index, "amount", e.target.value)} className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 pl-8 focus:ring-purple-600 font-bold`} placeholder="0.00" />
+                                </div>
+                            </label>
+                            <label className="flex flex-col min-w-0 gap-1.5">
+                                <span className="text-gray-400 text-sm font-medium">Proc. Fee</span>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
+                                    <input type="number" value={item.processingFee || ''} onChange={(e) => handleItemChange(index, "processingFee", e.target.value)} className={`${inputClass} border-0 bg-white dark:bg-white text-gray-900 pl-8 focus:ring-purple-600`} placeholder="0.00" />
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            ))}
+
+            <div className="flex gap-3 pt-2">
+                <button type="button" onClick={addItem} className="flex-1 h-14 rounded-xl border-2 border-purple-600/20 bg-transparent text-purple-600 text-base font-bold flex items-center justify-center gap-2 hover:bg-purple-600/5 transition-colors">
+                    <span className="material-symbols-outlined">add</span>
+                    Add Another
+                </button>
+                <button type="button" onClick={handleSubmit} disabled={loading} className="flex-[2] h-14 rounded-xl bg-purple-600 text-white text-base font-bold shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 hover:bg-purple-600/90 transition-colors disabled:opacity-70">
+                    {loading ? "Saving..." : "Save Entry"}
                 </button>
             </div>
-        </form>
+
+            <div className="mt-4">
+                <h3 className="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] mb-3 px-1">Recent Entries</h3>
+                <div className="flex flex-col gap-3">
+                    <div className="flex flex-col bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
+                        <div className="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 className="text-gray-900 dark:text-white font-bold text-base">Hs-2942 ... 12345</h4>
+                                <p className="text-gray-500 text-sm font-medium mt-0.5">Bank: KMB</p>
+                            </div>
+                            <span className="px-2.5 py-1 rounded-md bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wide">Active</span>
+                        </div>
+                        <div className="h-px w-full bg-gray-100 dark:bg-gray-800 my-2"></div>
+                        <div className="flex justify-between items-center text-sm">
+                            <div className="flex gap-3 text-gray-700 dark:text-gray-300 font-medium">
+                                <span><span className="text-gray-400 mr-1">₹</span>21,000</span>
+                                <span className="w-px h-4 bg-gray-300 dark:bg-gray-700"></span>
+                                <span>Fee: <span className="text-gray-400 mr-0.5">₹</span>25</span>
+                            </div>
+                            <span className="text-gray-400 text-xs font-medium">31 Oct. 2025</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
 
