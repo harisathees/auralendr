@@ -8,13 +8,20 @@ use App\Models\BranchAndUser\Branch;
 
 class BranchController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        if (!$request->user()->can('branch.view')) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
         return Branch::all();
     }
 
     public function store(Request $request)
     {
+        if (!$request->user()->can('branch.create')) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
         $data = $request->validate([
             'branch_name' => 'required|string|max:255',
             'location' => 'nullable|string|max:255',
@@ -24,13 +31,20 @@ class BranchController extends Controller
         return response()->json($branch, 201);
     }
 
-    public function show(Branch $branch)
+    public function show(Branch $branch, Request $request)
     {
+        if (!$request->user()->can('branch.view')) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
         return $branch;
     }
 
     public function update(Request $request, Branch $branch)
     {
+        if (!$request->user()->can('branch.update')) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
         $data = $request->validate([
             'branch_name' => 'sometimes|required|string|max:255',
             'location' => 'nullable|string|max:255',
@@ -40,8 +54,11 @@ class BranchController extends Controller
         return response()->json($branch);
     }
 
-    public function destroy(Branch $branch)
+    public function destroy(Branch $branch, Request $request)
     {
+        if (!$request->user()->can('branch.delete')) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
         $branch->delete();
         return response()->json(['message' => 'Deleted']);
     }

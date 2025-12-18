@@ -2,9 +2,11 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import http from "../../api/http";
 import PledgeForm from "../../components/Pledges/PledgeForm";
+import { useAuth } from "../../context/AuthContext";
 
 const Create: React.FC = () => {
   const navigate = useNavigate();
+  const { can, user } = useAuth();
 
   const handleSubmit = async (fd: FormData) => {
     try {
@@ -77,7 +79,26 @@ const Create: React.FC = () => {
       </header>
 
       <main className="flex-1 overflow-y-auto no-scrollbar">
-        <PledgeForm onSubmit={handleSubmit} />
+        {!can('pledge.create') ? (
+          <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
+            <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">lock</span>
+            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Access Denied</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">You don't have permission to create pledges.</p>
+            <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-left">
+              <p><strong>Debug Info:</strong></p>
+              <p>Role: {user?.role}</p>
+              <p>Check: pledge.create</p>
+              <p>Has Permission: NO</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <PledgeForm onSubmit={handleSubmit} />
+            <div className="fixed bottom-0 right-0 p-2 bg-black/50 text-white text-[10px] pointer-events-none z-50">
+              Debug: Role: {user?.role} | Perms: {user?.permissions?.includes('pledge.create') ? 'Yes' : 'No'} | Allow: Yes
+            </div>
+          </>
+        )}
       </main>
 
     </div>

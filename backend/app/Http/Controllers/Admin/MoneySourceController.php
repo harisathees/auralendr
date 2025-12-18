@@ -15,19 +15,19 @@ class MoneySourceController extends Controller
     {
         $user = $request->user();
 
-        // If user is Admin, they might see all or filter by request
-        if ($user->role === 'admin') {
-            return MoneySource::with('branches')->orderBy('name')->get();
-        }
-
-        // If staff, filter by their branch
+        // 1. If user has a branch assigned (Staff OR Admin with branch), filter by that branch
         if ($user->branch_id) {
             return MoneySource::whereHas('branches', function ($q) use ($user) {
                 $q->where('branches.id', $user->branch_id);
             })->orderBy('name')->get();
         }
 
-        // Fallback for users without branch (shouldn't happen for staff)
+        // 2. If user is Admin (and no branch assigned), return ALL
+        if ($user->role === 'admin') {
+            return MoneySource::with('branches')->orderBy('name')->get();
+        }
+
+        // 3. Fallback (e.g., Staff with no branch? Should not happen)
         return [];
     }
 

@@ -29,20 +29,26 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/roles', [App\Http\Controllers\Admin\RolePermissionController::class, 'index']);
     Route::get('/permissions', [App\Http\Controllers\Admin\RolePermissionController::class, 'getPermissions']);
     Route::put('/roles/{role}', [App\Http\Controllers\Admin\RolePermissionController::class, 'update']);
+    
+    // User Permissions - select seperate user for give permissions
+    Route::get('/users-by-role', [App\Http\Controllers\Admin\RolePermissionController::class, 'getUsersByRole']);
+    Route::put('/users/{user}/permissions', [App\Http\Controllers\Admin\RolePermissionController::class, 'updateUserPermissions']);
 
     // Pledge Routes
     Route::apiResource('pledges', PledgeController::class);
 
 
     // Repledge Routes
-    Route::get('repledges/search-loan', [\App\Http\Controllers\Repledge\RepledgeController::class, 'searchLoan']);
+    Route::get('repledge-loans/search', [\App\Http\Controllers\Repledge\RepledgeController::class, 'searchLoan']);
     Route::apiResource('repledges', \App\Http\Controllers\Repledge\RepledgeController::class);
+
+    // Permission Controlled Routes
+    Route::apiResource('branches', BranchController::class);
+    Route::apiResource('staff', StaffController::class);
 
 
     // Admin-only routes
     Route::middleware('admin')->group(function () {
-        Route::apiResource('branches', BranchController::class);
-        Route::apiResource('staff', StaffController::class);
         Route::apiResource('tasks', TaskController::class);
         Route::apiResource('jewel-types', JewelTypeController::class);
         Route::apiResource('jewel-qualities', JewelQualityController::class);
@@ -50,8 +56,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('interest-rates', \App\Http\Controllers\Admin\InterestRateController::class);
         Route::apiResource('loan-validities', \App\Http\Controllers\Admin\LoanValidityController::class);
         Route::apiResource('payment-methods', \App\Http\Controllers\Admin\PaymentMethodController::class);
+        Route::apiResource('transaction-categories', \App\Http\Controllers\Admin\TransactionCategoryController::class);
         Route::post('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'store']);
-        Route::apiResource('repledge-banks', \App\Http\Controllers\Repledge\RepledgeBankController::class);
     });
 
     // Shared Routes (Admin + Staff)
@@ -64,6 +70,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/payment-methods', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'index']);
     Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
     Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
+    Route::get('transaction-categories', [\App\Http\Controllers\Admin\TransactionCategoryController::class, 'index']);
+
+    // Repledge Sources (Shared for read/write as configured in controller)
+    Route::apiResource('repledge-sources', \App\Http\Controllers\Repledge\RepledgeSourceController::class);
 
     // Customer Search and List
     Route::get('/customers/search', [CustomerController::class, 'search']);
@@ -77,8 +87,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/money-sources', [App\Http\Controllers\Admin\MoneySourceController::class, 'store']);
     Route::put('/money-sources/{id}', [App\Http\Controllers\Admin\MoneySourceController::class, 'update']);
     Route::delete('/money-sources/{id}', [App\Http\Controllers\Admin\MoneySourceController::class, 'destroy']);
-    
-  
+    Route::get('/money-source-types', [\App\Http\Controllers\MoneySourceTypeController::class, 'index']);
+
+
+    // Transactions
+    Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index']);
+    Route::post('/transactions', [App\Http\Controllers\TransactionController::class, 'store']);
+
     // Staff Task Routes
     Route::get('/my-tasks', [TaskController::class, 'myTasks']);
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus']);

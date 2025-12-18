@@ -2,10 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import http from "../../api/http";
 import PledgeForm from "../../components/Pledges/PledgeForm";
+import { useAuth } from "../../context/AuthContext";
 
 const Edit: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { can } = useAuth();
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
@@ -39,7 +41,20 @@ const Edit: React.FC = () => {
       </header>
 
       <main className="flex-1 overflow-y-auto no-scrollbar">
-        <PledgeForm initial={data} onSubmit={handleSubmit} />
+        {!can('pledge.update') ? (
+          <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
+            <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">lock</span>
+            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Access Denied</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">You don't have permission to edit pledges.</p>
+            <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-left">
+              <p><strong>Debug Info:</strong></p>
+              <p>Check: pledge.update</p>
+              <p>Has Permission: {can('pledge.update') ? 'YES' : 'NO'}</p>
+            </div>
+          </div>
+        ) : (
+          <PledgeForm initial={data} onSubmit={handleSubmit} />
+        )}
       </main>
 
     </div>

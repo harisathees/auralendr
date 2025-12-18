@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 import http from "../../../../api/http";
-import type { MoneySource, Branch } from "../../../../types/models";
+import type { MoneySource, Branch, MoneySourceType } from "../../../../types/models";
 
 interface MoneySourceFormProps {
     initialData: MoneySource | null;
     onSuccess: () => void;
     onCancel: () => void;
+    isReadOnly?: boolean;
 }
 
-const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSuccess, onCancel }) => {
+const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSuccess, onCancel, isReadOnly = false }) => {
     const [name, setName] = useState("");
     const [type, setType] = useState("cash");
     const [balance, setBalance] = useState("0");
@@ -24,10 +25,14 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
     const [availableBranches, setAvailableBranches] = useState<Branch[]>([]);
     const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
 
+    // Dynamic Types
+    const [moneySourceTypes, setMoneySourceTypes] = useState<MoneySourceType[]>([]);
+
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         fetchBranches();
+        fetchMoneySourceTypes();
     }, []);
 
     const fetchBranches = async () => {
@@ -36,6 +41,15 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
             setAvailableBranches(res.data);
         } catch (err) {
             console.error("Failed to fetch branches");
+        }
+    };
+
+    const fetchMoneySourceTypes = async () => {
+        try {
+            const res = await http.get("/money-source-types");
+            setMoneySourceTypes(res.data);
+        } catch (err) {
+            console.error("Failed to fetch money source types");
         }
     };
 
@@ -118,12 +132,12 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col max-h-[85vh]">
             <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50 flex-shrink-0">
                 <h2 className="text-lg font-bold text-primary-text dark:text-white">
-                    {initialData ? "Edit Payment Method" : "Add Payment Method"}
+                    {isReadOnly ? "View Payment Method" : (initialData ? "Edit Payment Method" : "Add Payment Method")}
                 </h2>
                 <div className="flex items-center gap-3">
                     <div
-                        onClick={() => setIsActive(!isActive)}
-                        className={`flex items-center gap-1.5 p-1 px-3 text-xs font-bold rounded-full cursor-pointer transition-all ${isActive
+                        onClick={() => !isReadOnly && setIsActive(!isActive)}
+                        className={`flex items-center gap-1.5 p-1 px-3 text-xs font-bold rounded-full transition-all ${isReadOnly ? 'cursor-default' : 'cursor-pointer'} ${isActive
                             ? 'bg-green-500 text-white shadow-md'
                             : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                             }`}
@@ -141,10 +155,11 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                 <label className="flex flex-col gap-1.5">
                     <span className="text-sm font-bold text-primary-text dark:text-white">Name</span>
                     <input
-                        className="form-input w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 text-sm outline-none transition-all"
+                        className={`form-input w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 text-sm outline-none transition-all ${isReadOnly ? 'cursor-default' : ''}`}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="e.g. Shop Cash, HDFC Bank"
+                        readOnly={isReadOnly}
                     />
                 </label>
 
@@ -153,13 +168,14 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                         <span className="text-sm font-bold text-primary-text dark:text-white">Type</span>
                         <div className="relative">
                             <select
-                                className="form-select w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 text-sm outline-none appearance-none transition-all"
+                                className={`form-select w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 text-sm outline-none appearance-none transition-all ${isReadOnly ? 'cursor-default pointer-events-none' : ''}`}
                                 value={type}
                                 onChange={(e) => setType(e.target.value)}
+                                disabled={isReadOnly}
                             >
-                                <option value="cash" className="bg-white dark:bg-gray-800">Cash</option>
-                                <option value="bank" className="bg-white dark:bg-gray-800">Bank Account</option>
-                                <option value="wallet" className="bg-white dark:bg-gray-800">Wallet / UPI</option>
+                                {moneySourceTypes.map(t => (
+                                    <option key={t.id} value={t.value} className="bg-white dark:bg-gray-800">{t.name}</option>
+                                ))}
                             </select>
                             <span className="material-symbols-outlined absolute right-3 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
                         </div>
@@ -177,26 +193,27 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                             <input
                                 type="number"
                                 // 👇 ADDED CLASSES HERE to hide increment/decrement arrows
-                                className="form-input w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/50 h-12 pl-8 pr-12 text-sm font-semibold outline-none transition-all
+                                className={`form-input w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/50 h-12 pl-8 pr-12 text-sm font-semibold outline-none transition-all
             [appearance:textfield] 
             [&::-webkit-outer-spin-button]:appearance-none 
             [&::-webkit-inner-spin-button]:appearance-none 
             [&::-webkit-outer-spin-button]:m-0 
-            [&::-webkit-inner-spin-button]:m-0"
+            [&::-webkit-inner-spin-button]:m-0 ${isReadOnly ? 'cursor-default' : ''}`}
                                 // 👆 END OF ADDED CLASSES
                                 value={balance}
                                 onChange={(e) => setBalance(e.target.value)}
                                 placeholder="0.00"
+                                readOnly={isReadOnly}
                             />
 
                             {/* Visibility Toggle Button */}
                             <button
                                 type="button"
-                                onClick={() => setShowBalance(!showBalance)}
+                                onClick={() => !isReadOnly && setShowBalance(!showBalance)}
                                 title={showBalance ? "Hide Balance" : "Show Balance"}
-                                className={`absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full transition-colors ${showBalance
-                                    ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300 hover:bg-amber-200'
-                                    : 'text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                className={`absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full transition-colors ${isReadOnly ? 'cursor-default' : 'hover:bg-gray-200 dark:hover:bg-gray-700'} ${showBalance
+                                    ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300'
+                                    : 'text-gray-400 dark:text-gray-500'
                                     }`}
                             >
                                 <span className="material-symbols-outlined text-[16px]">
@@ -210,10 +227,11 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                 <label className="flex flex-col gap-1.5">
                     <span className="text-sm font-bold text-primary-text dark:text-white">Description</span>
                     <textarea
-                        className="form-textarea w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary p-4 text-sm outline-none min-h-[80px] resize-none transition-all"
+                        className={`form-textarea w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary p-4 text-sm outline-none min-h-[80px] resize-none transition-all ${isReadOnly ? 'cursor-default' : ''}`}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Optional details..."
+                        readOnly={isReadOnly}
                     />
                 </label>
 
@@ -224,7 +242,8 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                         <button
                             type="button"
                             onClick={handleSelectAllBranches}
-                            className="text-sm text-primary font-semibold hover:text-primary-dark dark:hover:text-primary-light transition-colors" // Adjusted text size/weight
+                            disabled={isReadOnly}
+                            className={`text-sm font-semibold transition-colors ${isReadOnly ? 'text-gray-400 cursor-default' : 'text-primary hover:text-primary-dark dark:hover:text-primary-light'}`} // Adjusted text size/weight
                         >
                             {selectedBranchIds.length === availableBranches.length ? 'Deselect All' : 'Select All'}
                         </button>
@@ -237,8 +256,8 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                             return (
                                 <div
                                     key={branch.id}
-                                    onClick={() => handleBranchToggle(branch.id)}
-                                    className={`aspect-square flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl border cursor-pointer transition-all duration-200 relative ${isSelected
+                                    onClick={() => !isReadOnly && handleBranchToggle(branch.id)}
+                                    className={`aspect-square flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl border transition-all duration-200 relative ${isReadOnly ? 'cursor-default' : 'cursor-pointer'} ${isSelected
                                         ? 'bg-primary/10 border-primary shadow-sm ring-1 ring-primary/50' // Added ring for subtle focus on select
                                         : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md' // Enhanced hover effect
                                         }`}>
@@ -277,8 +296,8 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                     <div className="grid grid-cols-2 gap-2">
                         {/* Outbound (Send) - Compacted */}
                         <div
-                            onClick={() => setIsOutbound(!isOutbound)}
-                            className={`flex items-center justify-center p-1.5 rounded-lg border-2 cursor-pointer transition-all active:scale-95 ${isOutbound
+                            onClick={() => !isReadOnly && setIsOutbound(!isOutbound)}
+                            className={`flex items-center justify-center p-1.5 rounded-lg border-2 transition-all active:scale-95 ${isReadOnly ? 'cursor-default' : 'cursor-pointer'} ${isOutbound
                                 ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400'
                                 : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                                 }`}
@@ -294,8 +313,8 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
 
                         {/* Inbound (Receive) - Compacted */}
                         <div
-                            onClick={() => setIsInbound(!isInbound)}
-                            className={`flex items-center justify-center p-1.5 rounded-lg border-2 cursor-pointer transition-all active:scale-95 ${isInbound
+                            onClick={() => !isReadOnly && setIsInbound(!isInbound)}
+                            className={`flex items-center justify-center p-1.5 rounded-lg border-2 transition-all active:scale-95 ${isReadOnly ? 'cursor-default' : 'cursor-pointer'} ${isInbound
                                 ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-500 dark:border-purple-400'
                                 : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                                 }`}
@@ -314,17 +333,19 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
                 <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex-shrink-0 mb-4">
                     <button
                         onClick={onCancel}
-                        className="px-6 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        className={`px-6 py-3 rounded-xl font-bold transition-colors ${isReadOnly ? 'w-full bg-gray-100 dark:bg-gray-800 text-primary hover:bg-gray-200 dark:hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
                     >
-                        Cancel
+                        {isReadOnly ? "Close" : "Cancel"}
                     </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={loading}
-                        className="px-8 py-3 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold shadow-lg shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {loading ? "Saving..." : "Save Payment Method"}
-                    </button>
+                    {!isReadOnly && (
+                        <button
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className="px-8 py-3 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold shadow-lg shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {loading ? "Saving..." : "Save Payment Method"}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

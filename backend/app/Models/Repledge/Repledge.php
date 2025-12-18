@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\Pledge\Loan;
+use App\Models\Repledge\RepledgeSource;
 
 class Repledge extends Model
 {
@@ -39,9 +40,9 @@ class Repledge extends Model
         });
     }
 
-    public function bank()
+    public function source()
     {
-        return $this->belongsTo(RepledgeBank::class, 'bank_id');
+        return $this->belongsTo(RepledgeSource::class, 'repledge_source_id');
     }
 
     public function loan()

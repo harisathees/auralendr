@@ -25,7 +25,7 @@ class UpdateRepledgeRequest extends FormRequest
             'loan_no' => 'sometimes|required|string',
             're_no' => 'sometimes|required|string',
             'loan_id' => 'nullable|exists:loans,id',
-            'bank_id' => 'sometimes|required|exists:repledge_banks,id',
+            'repledge_source_id' => 'sometimes|required|exists:repledge_sources,id',
             'amount' => 'sometimes|required|numeric|min:0',
             'processing_fee' => 'nullable|numeric|min:0',
             'net_weight' => 'sometimes|required|numeric|min:0',

@@ -137,143 +137,157 @@ const PledgeView: React.FC<Props> = ({ data }) => {
       </header>
 
       <main className="flex flex-col gap-6 p-4 pb-48 w-full max-w-5xl mx-auto">
-
-        {/* Customer Details Section */}
-        <section className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-green-100 dark:border-gray-700">
-          <div className="flex items-center gap-3 mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">
-            <span className="material-symbols-outlined text-primary">person</span>
-            <h3 className="text-gray-800 dark:text-white text-xl font-bold">Customer Details</h3>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <ReadOnlyField label="Name" value={customer.name} />
-            <ReadOnlyField label="Mobile No" value={customer.mobile_no} />
-
-            {(customer.whatsapp_no) && (
-              <ReadOnlyField label="Whatsapp No" value={customer.whatsapp_no} />
-            )}
-
-            <ReadOnlyField label="Address" value={customer.address} isTextArea />
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <ReadOnlyField label="ID Type" value={customer.id_proof_type} />
-              <ReadOnlyField label="ID Number" value={customer.id_proof_number} />
-            </div>
-
-            {/* Slot 1: Customer Document */}
-            <div className="flex flex-col gap-3 pt-2">
-              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Customer Document</span>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-                <MediaDisplay
-                  label="Customer Doc"
-                  icon="description"
-                  mediaItem={
-                    mediaMap['customer_document'] ||
-                    media.find((m: any) => m.category === 'customer_document' || m.collection_name === 'customer_document') ||
-                    (customer.document_url ? { url: customer.document_url, type: 'image' } : undefined)
-                  }
-                />
-                {/* ID Proof Image can be the same as doc or separate, usually we just show the doc */}
-                <MediaDisplay
-                  label="Customer Image"
-                  icon="face"
-                  mediaItem={
-                    mediaMap['customer_image'] ||
-                    media.find((m: any) => m.category === 'customer_image' || m.collection_name === 'customer_image') ||
-                    (customer.image_url ? { url: customer.image_url, type: 'image' } : undefined)
-                  }
-                />
-              </div>
+        {!can('pledge.view') ? (
+          <div className="flex flex-col items-center justify-center py-20 opacity-50">
+            <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">lock</span>
+            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Access Denied</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">You don't have permission to view pledge details.</p>
+            {/* Debug Info */}
+            <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-left">
+              <p><strong>Debug Info:</strong></p>
+              <p>Check: pledge.view</p>
+              <p>Has Permission: {can('pledge.view') ? 'YES' : 'NO'}</p>
             </div>
           </div>
-        </section>
-
-        {/* Jewel Details Section */}
-        <section className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-green-100 dark:border-gray-700">
-          <div className="flex items-center gap-3 mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">
-            <span className="material-symbols-outlined text-primary">diamond</span>
-            <h3 className="text-gray-800 dark:text-white text-xl font-bold">Jewel Details</h3>
-          </div>
-
-          {jewels.map((jewel: any, index: number) => (
-            <div key={index} className={`flex flex-col gap-4 ${index > 0 ? 'border-t pt-6 mt-2 border-dashed border-gray-200 dark:border-gray-700' : ''}`}>
-              <div className="grid grid-cols-2 gap-4">
-                <ReadOnlyField label="Jewel Type" value={jewel.jewel_type} />
-                <ReadOnlyField label="Quality" value={jewel.quality} />
+        ) : (
+          <>
+            {/* Customer Details Section */}
+            <section className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-green-100 dark:border-gray-700">
+              <div className="flex items-center gap-3 mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">
+                <span className="material-symbols-outlined text-primary">person</span>
+                <h3 className="text-gray-800 dark:text-white text-xl font-bold">Customer Details</h3>
               </div>
 
-              <ReadOnlyField label="Jewel Description" value={jewel.description} />
-              <ReadOnlyField label="Pieces" value={jewel.pieces} />
+              <div className="flex flex-col gap-4">
+                <ReadOnlyField label="Name" value={customer.name} />
+                <ReadOnlyField label="Mobile No" value={customer.mobile_no} />
 
-              <div className="grid grid-cols-2 gap-4">
-                <ReadOnlyField label="Weight (g)" value={jewel.weight} />
-                <ReadOnlyField label="Stone Weight (g)" value={jewel.stone_weight} />
+                {(customer.whatsapp_no) && (
+                  <ReadOnlyField label="Whatsapp No" value={customer.whatsapp_no} />
+                )}
+
+                <ReadOnlyField label="Address" value={customer.address} isTextArea />
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <ReadOnlyField label="ID Type" value={customer.id_proof_type} />
+                  <ReadOnlyField label="ID Number" value={customer.id_proof_number} />
+                </div>
+
+                {/* Slot 1: Customer Document */}
+                <div className="flex flex-col gap-3 pt-2">
+                  <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Customer Document</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+                    <MediaDisplay
+                      label="Customer Doc"
+                      icon="description"
+                      mediaItem={
+                        mediaMap['customer_document'] ||
+                        media.find((m: any) => m.category === 'customer_document' || m.collection_name === 'customer_document') ||
+                        (customer.document_url ? { url: customer.document_url, type: 'image' } : undefined)
+                      }
+                    />
+                    {/* ID Proof Image can be the same as doc or separate, usually we just show the doc */}
+                    <MediaDisplay
+                      label="Customer Image"
+                      icon="face"
+                      mediaItem={
+                        mediaMap['customer_image'] ||
+                        media.find((m: any) => m.category === 'customer_image' || m.collection_name === 'customer_image') ||
+                        (customer.image_url ? { url: customer.image_url, type: 'image' } : undefined)
+                      }
+                    />
+                  </div>
+                </div>
               </div>
-              <ReadOnlyField label="Net Weight (g)" value={jewel.net_weight} />
+            </section>
+
+            {/* Jewel Details Section */}
+            <section className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-green-100 dark:border-gray-700">
+              <div className="flex items-center gap-3 mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">
+                <span className="material-symbols-outlined text-primary">diamond</span>
+                <h3 className="text-gray-800 dark:text-white text-xl font-bold">Jewel Details</h3>
+              </div>
+
+              {jewels.map((jewel: any, index: number) => (
+                <div key={index} className={`flex flex-col gap-4 ${index > 0 ? 'border-t pt-6 mt-2 border-dashed border-gray-200 dark:border-gray-700' : ''}`}>
+                  <div className="grid grid-cols-2 gap-4">
+                    <ReadOnlyField label="Jewel Type" value={jewel.jewel_type} />
+                    <ReadOnlyField label="Quality" value={jewel.quality} />
+                  </div>
+
+                  <ReadOnlyField label="Jewel Description" value={jewel.description} />
+                  <ReadOnlyField label="Pieces" value={jewel.pieces} />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <ReadOnlyField label="Weight (g)" value={jewel.weight} />
+                    <ReadOnlyField label="Stone Weight (g)" value={jewel.stone_weight} />
+                  </div>
+                  <ReadOnlyField label="Net Weight (g)" value={jewel.net_weight} />
+                </div>
+              ))}
+
+              {/* Slot 2: Jewel Image */}
+              <div className="flex flex-col gap-3 pt-6 mt-4 border-t border-gray-100 dark:border-gray-700">
+                <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Jewel Images</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+                  <MediaDisplay
+                    label="Jewel Photo"
+                    icon="camera_alt"
+                    mediaItem={mediaMap['jewel_image'] || media.find((m: any) => m.category === 'jewel_image' || m.collection_name === 'jewel_image')}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Loan Details Section */}
+            <section className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-green-100 dark:border-gray-700">
+              <div className="flex items-center gap-3 mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">
+                <span className="material-symbols-outlined text-primary">request_quote</span>
+                <h3 className="text-gray-800 dark:text-white text-xl font-bold">Loan Details</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ReadOnlyField label="Loan Number" value={loan.loan_no} />
+                <ReadOnlyField label="Loan Date" value={loan.date} />
+                <ReadOnlyField label="Loan Amount (₹)" value={loan.amount} />
+                <ReadOnlyField label="Interest (%)" value={loan.interest_percentage} />
+                <ReadOnlyField label="Validity (Months)" value={loan.validity_months} />
+                <ReadOnlyField label="Due Date" value={loan.due_date} />
+                <ReadOnlyField label="Estimated Amount (₹)" value={loan.estimated_amount} />
+                {loan.metal_rate && <ReadOnlyField label="Metal Rate" value={loan.metal_rate} />}
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ReadOnlyField label="Payment Method" value={loan.payment_method} />
+                <ReadOnlyField label="Processing Fee (₹)" value={loan.processing_fee} />
+                {/* If we have total given amount available in loan data, show it, else calculate or skip */}
+                <ReadOnlyField label="Amount Given (₹)" value={loan.amount_to_be_given || loan.amount} />
+              </div>
+
+              {/* Slot 3: Evidence */}
+              <div className="flex flex-col gap-3 pt-6 mt-4 border-t border-gray-100 dark:border-gray-700">
+                <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Evidence</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+                  <MediaDisplay
+                    label="Audio Evidence"
+                    icon="mic"
+                    mediaItem={mediaMap['evidence_media'] || media.find((m: any) => m.category === 'evidence_media' || m.collection_name === 'evidence_media')}
+                  />
+                </div>
+              </div>
+            </section>
+
+            <div className="flex justify-center py-8">
+              <button
+                onClick={() => navigate(`/pledges/${data.id}/edit`)}
+                className="flex items-center gap-2.5 px-8 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-dark transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
+              >
+                <span className="material-symbols-outlined text-[20px]">edit_square</span>
+                <span>Edit Pledge Details</span>
+              </button>
             </div>
-          ))}
-
-          {/* Slot 2: Jewel Image */}
-          <div className="flex flex-col gap-3 pt-6 mt-4 border-t border-gray-100 dark:border-gray-700">
-            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Jewel Images</span>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-              <MediaDisplay
-                label="Jewel Photo"
-                icon="camera_alt"
-                mediaItem={mediaMap['jewel_image'] || media.find((m: any) => m.category === 'jewel_image' || m.collection_name === 'jewel_image')}
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Loan Details Section */}
-        <section className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-green-100 dark:border-gray-700">
-          <div className="flex items-center gap-3 mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">
-            <span className="material-symbols-outlined text-primary">request_quote</span>
-            <h3 className="text-gray-800 dark:text-white text-xl font-bold">Loan Details</h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ReadOnlyField label="Loan Number" value={loan.loan_no} />
-            <ReadOnlyField label="Loan Date" value={loan.date} />
-            <ReadOnlyField label="Loan Amount (₹)" value={loan.amount} />
-            <ReadOnlyField label="Interest (%)" value={loan.interest_percentage} />
-            <ReadOnlyField label="Validity (Months)" value={loan.validity_months} />
-            <ReadOnlyField label="Due Date" value={loan.due_date} />
-            <ReadOnlyField label="Estimated Amount (₹)" value={loan.estimated_amount} />
-            {loan.metal_rate && <ReadOnlyField label="Metal Rate" value={loan.metal_rate} />}
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ReadOnlyField label="Payment Method" value={loan.payment_method} />
-            <ReadOnlyField label="Processing Fee (₹)" value={loan.processing_fee} />
-            {/* If we have total given amount available in loan data, show it, else calculate or skip */}
-            <ReadOnlyField label="Amount Given (₹)" value={loan.amount_to_be_given || loan.amount} />
-          </div>
-
-          {/* Slot 3: Evidence */}
-          <div className="flex flex-col gap-3 pt-6 mt-4 border-t border-gray-100 dark:border-gray-700">
-            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Evidence</span>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-              <MediaDisplay
-                label="Audio Evidence"
-                icon="mic"
-                mediaItem={mediaMap['evidence_media'] || media.find((m: any) => m.category === 'evidence_media' || m.collection_name === 'evidence_media')}
-              />
-            </div>
-          </div>
-        </section>
-        <div className="flex justify-center py-8">
-          {can('pledge.update') && (
-            <button
-              onClick={() => navigate(`/pledges/${data.id}/edit`)}
-              className="flex items-center gap-2.5 px-8 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-dark transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
-            >
-              <span className="material-symbols-outlined text-[20px]">edit_square</span>
-              <span>Edit Pledge Details</span>
-            </button>
-          )}
-        </div>
+          </>
+        )}
       </main>
     </div>
   );

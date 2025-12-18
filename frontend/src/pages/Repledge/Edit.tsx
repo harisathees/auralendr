@@ -3,12 +3,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import http from "../../api/http";
 import RepledgeForm from "../../components/Repledge/RepledgeForm";
 import { useToast } from "../../context";
+import { useAuth } from "../../context/AuthContext";
 import GoldCoinSpinner from "../../components/Shared/GoldCoinSpinner";
 
 const Edit: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { showToast } = useToast();
+    const { can } = useAuth();
     const [initialData, setInitialData] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -50,8 +52,21 @@ const Edit: React.FC = () => {
                 <h1 className="text-xl font-bold text-primary-text dark:text-white">Edit Repledge</h1>
             </header>
 
-            <main className="flex-1 overflow-y-auto p-6 max-w-5xl mx-auto w-full">
-                <RepledgeForm initialData={initialData} onSubmit={handleSubmit} onCancel={() => navigate(-1)} />
+            <main className="flex-1 overflow-y-auto no-scrollbar p-6 max-w-5xl mx-auto w-full">
+                {!can('repledge.update') ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
+                        <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">lock</span>
+                        <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Access Denied</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">You don't have permission to edit repledges.</p>
+                        <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-left">
+                            <p><strong>Debug Info:</strong></p>
+                            <p>Check: repledge.update</p>
+                            <p>Has Permission: {can('repledge.update') ? 'YES' : 'NO'}</p>
+                        </div>
+                    </div>
+                ) : (
+                    <RepledgeForm initialData={initialData} onSubmit={handleSubmit} onCancel={() => navigate(-1)} />
+                )}
             </main>
         </div>
     );

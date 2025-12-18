@@ -10,6 +10,7 @@ class AuthServiceProvider extends ServiceProvider
 {
     protected $policies = [
         Pledge::class => PledgePolicy::class,
+        \App\Models\Repledge\Repledge::class => \App\Policies\RepledgePolicy::class,
     ];
 
     public function boot(): void

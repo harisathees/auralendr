@@ -17,6 +17,28 @@ class RolePermissionSeeder extends Seeder
             'pledge.update',
             'pledge.delete',
             'loan.view_all_branches', // optional separate permission
+            
+            'repledge.create',
+            'repledge.view',
+            'repledge.update',
+            'repledge.delete',
+
+            'branch.create',
+            'branch.view',
+            'branch.update',
+            'branch.delete',
+
+            'user.create',
+            'user.view',
+            'user.update',
+            'user.delete',
+
+            'brandkit.create',
+            'brandkit.view',
+            'brandkit.delete',
+
+            'user_privilege.view',
+            'user_privilege.update',
         ];
 
         foreach ($perms as $p) {

@@ -5,8 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import Toast from '../../../../../components/Shared/Toast';
 import ConfirmationModal from '../../../../../components/Shared/ConfirmationModal';
 import type { Branch } from '../../../../../types/models';
+import { useAuth } from "../../../../../context/AuthContext";
+import { Lock } from "lucide-react";
 
 const List: React.FC = () => {
+    const { can } = useAuth();
     const navigate = useNavigate();
     const [branches, setBranches] = useState<Branch[]>([]);
     const [loading, setLoading] = useState(true);
@@ -29,6 +32,10 @@ const List: React.FC = () => {
     };
 
     const fetchBranches = async () => {
+        if (!can('branch.view')) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
             const response = await http.get('/branches');
@@ -117,13 +124,24 @@ const List: React.FC = () => {
                 {/* Actions Bar */}
                 <div className="flex items-center justify-between">
                     <h3 className="text-xl font-bold text-primary-text dark:text-white">All Branches</h3>
-                    <button
-                        onClick={handleAdd}
-                        className="bg-primary text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20 flex items-center gap-2"
-                    >
-                        <span className="material-symbols-outlined text-lg">add</span>
-                        Add Branch
-                    </button>
+                    {can('branch.create') ? (
+                        <button
+                            onClick={handleAdd}
+                            className="bg-primary text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20 flex items-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-lg">add</span>
+                            Add Branch
+                        </button>
+                    ) : (
+                        <button
+                            disabled
+                            className="bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm font-semibold px-4 py-2.5 rounded-xl cursor-not-allowed shadow-none flex items-center gap-2"
+                            title="Permission denied"
+                        >
+                            <Lock className="w-4 h-4" />
+                            Add Branch
+                        </button>
+                    )}
                 </div>
 
                 {/* List Content */}
@@ -131,6 +149,18 @@ const List: React.FC = () => {
                     <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-70">
                         <span className="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
                         <p className="text-sm font-medium text-gray-500">Loading branches...</p>
+                    </div>
+                ) : !can('branch.view') ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                        <div className="flex flex-col items-center justify-center text-center p-8 bg-surface dark:bg-gray-900 rounded-xl w-full border border-gray-100 dark:border-gray-800">
+                            <Lock className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" />
+                            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                Access Denied
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                You don't have permission to view branches.
+                            </p>
+                        </div>
                     </div>
                 ) : branches.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-60">
@@ -160,18 +190,37 @@ const List: React.FC = () => {
                                 </div>
 
                                 <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={() => handleEdit(branch)}
-                                        className="h-9 w-9 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-primary hover:text-white transition-colors"
-                                    >
-                                        <span className="material-symbols-outlined text-lg">edit</span>
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteClick(branch.id)}
-                                        className="h-9 w-9 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center text-red-500 hover:bg-red-600 hover:text-white transition-colors"
-                                    >
-                                        <span className="material-symbols-outlined text-lg">delete</span>
-                                    </button>
+                                    {can('branch.update') ? (
+                                        <button
+                                            onClick={() => handleEdit(branch)}
+                                            className="h-9 w-9 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-primary hover:text-white transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-lg">edit</span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            disabled
+                                            className="h-9 w-9 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-400 cursor-not-allowed"
+                                        >
+                                            <Lock className="w-4 h-4" />
+                                        </button>
+                                    )}
+
+                                    {can('branch.delete') ? (
+                                        <button
+                                            onClick={() => handleDeleteClick(branch.id)}
+                                            className="h-9 w-9 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center text-red-500 hover:bg-red-600 hover:text-white transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-lg">delete</span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            disabled
+                                            className="h-9 w-9 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-400 cursor-not-allowed"
+                                        >
+                                            <Lock className="w-4 h-4" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}

@@ -30,10 +30,43 @@ class PledgeController extends Controller
     {
         $user = $request->user();
 
+        if (!$user->can('pledge.list')) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
         $query = Pledge::with(['customer', 'loan', 'jewels', 'media']);
 
         if (!$user->hasRole('admin')) {
             $query->where('branch_id', $user->branch_id);
+        }
+
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                // Search Customer Name or Mobile
+                $q->whereHas('customer', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('mobile_no', 'like', "%{$search}%");
+                })
+                    // Search Loan Number
+                    ->orWhereHas('loan', function ($q) use ($search) {
+                        $q->where('loan_no', 'like', "%{$search}%");
+                    })
+                    // Search Pledge ID
+                    ->orWhere('id', $search);
+            });
+        }
+
+        // Lightweight Suggestions Mode
+        if ($request->query('suggestions')) {
+            $results = $query->take(10)->get()->map(function ($pledge) {
+                return [
+                    'id' => $pledge->id,
+                    'loan_no' => $pledge->loan->loan_no ?? 'No Loan No',
+                    'customer_name' => $pledge->customer->name ?? 'Unknown',
+                    'mobile_no' => $pledge->customer->mobile_no ?? '',
+                ];
+            });
+            return response()->json(['data' => $results]);
         }
 
         $perPage = (int) $request->query('per_page', 20);
@@ -159,7 +192,25 @@ class PledgeController extends Controller
                 if (!empty($loan->payment_method) && !empty($loan->amount_to_be_given)) {
                     $moneySource = MoneySource::where('name', $loan->payment_method)->first();
                     if ($moneySource) {
+                        if (!$moneySource->is_outbound) {
+                            throw new \Exception("The selected payment method '{$moneySource->name}' is not allowed for outbound transactions.");
+                        }
                         $moneySource->decrement('balance', $loan->amount_to_be_given);
+
+                        // Create Transaction Record
+                        \App\Models\Transaction::create([
+                            'branch_id' => $user->branch_id,
+                            'money_source_id' => $moneySource->id,
+                            'type' => 'debit',
+                            'amount' => $loan->amount_to_be_given,
+                            'date' => now(), // or $loan->date if strictly following loan date
+                            'description' => "Loan Disbursment for Pledge #{$pledge->id} (Cust: {$customer->name})",
+                            'category' => 'loan',
+                            'transactionable_type' => \App\Models\pledge\Loan::class,
+                            'transactionable_id' => $loan->id,
+                            'created_by' => $user->id,
+                        ]);
+
                         Log::info('Money source balance deducted', [
                             'source' => $moneySource->name,
                             'deducted' => $loan->amount_to_be_given,
@@ -294,10 +345,83 @@ class PledgeController extends Controller
                 if (isset($data['loan'])) {
                     $loan = $pledge->loan;
                     if ($loan) {
+                        $oldAmount = $loan->amount_to_be_given;
+                        // Determine payment method (could be updated or existing)
+                        $paymentMethodName = $data['loan']['payment_method'] ?? $loan->payment_method;
+
                         $loan->update($data['loan']);
+
+                        // Smart Balance Update
+                        if (isset($data['loan']['amount_to_be_given'])) {
+                            $newAmount = (float) $data['loan']['amount_to_be_given'];
+                            $diff = $newAmount - $oldAmount;
+
+                            Log::debug('Pledge Update Logic Trace', [
+                                'pledge_id' => $pledge->id,
+                                'old_amount' => $oldAmount,
+                                'new_amount' => $newAmount,
+                                'diff' => $diff,
+                                'payment_method' => $paymentMethodName
+                            ]);
+
+                            if (abs($diff) > 0 && !empty($paymentMethodName)) {
+                                $moneySource = MoneySource::where('name', $paymentMethodName)->first();
+
+                                if ($moneySource) {
+                                    if ($diff > 0) {
+                                        // Amount Increased: Deduct difference
+                                        Log::debug('Increasing Loan Amount', ['deduct_diff' => $diff]);
+                                        if (!$moneySource->is_outbound) {
+                                            throw new \Exception("Payment method '{$moneySource->name}' not allowed for outbound.");
+                                        }
+                                        $moneySource->decrement('balance', $diff);
+
+                                        \App\Models\Transaction::create([
+                                            'branch_id' => $pledge->branch_id,
+                                            'money_source_id' => $moneySource->id,
+                                            'type' => 'debit',
+                                            'amount' => $diff,
+                                            'date' => now(),
+                                            'description' => "Loan incr. Pledge #{$pledge->id}",
+                                            'category' => 'loan',
+                                            'transactionable_type' => \App\Models\pledge\Loan::class,
+                                            'transactionable_id' => $loan->id,
+                                            'created_by' => $request->user()->id,
+                                        ]);
+                                    } else {
+                                        // Amount Decreased: Refund difference (Credit)
+                                        $refundAmount = abs($diff);
+                                        Log::debug('Decreasing Loan Amount', ['refund_amount' => $refundAmount]);
+                                        $moneySource->increment('balance', $refundAmount);
+
+                                        \App\Models\Transaction::create([
+                                            'branch_id' => $pledge->branch_id,
+                                            'money_source_id' => $moneySource->id,
+                                            'type' => 'credit',
+                                            'amount' => $refundAmount,
+                                            'date' => now(),
+                                            'description' => "Loan decr. Pledge #{$pledge->id}",
+                                            'category' => 'loan',
+                                            'transactionable_type' => \App\Models\pledge\Loan::class,
+                                            'transactionable_id' => $loan->id,
+                                            'created_by' => $request->user()->id,
+                                        ]);
+                                    }
+                                } else {
+                                    Log::warning('Money Source not found for update', ['name' => $paymentMethodName]);
+                                }
+                            } else {
+                                Log::debug('No difference or no payment method', ['diff' => $diff, 'method' => $paymentMethodName]);
+                            }
+                        }
+
                     } else {
                         $data['loan']['pledge_id'] = $pledge->id;
                         $loan = Loan::create($data['loan']);
+
+                        // New loan created during update (rare but possible), trigger original deduction logic if needed
+                        // For now, simpler to leave this as standard creation or duplicate logic if required.
+                        // Assuming standard creation flow handles initial deduction usually.
                     }
                 }
 

@@ -1,14 +1,30 @@
-import React from "react";
+import React, { useState } from "react";
 import { usePledges } from "../../hooks/usePledges";
 import PledgeList from "../../components/Pledges/PledgeList";
-import GoldCoinSpinner from "../../components/Shared/GoldCoinSpinner";
 
 const List = () => {
-  const { pledges, loading } = usePledges();
+  const [searchTerm, setSearchTerm] = useState("");
+  // Simple debounce logic or direct pass? Let's assume direct for now and optimize later if needed,
+  // or implement a simple useEffect debounce here.
 
-  if (loading) return <GoldCoinSpinner text="Loading loans..." />;
+  /* 
+  // No need for debounce here anymore as PledgeList handles interaction 
+  // and only triggers search on explicit selection/enter
+  */
 
-  return <PledgeList pledges={pledges} />;
+  const { pledges, loading } = usePledges(searchTerm);
+
+  // Loading state handling can be smarter (e.g. keep showing list while searching)
+  // For now simple:
+
+  return (
+    <PledgeList
+      pledges={pledges}
+      searchTerm={searchTerm}
+      onSearchChange={setSearchTerm}
+      loading={loading}
+    />
+  );
 };
 
 export default List;

@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             JewelNameSeeder::class,
             JewelQualitySeeder::class,
             JewelTypeSeeder::class,
+            MoneySourceTypeSeeder::class,
         
         ]);
     }

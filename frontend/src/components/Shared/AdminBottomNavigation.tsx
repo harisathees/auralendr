@@ -68,7 +68,7 @@ const AdminBottomNavigation: React.FC = () => {
                         }`}
                     to="/re-pledge/"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/re-pledge/") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                    <span className="material-symbols-outlined text-3xl" style={isActive("/re-pledge") ? { fontVariationSettings: "'FILL' 1" } : {}}>
                         currency_exchange
                     </span>
                     <span className="text-xs font-bold">Repledge</span>

@@ -232,7 +232,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
   // Loan Configs
   const [interestRates, setInterestRates] = useState<{ id: number; rate: string; jewel_type_id?: number | null; estimation_percentage?: string }[]>([]);
   const [loanValidities, setLoanValidities] = useState<{ id: number; months: number; label?: string; jewel_type_id?: number | null }[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string; balance: string; show_balance: boolean }[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string; balance: string; show_balance: boolean; is_outbound?: boolean }[]>([]);
   const [metalRates, setMetalRates] = useState<{ name: string; metal_rate?: { rate: string } }[]>([]);
   const [processingFeesConfigs, setProcessingFeesConfigs] = useState<{ jewel_type_id: number; percentage: string; max_amount: string | null }[]>([]);
 
@@ -441,7 +441,11 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
     http.get("/jewel-names").then(res => Array.isArray(res.data) && setJewelNames(res.data)).catch(console.error);
     http.get("/interest-rates").then(res => Array.isArray(res.data) && setInterestRates(res.data)).catch(console.error);
     http.get("/loan-validities").then(res => Array.isArray(res.data) && setLoanValidities(res.data)).catch(console.error);
-    http.get("/money-sources").then(res => Array.isArray(res.data) && setPaymentMethods(res.data)).catch(console.error);
+    http.get("/money-sources").then(res => {
+      if (Array.isArray(res.data)) {
+        setPaymentMethods(res.data.filter((m: any) => m.is_outbound));
+      }
+    }).catch(console.error);
     http.get("/metal-rates").then(res => Array.isArray(res.data) && setMetalRates(res.data)).catch(console.error); // Added this line
   }, []);
 
@@ -796,10 +800,10 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
                 />
               </label>
 
-              <label className="flex flex-col gap-1.5">
+              <label className="flex flex-col gap-1.5 z-40">
                 <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Stone Weight (g)</span>
                 <input
-                  value={jewel.stone_weight} onChange={e => updateJewel(index, 'stone_weight', e.target.value)}
+                  value={jewel.stone_weight ?? ""} onChange={e => updateJewel(index, 'stone_weight', e.target.value)}
                   className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="0.00" step="0.01" type="number"
                 />
               </label>
@@ -808,17 +812,18 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
             <label className="flex flex-col gap-1.5">
               <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Net Weight (g)</span>
               <input
-                value={jewel.net_weight} readOnly
-                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-500 focus:outline-none h-12 px-4 shadow-sm cursor-not-allowed outline-none transition-all" placeholder="0.00" type="number"
+                value={jewel.net_weight ?? ""} readOnly
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 h-12 px-4 shadow-sm outline-none transition-all cursor-not-allowed" placeholder="0.00"
               />
             </label>
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Faults</span>
-              <input
-                value={jewel.faults} onChange={e => updateJewel(index, 'faults', e.target.value)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="Any damage or faults" type="text"
-              />
+              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Faults / Remarks</span>
+              <textarea
+                value={jewel.faults ?? ""} onChange={e => updateJewel(index, 'faults', e.target.value)}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary p-4 shadow-sm resize-none h-20 outline-none transition-all placeholder:text-gray-400"
+                placeholder="Describe any damage"
+              ></textarea>
             </label>
           </div>
         ))}

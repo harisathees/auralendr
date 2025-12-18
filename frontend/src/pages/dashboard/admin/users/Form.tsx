@@ -4,7 +4,10 @@ import type { Branch } from "../../../../types/models";
 import { useNavigate, useParams } from "react-router-dom";
 import GoldCoinSpinner from "../../../../components/Shared/GoldCoinSpinner";
 
+import { useAuth } from "../../../../context/AuthContext";
+
 const UserForm: React.FC = () => {
+    const { can } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
     const isEdit = !!id;
@@ -30,6 +33,7 @@ const UserForm: React.FC = () => {
     // Fetch user details if editing
     useEffect(() => {
         if (isEdit) {
+            if (!can('user.update')) return;
             setLoading(true);
             http.get(`/staff/${id}`)
                 .then((res) => {
@@ -80,6 +84,26 @@ const UserForm: React.FC = () => {
     };
 
     if (loading) return <GoldCoinSpinner text="Loading..." />;
+
+    // Permission Check
+    const hasPermission = isEdit ? can('user.update') : can('user.create');
+    if (!hasPermission) {
+        return (
+            <div className="p-6 h-full flex flex-col items-center justify-center text-center">
+                <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">lock</span>
+                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">Access Denied</h3>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">
+                    You don't have permission to {isEdit ? 'update' : 'create'} users.
+                </p>
+                <button
+                    onClick={() => navigate("/admin/users")}
+                    className="mt-6 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                >
+                    Go Back
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 max-w-2xl mx-auto">

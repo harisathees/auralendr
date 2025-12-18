@@ -1,29 +1,81 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { Search, X, SlidersHorizontal, Lock } from "lucide-react";
+import http from "../../api/http";
+import { useRepledge } from "../../hooks/useRepledge";
+import { useAuth } from "../../context/AuthContext";
 
 interface Props {
   pledges: any[];
+  searchTerm: string;
+  onSearchChange: (term: string) => void;
+  loading: boolean;
 }
 
-import { useAuth } from "../../context/AuthContext";
-
-const PledgeList: React.FC<Props> = ({ pledges }) => {
+const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, loading }) => {
   const navigate = useNavigate();
   const { can } = useAuth();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState<'loans' | 'repledges'>('loans');
+  const { repledgeEntries, fetchRepledgeEntries, loading: repledgeLoading } = useRepledge();
 
-  const filteredPledges = useMemo(() => {
-    return pledges.filter((p) => {
-      const term = searchTerm.toLowerCase();
-      return (
-        p.customer?.name?.toLowerCase().includes(term) ||
-        p.loan?.loan_no?.toLowerCase().includes(term) ||
-        p.customer?.mobile_no?.includes(term) ||
-        String(p.id).includes(term)
-      );
-    });
-  }, [pledges, searchTerm]);
+  useEffect(() => {
+    if (activeTab === 'repledges') {
+      fetchRepledgeEntries();
+    }
+  }, [activeTab, fetchRepledgeEntries]);
 
+  // Autocomplete State
+  const [inputValue, setInputValue] = useState(searchTerm);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Sync input value if parent updates searchTerm (e.g. clear)
+  useEffect(() => {
+    setInputValue(searchTerm);
+  }, [searchTerm]);
+
+  // Handle outside click to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Fetch Suggestions
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (inputValue.length > 1 && inputValue !== searchTerm) {
+        http.get('/pledges', { params: { search: inputValue, suggestions: true } })
+          .then(res => {
+            setSuggestions(res.data.data || []);
+            setShowDropdown(true);
+          })
+          .catch(console.error);
+      } else {
+        setSuggestions([]);
+        setShowDropdown(false);
+      }
+    }, 300); // 300ms debounce for suggestions
+    return () => clearTimeout(timer);
+  }, [inputValue, searchTerm]);
+
+  const handleSelectSuggestion = (loanNo: string) => {
+    setInputValue(loanNo);
+    onSearchChange(loanNo); // Trigger parent search
+    setShowDropdown(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      onSearchChange(inputValue);
+      setShowDropdown(false);
+    }
+  };
 
   // Helper for random color or logic based on status
   const getStatusColor = (status: string) => {
@@ -41,102 +93,247 @@ const PledgeList: React.FC<Props> = ({ pledges }) => {
   };
 
   return (
-    <div className="bg-background-light dark:bg-background-dark text-primary-text dark:text-text-main h-full flex flex-col overflow-hidden w-full relative font-display transition-colors duration-300">
-
+    <div className="flex flex-col h-full bg-background dark:bg-background-dark">
       {/* Header Section */}
-      <header className="flex-none pt-12 pb-4 px-5 bg-background-light dark:bg-background-dark z-10 transition-colors duration-300">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-primary-text dark:text-white">Loans</h1>
-          <div className="bg-white dark:bg-dark-surface border border-gray-200 dark:border-[#1f3d2e] px-3 py-1.5 rounded-full flex items-center shadow-sm dark:shadow-none">
-            <span className="text-primary text-xs font-bold uppercase tracking-wider">
-              {pledges.length} Loans
-            </span>
-          </div>
+      <div className="sticky top-0 z-10 bg-background dark:bg-background-dark border-b border-gray-200 dark:border-gray-800 px-4 py-3">
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-xl font-bold text-primary dark:text-white">
+            Loans
+          </h1>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {activeTab === 'loans' ? pledges.length : repledgeEntries.length} items
+          </span>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative w-full group">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <span className="material-symbols-outlined text-secondary-text dark:text-text-muted">search</span>
-          </div>
-          <input
-            className="block w-full p-3 pl-11 pr-12 text-sm text-primary-text dark:text-white bg-white dark:bg-dark-surface border border-gray-200 dark:border-transparent rounded-xl placeholder-secondary-text dark:placeholder-text-muted focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-sm outline-none"
-            placeholder="Search by name, phone, or loan no..."
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer">
-            <span className="material-symbols-outlined text-primary">tune</span>
-          </div>
+        {/* Tab Switcher */}
+        <div className="flex gap-2 mb-3 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+          <button
+            onClick={() => setActiveTab('loans')}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'loans'
+              ? 'bg-white dark:bg-gray-700 text-primary shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+              }`}
+          >
+            Pledges
+          </button>
+          <button
+            onClick={() => setActiveTab('repledges')}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'repledges'
+              ? 'bg-white dark:bg-gray-700 text-purple-600 shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+              }`}
+          >
+            Repledges
+          </button>
         </div>
-      </header>
 
-      {/* Main Content: List */}
-      <main className="flex-1 overflow-y-auto no-scrollbar relative px-5 pb-24">
-        {!can('pledge.view') ? (
-          <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
-            <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">lock</span>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Access Denied</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">You don't have permission to view pledges.</p>
+        {/* Search Bar - Autocomplete */}
+        <div className="relative" ref={searchRef}>
+          <div className="relative flex items-center">
+            <Search className="absolute left-3 text-gray-400 dark:text-gray-500 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search by loan no, customer name, or mobile"
+              className="w-full pl-10 pr-10 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary/30 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => inputValue.length > 1 && setShowDropdown(true)}
+            />
+            <button
+              className="absolute right-3 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+              onClick={() => {
+                setInputValue('');
+                onSearchChange('');
+              }}
+            >
+              {inputValue ? <X className="w-5 h-5" /> : <SlidersHorizontal className="w-5 h-5" />}
+            </button>
           </div>
-        ) : (
-          <>
-            {filteredPledges.length === 0 && (
-              <div className="text-center text-secondary-text dark:text-text-muted py-10">
-                No pledges found matching your search.
-              </div>
-            )}
 
-            {filteredPledges.map((p) => (
-              <div
-                key={p.id}
-                onClick={() => navigate(`/pledges/${p.id}`)}
-                className="group py-5 border-b border-gray-100 dark:border-[#1f3d2e] flex items-start gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-              >
-                {/* Avatar / Image */}
-                <div className="flex-shrink-0 relative">
-                  <img
-                    alt={p.customer?.name}
-                    className="h-14 w-14 rounded-full object-cover ring-2 ring-white dark:ring-[#1f3d2e] shadow-sm dark:shadow-none"
-                    src={fixImageUrl(p.media?.find((m: any) => m.category === 'customer_image')?.url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
-                  />
-                </div>
-
-                <div className="flex-1 min-w-0 flex flex-col h-full justify-between gap-1">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-base font-medium text-primary-text dark:text-white truncate pr-2">
-                        {p.customer?.name || 'Unknown'}
-                      </h3>
-                      <p className="text-xs text-secondary-text dark:text-text-muted font-medium mt-0.5">
-                        {p.loan?.date || 'No Date'}
-                      </p>
+          {/* Suggestions Dropdown */}
+          {showDropdown && suggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto z-20">
+              {suggestions.map((s) => (
+                <div
+                  key={s.id}
+                  className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                  onClick={() => handleSelectSuggestion(s.loan_no)}
+                >
+                  <div className="font-medium text-sm text-gray-900 dark:text-white">
+                    {s.loan_no} • {s.customer_name}
+                  </div>
+                  {s.mobile_no && (
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {s.mobile_no}
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <div className={`h-6 w-6 rounded-full flex items-center justify-center border ${getStatusColor(p.status)}`}>
-                        <span className={`text-[10px] font-bold ${p.status === 'closed' ? 'text-red-500' : 'text-primary'}`}>
-                          {p.status ? p.status.charAt(0).toUpperCase() : 'A'}
-                        </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+
+
+      {/* Pledges List */}
+      {activeTab === 'loans' && (
+        <>
+          {!can('pledge.list') ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <Lock className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Access Denied
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                You don't have permission to list pledges.
+              </p>
+              <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-left">
+                <p><strong>ASK ADMIN TO ACCESS IT</strong></p>
+              </div>
+              <div className="mt-1 p-1 bg-gray-100 dark:bg-gray-800 rounded text-xs text-left">
+               <p>Has Permission: {can('pledge.list') ? 'YES' : 'NO'}</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {loading ? (
+                <div className="flex justify-center items-center py-20">
+                  {/* <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div> */}
+                </div>
+              ) : (
+                <div className="space-y-3 pb-20">
+                  {pledges.length === 0 && (
+                    <div className="text-center text-secondary-text dark:text-text-muted py-10">
+                      No pledges found matching your search.
+                    </div>
+                  )}
+                  {pledges.map((p, index) => (
+                    <div
+                      key={p.id}
+                      onClick={() => navigate(`/pledges/${p.id}`)}
+                      className="group relative bg-white dark:bg-card-dark rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none border border-gray-100 dark:border-gray-800/50 flex flex-col p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-300 animate-in fade-in"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      <div className="flex items-start gap-3">
+                        {/* Avatar / Image - Simplified */}
+                        <img
+                          className="w-12 h-12 rounded-full object-cover border-2 border-gray-100 dark:border-gray-700"
+                          src={fixImageUrl(p.media?.find((m: any) => m.category === 'customer_image')?.url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
+                          alt=""
+                        />
+
+                        <div className="flex-1 min-w-0">
+                          {/* Header Row: Name & Status */}
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <h3 className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                              {p.customer?.name || 'Unknown'}
+                            </h3>
+                            <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${getStatusColor(p.status)}`}>
+                              {p.status || 'Active'}
+                            </span>
+                          </div>
+
+                          {/* Meta Row: Loan No & Date */}
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                            {p.loan?.loan_no || `#${p.id}`} • {p.loan?.date ? new Date(p.loan.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No Date'}
+                          </p>
+
+                          {/* Footer Row: Label & Amount */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">Loan Amount</span>
+                            <span className="text-sm font-bold text-primary dark:text-primary-light">
+                              ₹{Number(p.loan?.amount || 0).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex justify-between items-end mt-2">
-                    <p className="text-xs text-secondary-text dark:text-text-muted">
-                      Loan No. <span className="text-primary-text dark:text-gray-400 font-medium">{p.loan?.loan_no || `#${p.id} `}</span>
-                    </p>
-                    <p className="text-sm font-semibold text-primary">
-                      ₹{Number(p.loan?.amount || 0).toLocaleString()}
-                    </p>
-                  </div>
+                  ))}
                 </div>
-              </div>
-            ))}
-          </>
-        )}
-      </main>
+              )}
+            </>
+          )}
+        </>
+      )}
 
-      {/* Global Bottom Navigation - Moved to Layout */}
+      {/* Repledges List */}
+      {activeTab === 'repledges' && (
+        <>
+          {!can('repledge.list') ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <Lock className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Access Denied
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                You don't have permission to list repledges.
+              </p>
+              <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-left">
+                <p><strong>ASK ADMIN TO ACCESS IT</strong></p>
+                <p>Check: repledge.list</p>
+                <p>Has Permission: {can('repledge.list') ? 'YES' : 'NO'}</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {repledgeLoading ? (
+                <div className="flex justify-center items-center py-20">
+                  {/* <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div> */}
+                </div>
+              ) : (
+                <div className="space-y-3 pb-20">
+                  {repledgeEntries.length === 0 && (
+                    <div className="text-center text-secondary-text dark:text-text-muted py-10">
+                      No repledges found.
+                    </div>
+                  )}
+                  {repledgeEntries.map((item, index) => (
+                    <div
+                      key={item.id}
+                      onClick={() => navigate(`/re-pledge/${item.id}`)}
+                      className="group relative bg-white dark:bg-card-dark rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none border border-gray-100 dark:border-gray-800/50 flex flex-col p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-300 animate-in fade-in"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 font-bold text-sm border-2 border-purple-200 dark:border-purple-800">
+                          {item.loan_no.slice(-2)}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          {/* Header Row: Loan No & Status */}
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <h3 className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                              {item.loan_no}
+                            </h3>
+                            <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${getStatusColor(item.status)}`}>
+                              {item.status}
+                            </span>
+                          </div>
+
+                          {/* Meta Row: Re-No & Source & Date */}
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                            RE: {item.re_no} • {item.source?.name || 'Unknown'} • {item.start_date ? new Date(item.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No Date'}
+                          </p>
+
+                          {/* Footer Row: Label & Amount */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">Repledge Amount</span>
+                            <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+                              ₹{Number(item.amount).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 };

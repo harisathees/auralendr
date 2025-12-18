@@ -46,10 +46,17 @@ export interface MoneySource {
     branches?: any[]; // Simplified for now
 }
 
-export interface RepledgeBank {
+export interface MoneySourceType {
     id: number;
     name: string;
-    code: string | null;
+    value: string;
+    icon: string | null;
+}
+
+export interface RepledgeSource {
+    id: number;
+    name: string;
+    description: string | null;
     branch: string | null; // legacy field name in DB for branch name text
     default_interest: number;
     validity_months: number;
@@ -57,13 +64,14 @@ export interface RepledgeBank {
     payment_method: string | null;
     created_at?: string;
     updated_at?: string;
+    branches?: Branch[];
 }
 
 export interface Repledge {
     id: number;
     loan_no: string;
     re_no: string;
-    bank_id: number;
+    repledge_source_id: number;
     amount: string;
     processing_fee: string;
     interest_percent: number;
@@ -73,7 +81,7 @@ export interface Repledge {
     end_date?: string;
     due_date?: string;
     status: 'active' | 'closed';
-    bank?: RepledgeBank;
+    source?: RepledgeSource;
     created_at?: string;
     updated_at?: string;
 }

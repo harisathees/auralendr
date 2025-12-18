@@ -5,8 +5,11 @@ import Toast from '../../../../../components/Shared/Toast';
 import ConfirmationModal from '../../../../../components/Shared/ConfirmationModal';
 import UserForm from './UserForm';
 import type { User } from './UserForm';
+import { useAuth } from '../../../../../context/AuthContext';
+import { Lock } from 'lucide-react';
 
 const List: React.FC = () => {
+    const { can } = useAuth();
     const navigate = useNavigate();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
@@ -34,6 +37,10 @@ const List: React.FC = () => {
     };
 
     const fetchUsers = async () => {
+        if (!can('user.view')) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
             const response = await http.get('/staff');
@@ -128,13 +135,24 @@ const List: React.FC = () => {
                 {/* Actions Bar */}
                 <div className="flex items-center justify-between">
                     <h3 className="text-xl font-bold text-primary-text dark:text-white">All Users</h3>
-                    <button
-                        onClick={handleAdd}
-                        className="bg-primary text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20 flex items-center gap-2"
-                    >
-                        <span className="material-symbols-outlined text-lg">add</span>
-                        Add User
-                    </button>
+                    {can('user.create') ? (
+                        <button
+                            onClick={handleAdd}
+                            className="bg-primary text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20 flex items-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-lg">add</span>
+                            Add User
+                        </button>
+                    ) : (
+                        <button
+                            disabled
+                            className="bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm font-semibold px-4 py-2.5 rounded-xl cursor-not-allowed shadow-none flex items-center gap-2"
+                            title="Permission denied"
+                        >
+                            <Lock className="w-4 h-4" />
+                            Add User
+                        </button>
+                    )}
                 </div>
 
                 {/* List Content */}
@@ -142,6 +160,18 @@ const List: React.FC = () => {
                     <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-70">
                         <span className="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
                         <p className="text-sm font-medium text-gray-500">Loading users...</p>
+                    </div>
+                ) : !can('user.view') ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                        <div className="flex flex-col items-center justify-center text-center p-8 bg-surface dark:bg-gray-900 rounded-xl w-full border border-gray-100 dark:border-gray-800">
+                            <Lock className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" />
+                            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                Access Denied
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                You don't have permission to view users.
+                            </p>
+                        </div>
                     </div>
                 ) : users.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-60">
@@ -233,19 +263,39 @@ const List: React.FC = () => {
 
                                         {/* Actions */}
                                         <div className="flex gap-2 mt-2 pt-3 border-t border-gray-100 dark:border-gray-800">
-                                            <button
-                                                onClick={(e) => handleEdit(user, e)}
-                                                className="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <span className="material-symbols-outlined text-lg">edit</span>
-                                                Edit Profile
-                                            </button>
-                                            <button
-                                                onClick={(e) => handleDeleteClick(user.id, e)}
-                                                className="px-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 py-1.5 rounded-lg text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/30 active:scale-95 transition-all flex items-center justify-center"
-                                            >
-                                                <span className="material-symbols-outlined text-lg">delete</span>
-                                            </button>
+                                            {can('user.update') ? (
+                                                <button
+                                                    onClick={(e) => handleEdit(user, e)}
+                                                    className="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">edit</span>
+                                                    Edit Profile
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    disabled
+                                                    className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 py-1.5 rounded-lg text-sm font-medium cursor-not-allowed flex items-center justify-center gap-2"
+                                                >
+                                                    <Lock className="w-4 h-4" />
+                                                    Edit Profile
+                                                </button>
+                                            )}
+
+                                            {can('user.delete') ? (
+                                                <button
+                                                    onClick={(e) => handleDeleteClick(user.id, e)}
+                                                    className="px-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 py-1.5 rounded-lg text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/30 active:scale-95 transition-all flex items-center justify-center"
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">delete</span>
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    disabled
+                                                    className="px-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 py-1.5 rounded-lg text-sm font-medium cursor-not-allowed flex items-center justify-center"
+                                                >
+                                                    <Lock className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
