@@ -3,42 +3,76 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use App\Models\MoneySource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
-    /**
-     * GET /api/transactions
-     */
     public function index(Request $request)
     {
         $user = $request->user();
 
-        $query = Transaction::with(['moneySource', 'transactionable']);
+        $query = Transaction::with(['moneySource', 'creator'])
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc');
 
-        // Staff sees only their branch transactions
-        if (!$user->hasRole('admin')) {
-            if ($user->branch_id) {
-                $query->where('branch_id', $user->branch_id);
-            }
-        }
-
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('description', 'like', "%{$search}%")
-                    ->orWhere('category', 'like', "%{$search}%");
+        // Filter by branch if user is assigned to one
+        if ($user->branch_id) {
+            $query->whereHas('creator', function ($q) use ($user) {
+                $q->where('branch_id', $user->branch_id);
             });
         }
 
-        try {
-            return response()->json($query->orderByDesc('date')->orderByDesc('id')->paginate(20));
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Transaction Fetch Error: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Failed to fetch transactions',
-                'message' => $e->getMessage()
-            ], 500);
+        if ($request->has('money_source_id') && $request->money_source_id != '') {
+            $query->where('money_source_id', $request->money_source_id);
         }
+
+        $transactions = $query->paginate(50);
+
+        return response()->json($transactions);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:1',
+            'type' => 'required|in:credit,debit',
+            'money_source_id' => 'required|exists:money_sources,id',
+            'date' => 'required|date',
+            'description' => 'required|string|max:255',
+            'category' => 'nullable|string|max:50',
+        ]);
+
+        return DB::transaction(function () use ($validated) {
+            // 1. Create Transaction
+            $transaction = Transaction::create([
+                'amount' => $validated['amount'],
+                'type' => $validated['type'],
+                'money_source_id' => $validated['money_source_id'],
+                'date' => $validated['date'],
+                'description' => $validated['description'],
+                'category' => $validated['category'] ?? 'general',
+                'created_by' => auth()->id(),
+                // 'transactionable' can be null for manual entries
+            ]);
+
+            // 2. Update Money Source Balance
+            $moneySource = MoneySource::lockForUpdate()->find($validated['money_source_id']);
+
+            if ($validated['type'] === 'credit') {
+                $moneySource->balance += $validated['amount'];
+            } else {
+                $moneySource->balance -= $validated['amount'];
+            }
+
+            $moneySource->save();
+
+            return response()->json([
+                'message' => 'Transaction created successfully',
+                'transaction' => $transaction->load('moneySource'),
+                'new_balance' => $moneySource->balance
+            ], 201);
+        });
     }
 }

@@ -9,6 +9,7 @@ import AdminLayout from "../layouts/AdminLayout";
 // Lazy load dashboard pages to enable transition animations
 const Dashboard = lazy(() => import("../pages/dashboard/Dashboard"));
 const TransactionHistory = lazy(() => import("../pages/dashboard/TransactionHistory")); // Added TransactionHistory
+const TransactionForm = lazy(() => import("../pages/dashboard/TransactionForm"));
 const List = lazy(() => import("../pages/Pledges/List"));
 const Create = lazy(() => import("../pages/Pledges/Create"));
 const Edit = lazy(() => import("../pages/Pledges/Edit"));
@@ -43,6 +44,9 @@ const JewelNameForm = lazy(() => import("../pages/dashboard/admin/configs/JewelN
 const InterestRateForm = lazy(() => import("../pages/dashboard/admin/configs/InterestRateForm"));
 const ValidityPeriodForm = lazy(() => import("../pages/dashboard/admin/configs/ValidityPeriodForm"));
 
+const TransactionCategories = lazy(() => import("../pages/dashboard/admin/configs/TransactionCategories"));
+const TransactionCategoryForm = lazy(() => import("../pages/dashboard/admin/configs/TransactionCategoryForm"));
+
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
@@ -67,6 +71,7 @@ const AppRoutes: React.FC = () => {
       >
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/transactions" element={<TransactionHistory />} /> // Added route
+        <Route path="/transactions/create" element={<TransactionForm />} />
 
         {/* Repledge Routes */}
         <Route path="/pledges" element={<List />} />
@@ -125,11 +130,14 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/customers" element={<CustomersList />} />
         <Route path="/admin/pledges/:id" element={<View />} />
 
-        {/* Configurations */}
-        <Route path="/admin/configurations" element={<Navigate to="/admin/configs" replace />} />
         <Route path="/admin/configs" element={<AdminConfigs />} />
         <Route path="/admin/configs/money-sources" element={<MoneySources />} />
         <Route path="/admin/configs/metal-rates" element={<MetalRates />} />
+
+        {/* Transaction Categories */}
+        <Route path="/admin/configs/transaction-categories" element={<TransactionCategories />} />
+        <Route path="/admin/configs/transaction-categories/create" element={<TransactionCategoryForm />} />
+        <Route path="/admin/configs/transaction-categories/edit/:id" element={<TransactionCategoryForm />} />
 
         {/* Jewel Types */}
         <Route path="/admin/configs/jewel-types" element={<JewelTypesIndex />} />

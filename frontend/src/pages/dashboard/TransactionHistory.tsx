@@ -21,13 +21,36 @@ const TransactionHistory = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Filtering State
+    const [moneySources, setMoneySources] = useState<{ id: number, name: string }[]>([]);
+    const [selectedSourceId, setSelectedSourceId] = useState<string>('');
+    const [isFilterOpen, setIsFilterOpen] = useState(false); // For source dropdown toggle
+
+    useEffect(() => {
+        fetchMoneySources();
+    }, []);
+
     useEffect(() => {
         fetchTransactions();
-    }, []);
+    }, [selectedSourceId]); // Refetch on filter change
+
+    const fetchMoneySources = async () => {
+        try {
+            const res = await http.get('/money-sources');
+            setMoneySources(res.data);
+        } catch (error) {
+            console.error('Failed to fetch money sources');
+        }
+    };
 
     const fetchTransactions = async () => {
         try {
-            const response = await http.get('/transactions');
+            setLoading(true);
+            // Append query param if source is selected
+            const url = selectedSourceId
+                ? `/transactions?money_source_id=${selectedSourceId}`
+                : '/transactions';
+            const response = await http.get(url);
             setTransactions(response.data.data);
         } catch (error) {
             console.error('Failed to fetch transactions', error);
@@ -79,24 +102,62 @@ const TransactionHistory = () => {
                 <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Transaction History</h1>
                 <button
                     className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary active:scale-95 transition-all px-3 py-1.5 rounded-full"
-                    onClick={() => console.log("Add Transaction")}
+                    onClick={() => navigate('/transactions/create')}
                 >
                     <span className="text-xs font-bold uppercase tracking-wide">Add</span>
                     <span className="material-symbols-outlined text-lg">post_add</span>
                 </button>
             </header>
 
-            <div className="sticky top-[69px] z-10 bg-background-light dark:bg-background-dark px-4 py-3 flex space-x-3 overflow-x-auto no-scrollbar border-b border-gray-100 dark:border-gray-800">
-                <button className="flex items-center bg-card-light dark:bg-card-dark px-4 py-2 rounded-full text-sm font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap active:scale-95 transition-transform">
+            {/* Filter Bar */}
+            <div className="sticky top-[69px] z-10 bg-background-light dark:bg-background-dark px-4 py-3 flex flex-wrap gap-3 border-b border-gray-100 dark:border-gray-800">
+
+                {/* Money Source Filter */}
+                <div className="relative">
+                    <button
+                        onClick={() => setIsFilterOpen(!isFilterOpen)}
+                        className={`flex items-center px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap active:scale-95 transition-all ${selectedSourceId
+                            ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                            : 'bg-card-light dark:bg-card-dark text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700'
+                            }`}
+                    >
+                        {selectedSourceId
+                            ? moneySources.find(s => s.id.toString() === selectedSourceId)?.name
+                            : 'All Sources'}
+                        <span className="material-symbols-outlined text-base ml-1">expand_more</span>
+                    </button>
+
+                    {/* Filter Dropdown */}
+                    {isFilterOpen && (
+                        <>
+                            <div className="fixed inset-0 z-10" onClick={() => setIsFilterOpen(false)}></div>
+                            <div className="absolute top-full mt-2 left-0 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-20 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                <button
+                                    onClick={() => { setSelectedSourceId(''); setIsFilterOpen(false); }}
+                                    className={`w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${selectedSourceId === '' ? 'text-primary bg-primary/5' : 'text-gray-700 dark:text-gray-200'}`}
+                                >
+                                    All Sources
+                                </button>
+                                {moneySources.map(source => (
+                                    <button
+                                        key={source.id}
+                                        onClick={() => { setSelectedSourceId(source.id.toString()); setIsFilterOpen(false); }}
+                                        className={`w-full text-left px-4 py-2.5 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${selectedSourceId === source.id.toString() ? 'text-primary bg-primary/5' : 'text-gray-700 dark:text-gray-200'}`}
+                                    >
+                                        {source.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                <button className="flex items-center bg-card-light dark:bg-card-dark px-4 py-2 rounded-full text-sm font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap active:scale-95 transition-transform border border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed">
                     Date
                     <span className="material-symbols-outlined text-base ml-1 text-gray-500 dark:text-gray-400">expand_more</span>
                 </button>
-                <button className="flex items-center bg-card-light dark:bg-card-dark px-4 py-2 rounded-full text-sm font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap active:scale-95 transition-transform">
-                    Services
-                    <span className="material-symbols-outlined text-base ml-1 text-gray-500 dark:text-gray-400">expand_more</span>
-                </button>
-                <button className="flex items-center bg-card-light dark:bg-card-dark px-4 py-2 rounded-full text-sm font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap active:scale-95 transition-transform">
-                    Method
+                <button className="flex items-center bg-card-light dark:bg-card-dark px-4 py-2 rounded-full text-sm font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap active:scale-95 transition-transform border border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed">
+                    Category
                     <span className="material-symbols-outlined text-base ml-1 text-gray-500 dark:text-gray-400">expand_more</span>
                 </button>
             </div>
@@ -149,7 +210,7 @@ const TransactionHistory = () => {
                                         <div className="flex items-center text-xs font-medium text-gray-700 dark:text-gray-300">
                                             {/* Badge style mimicking "VISA" */}
                                             <span className={`font-black italic mr-2 text-[10px] tracking-wider uppercase ${item.category === 'loan' ? 'text-purple-700 dark:text-purple-400' :
-                                                    item.category === 'repledge' ? 'text-blue-700 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
+                                                item.category === 'repledge' ? 'text-blue-700 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
                                                 }`}>
                                                 {item.category}
                                             </span>

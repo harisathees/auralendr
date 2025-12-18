@@ -45,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('interest-rates', \App\Http\Controllers\Admin\InterestRateController::class);
         Route::apiResource('loan-validities', \App\Http\Controllers\Admin\LoanValidityController::class);
         Route::apiResource('payment-methods', \App\Http\Controllers\Admin\PaymentMethodController::class);
+        Route::apiResource('transaction-categories', \App\Http\Controllers\Admin\TransactionCategoryController::class);
         Route::post('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'store']);
     });
 
@@ -58,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/payment-methods', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'index']);
     Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
     Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
+    Route::get('transaction-categories', [\App\Http\Controllers\Admin\TransactionCategoryController::class, 'index']);
 
     // Repledge Sources (Shared for read/write as configured in controller)
     Route::apiResource('repledge-sources', \App\Http\Controllers\Repledge\RepledgeSourceController::class);
@@ -82,6 +84,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Transactions
     Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index']);
+    Route::post('/transactions', [App\Http\Controllers\TransactionController::class, 'store']);
 
     // Staff Task Routes
     Route::get('/my-tasks', [TaskController::class, 'myTasks']);

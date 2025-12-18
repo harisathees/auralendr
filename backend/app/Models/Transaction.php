@@ -24,4 +24,9 @@ class Transaction extends Model
     {
         return $this->morphTo();
     }
+
+    public function creator()
+    {
+        return $this->belongsTo(\App\Models\BranchAndUser\User::class, 'created_by');
+    }
 }

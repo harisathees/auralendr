@@ -41,6 +41,14 @@ const AdminConfigs: React.FC = () => {
                         bg: "bg-cyan-100",
                         link: "/admin/configs/repledge-sources"
                     },
+                    {
+                        title: "Transaction Categories",
+                        description: "Income & Expense categories",
+                        icon: "label",
+                        color: "text-indigo-600",
+                        bg: "bg-indigo-100",
+                        link: "/admin/configs/transaction-categories"
+                    },
                 ]
             },
             {
