@@ -65,8 +65,11 @@ interface Props {
   data: any;
 }
 
+import { useAuth } from "../../context/AuthContext";
+
 const PledgeView: React.FC<Props> = ({ data }) => {
   const navigate = useNavigate();
+  const { can } = useAuth();
   const { customer, loan, jewels = [], media = [] } = data;
 
   // Organize Media by Category
@@ -261,13 +264,15 @@ const PledgeView: React.FC<Props> = ({ data }) => {
           </div>
         </section>
         <div className="flex justify-center py-8">
-          <button
-            onClick={() => navigate(`/pledges/${data.id}/edit`)}
-            className="flex items-center gap-2.5 px-8 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-dark transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
-          >
-            <span className="material-symbols-outlined text-[20px]">edit_square</span>
-            <span>Edit Pledge Details</span>
-          </button>
+          {can('pledge.update') && (
+            <button
+              onClick={() => navigate(`/pledges/${data.id}/edit`)}
+              className="flex items-center gap-2.5 px-8 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-dark transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
+            >
+              <span className="material-symbols-outlined text-[20px]">edit_square</span>
+              <span>Edit Pledge Details</span>
+            </button>
+          )}
         </div>
       </main>
     </div>

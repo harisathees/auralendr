@@ -49,24 +49,12 @@ class PledgeController extends Controller
     {
         $user = $request->user();
 
-        // Check permission manually since middleware is temporarily disabled
-        try {
-            // Check roles (both Spatie roles and legacy 'role' column)
-            $isAdmin = $user->hasRole('admin') || $user->role === 'admin';
-            $isStaff = $user->hasRole('staff') || $user->role === 'staff';
-
-            if (!$isAdmin && !$isStaff && !$user->hasPermissionTo('pledge.create', 'sanctum')) {
-                return response()->json([
-                    'message' => 'You do not have permission to create pledges',
-                    'error' => 'insufficient_permissions'
-                ], 403);
-            }
-        } catch (\Exception $e) {
-            // If permission check fails, log and allow (for debugging)
-            Log::warning('Permission check failed, allowing request', [
-                'user_id' => $user->id,
-                'error' => $e->getMessage()
-            ]);
+        // Check permission
+        if (!$user->can('pledge.create')) {
+             return response()->json([
+                'message' => 'You do not have permission to create pledges',
+                'error' => 'insufficient_permissions'
+            ], 403);
         }
 
         // Log the request for debugging

@@ -38,5 +38,26 @@ class AdminSeeder extends Seeder
                 'branch_id' => $branch->id
             ]
         );
+
+        // Create developer
+        User::firstOrCreate(
+            ['email' => 'developer@gmail.com'],
+            [
+                'name' => 'Developer',
+                'password' => Hash::make('12345'),
+                'role' => 'developer',
+                'branch_id' => $branch->id
+            ]
+        );
+
+        // Assign Spatie Roles
+        $adminUser = User::where('email', 'admin@gmail.com')->first();
+        if($adminUser) $adminUser->assignRole('admin');
+
+        $staffUser = User::where('email', 'staff@gmail.com')->first();
+        if($staffUser) $staffUser->assignRole('staff');
+        
+        $developerUser = User::where('email', 'developer@gmail.com')->first();
+        if($developerUser) $developerUser->assignRole('developer');
     }
 }

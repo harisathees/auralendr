@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useState,
   type ReactNode,
 } from "react";
@@ -12,6 +13,7 @@ interface User {
   email: string;
   role: string;
   branch_id: number;
+  permissions: string[];
 }
 
 interface AuthContextType {
@@ -19,6 +21,7 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<User>;
   logout: () => void;
+  can: (permission: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -54,6 +57,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const [user, setUser] = useState<User | null>(getUserFromStorage());
 
+  const logout = (): void => {
+    http.post("/logout"); // no need await
+    setToken(null);
+    setUser(null);
+    localStorage.clear();
+  };
+
   const login = async (email: string, password: string): Promise<User> => {
     try {
       const res = await http.post("/login", { email, password });
@@ -68,6 +78,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         email: res.data.user.email,
         role: res.data.user.role,
         branch_id: res.data.user.branch_id,
+        permissions: res.data.user.permissions || [],
       };
 
       setToken(res.data.token);
@@ -91,15 +102,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const logout = (): void => {
-    http.post("/logout"); // no need await
-    setToken(null);
-    setUser(null);
-    localStorage.clear();
+  const can = (permission: string): boolean => {
+    if (!user) return false;
+    if (user.role === 'developer' || user.role === 'superadmin') return true;
+    return user.permissions?.includes(permission) || false;
   };
 
+  // Fetch fresh user data on mount to ensure permissions are up to date
+  useEffect(() => {
+    if (token) {
+      http.get("/me")
+        .then(res => {
+          const userData: User = {
+            id: res.data.id,
+            name: res.data.name,
+            email: res.data.email,
+            role: res.data.role,
+            branch_id: res.data.branch_id,
+            permissions: res.data.permissions || [],
+          };
+          setUser(userData);
+          localStorage.setItem("user", JSON.stringify(userData));
+        })
+        .catch(() => {
+          // If token invalid, logout
+          logout();
+        });
+    }
+  }, [token]);
+
   return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>
+    <AuthContext.Provider value={{ token, user, login, logout, can }}>
       {children}
     </AuthContext.Provider>
   );

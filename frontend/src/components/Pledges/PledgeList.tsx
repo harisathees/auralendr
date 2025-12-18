@@ -5,8 +5,11 @@ interface Props {
   pledges: any[];
 }
 
+import { useAuth } from "../../context/AuthContext";
+
 const PledgeList: React.FC<Props> = ({ pledges }) => {
   const navigate = useNavigate();
+  const { can } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredPledges = useMemo(() => {
@@ -71,56 +74,66 @@ const PledgeList: React.FC<Props> = ({ pledges }) => {
 
       {/* Main Content: List */}
       <main className="flex-1 overflow-y-auto no-scrollbar relative px-5 pb-24">
-        {filteredPledges.length === 0 && (
-          <div className="text-center text-secondary-text dark:text-text-muted py-10">
-            No pledges found matching your search.
+        {!can('pledge.view') ? (
+          <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
+            <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">lock</span>
+            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Access Denied</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">You don't have permission to view pledges.</p>
           </div>
-        )}
+        ) : (
+          <>
+            {filteredPledges.length === 0 && (
+              <div className="text-center text-secondary-text dark:text-text-muted py-10">
+                No pledges found matching your search.
+              </div>
+            )}
 
-        {filteredPledges.map((p) => (
-          <div
-            key={p.id}
-            onClick={() => navigate(`/pledges/${p.id}`)}
-            className="group py-5 border-b border-gray-100 dark:border-[#1f3d2e] flex items-start gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-          >
-            {/* Avatar / Image */}
-            <div className="flex-shrink-0 relative">
-              <img
-                alt={p.customer?.name}
-                className="h-14 w-14 rounded-full object-cover ring-2 ring-white dark:ring-[#1f3d2e] shadow-sm dark:shadow-none"
-                src={fixImageUrl(p.media?.find((m: any) => m.category === 'customer_image')?.url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
-              />
-            </div>
-
-            <div className="flex-1 min-w-0 flex flex-col h-full justify-between gap-1">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-base font-medium text-primary-text dark:text-white truncate pr-2">
-                    {p.customer?.name || 'Unknown'}
-                  </h3>
-                  <p className="text-xs text-secondary-text dark:text-text-muted font-medium mt-0.5">
-                    {p.loan?.date || 'No Date'}
-                  </p>
+            {filteredPledges.map((p) => (
+              <div
+                key={p.id}
+                onClick={() => navigate(`/pledges/${p.id}`)}
+                className="group py-5 border-b border-gray-100 dark:border-[#1f3d2e] flex items-start gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+              >
+                {/* Avatar / Image */}
+                <div className="flex-shrink-0 relative">
+                  <img
+                    alt={p.customer?.name}
+                    className="h-14 w-14 rounded-full object-cover ring-2 ring-white dark:ring-[#1f3d2e] shadow-sm dark:shadow-none"
+                    src={fixImageUrl(p.media?.find((m: any) => m.category === 'customer_image')?.url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
+                  />
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                  <div className={`h-6 w-6 rounded-full flex items-center justify-center border ${getStatusColor(p.status)}`}>
-                    <span className={`text-[10px] font-bold ${p.status === 'closed' ? 'text-red-500' : 'text-primary'}`}>
-                      {p.status ? p.status.charAt(0).toUpperCase() : 'A'}
-                    </span>
+
+                <div className="flex-1 min-w-0 flex flex-col h-full justify-between gap-1">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-base font-medium text-primary-text dark:text-white truncate pr-2">
+                        {p.customer?.name || 'Unknown'}
+                      </h3>
+                      <p className="text-xs text-secondary-text dark:text-text-muted font-medium mt-0.5">
+                        {p.loan?.date || 'No Date'}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className={`h-6 w-6 rounded-full flex items-center justify-center border ${getStatusColor(p.status)}`}>
+                        <span className={`text-[10px] font-bold ${p.status === 'closed' ? 'text-red-500' : 'text-primary'}`}>
+                          {p.status ? p.status.charAt(0).toUpperCase() : 'A'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-end mt-2">
+                    <p className="text-xs text-secondary-text dark:text-text-muted">
+                      Loan No. <span className="text-primary-text dark:text-gray-400 font-medium">{p.loan?.loan_no || `#${p.id} `}</span>
+                    </p>
+                    <p className="text-sm font-semibold text-primary">
+                      ₹{Number(p.loan?.amount || 0).toLocaleString()}
+                    </p>
                   </div>
                 </div>
               </div>
-              <div className="flex justify-between items-end mt-2">
-                <p className="text-xs text-secondary-text dark:text-text-muted">
-                  Loan No. <span className="text-primary-text dark:text-gray-400 font-medium">{p.loan?.loan_no || `#${p.id} `}</span>
-                </p>
-                <p className="text-sm font-semibold text-primary">
-                  ₹{Number(p.loan?.amount || 0).toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
+            ))}
+          </>
+        )}
       </main>
 
       {/* Global Bottom Navigation - Moved to Layout */}

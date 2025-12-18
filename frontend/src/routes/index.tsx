@@ -41,6 +41,7 @@ const JewelNamesIndex = lazy(() => import("../pages/dashboard/admin/configs/Jewe
 const JewelNameForm = lazy(() => import("../pages/dashboard/admin/configs/JewelNameForm"));
 const InterestRateForm = lazy(() => import("../pages/dashboard/admin/configs/InterestRateForm"));
 const ValidityPeriodForm = lazy(() => import("../pages/dashboard/admin/configs/ValidityPeriodForm"));
+const RolesIndex = lazy(() => import("../pages/dashboard/developer/configs/Roles/index"));
 
 const AppRoutes: React.FC = () => {
   return (
@@ -72,13 +73,13 @@ const AppRoutes: React.FC = () => {
         <Route path="/pledges/:id/edit" element={<Edit />} />
         <Route path="/pledges/:id/receipt" element={<Receipt />} />
         <Route path="/pledges/:id" element={<View />} />
-        </Route>
+      </Route>
 
-        {/* Repledge Routes */}
-        <Route path="/re-pledge" element={<RepledgeList />} />
-        <Route path="/re-pledge/create" element={<RepledgeCreate />} />
-        <Route path="/re-pledge/:id/edit" element={<RepledgeEdit />} />
-        <Route path="/re-pledge/:id" element={<RepledgeView />} />
+      {/* Repledge Routes */}
+      <Route path="/re-pledge" element={<RepledgeList />} />
+      <Route path="/re-pledge/create" element={<RepledgeCreate />} />
+      <Route path="/re-pledge/:id/edit" element={<RepledgeEdit />} />
+      <Route path="/re-pledge/:id" element={<RepledgeView />} />
 
 
       {/* Admin Routes */}
@@ -124,6 +125,9 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/configs/validity-periods/edit/:id" element={<ValidityPeriodForm />} />
         <Route path="/admin/configs/processing-fees" element={<ProcessingFees />} />
         <Route path="/admin/configs/repledge-banks" element={<RepledgeBanks />} />
+
+        {/* Developer - Privileges */}
+        <Route path="/admin/configs/roles" element={<RolesIndex />} />
 
         {/* FAB Action Routes (if they are pages) */}
         <Route path="/admin/analysis" element={<div>Advanced Analysis Page (Placeholder)</div>} />

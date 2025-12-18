@@ -20,8 +20,9 @@ const Login: React.FC = () => {
       // Passing email to login function
       const user = await login(email, password);
 
-      if (user.role === 'admin') {
+      if (user.role === 'admin' || user.role === 'developer') {
         navigate("/admin/dashboard");
+
       } else {
         navigate("/dashboard");
       }

@@ -6,7 +6,7 @@ const PublicRoute = ({ children }: PropsWithChildren) => {
   const { token, user } = useAuth();
 
   if (token) {
-    if (user?.role === 'admin') {
+    if (user?.role === 'admin' || user?.role === 'developer') {
       return <Navigate to="/admin/dashboard" replace />;
     }
     return <Navigate to="/dashboard" replace />;

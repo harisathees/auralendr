@@ -25,6 +25,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
+    // Developer Routes - Role & Permissions
+    Route::get('/roles', [App\Http\Controllers\Admin\RolePermissionController::class, 'index']);
+    Route::get('/permissions', [App\Http\Controllers\Admin\RolePermissionController::class, 'getPermissions']);
+    Route::put('/roles/{role}', [App\Http\Controllers\Admin\RolePermissionController::class, 'update']);
+
     // Pledge Routes
     Route::apiResource('pledges', PledgeController::class);
 
@@ -63,9 +68,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Customer Search and List
     Route::get('/customers/search', [CustomerController::class, 'search']);
     Route::get('/customers', [CustomerController::class, 'index']);
-
-    // Pledges
-    Route::apiResource('pledges', PledgeController::class);
 
     // Metal Rates
     Route::post('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'store']);

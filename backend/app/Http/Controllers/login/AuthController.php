@@ -43,7 +43,9 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'role' => $user->role,
                 'branch_id' => $user->branch_id,
+                'permissions' => $user->getAllPermissions()->pluck('name'),
             ]
         ]);
     }
@@ -51,7 +53,14 @@ class AuthController extends Controller
     // GET /api/me
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        return response()->json([
+            'id' => $request->user()->id,
+            'name' => $request->user()->name,
+            'email' => $request->user()->email,
+            'role' => $request->user()->role,
+            'branch_id' => $request->user()->branch_id,
+            'permissions' => $request->user()->getAllPermissions()->pluck('name'),
+        ]);
     }
 
     // POST /api/logout

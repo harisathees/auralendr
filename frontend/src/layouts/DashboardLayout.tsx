@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 import { Outlet } from "react-router-dom";
-import BottomNavigation from "../components/Shared/BottomNavigation";
+import BottomNavigation from "../components/Shared/StaffBottomNavigation";
 import GoldCoinSpinner from "../components/Shared/GoldCoinSpinner";
 
 const DashboardLayout: React.FC = () => {
