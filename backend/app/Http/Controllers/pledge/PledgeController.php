@@ -30,7 +30,7 @@ class PledgeController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->can('pledge.list')) {
+        if (!$user->can('pledge.view')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -84,7 +84,7 @@ class PledgeController extends Controller
 
         // Check permission
         if (!$user->can('pledge.create')) {
-             return response()->json([
+            return response()->json([
                 'message' => 'You do not have permission to create pledges',
                 'error' => 'insufficient_permissions'
             ], 403);
