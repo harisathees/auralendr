@@ -26,8 +26,12 @@ const Login: React.FC = () => {
       } else {
         navigate("/dashboard");
       }
-    } catch (error) {
-      setError((error as Error).message || "Login failed. Please check your credentials.");
+    } catch (error: any) {
+      setError(
+        error.response?.data?.message || 
+        error.message || 
+        "Login failed. Please check your credentials."
+      );
     }
   };
 

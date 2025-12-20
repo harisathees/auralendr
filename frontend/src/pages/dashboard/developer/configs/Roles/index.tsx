@@ -19,7 +19,7 @@ interface Role {
 }
 
 const RolesIndex: React.FC = () => {
-    const { can } = useAuth();
+    const { user, can } = useAuth();
     const [roles, setRoles] = useState<Role[]>([]);
     const [allPermissions, setAllPermissions] = useState<{ [key: string]: Permission[] }>({});
     const [selectedRoleName, setSelectedRoleName] = useState<string>("staff");
@@ -27,15 +27,26 @@ const RolesIndex: React.FC = () => {
 
     // User Permissions Logic
     const [roleUsers, setRoleUsers] = useState<any[]>([]);
+
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+
+    // Branch Logic
+    const [branches, setBranches] = useState<any[]>([]);
+    const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
+
+    // Staff Login Time Settings
+    const [staffTimeSettings, setStaffTimeSettings] = useState({ start: '09:00', end: '17:00' });
+    const [loadingSettings, setLoadingSettings] = useState(false);
 
     const fetchData = async () => {
         try {
             setLoading(true);
             const rolesRes = await http.get("/roles");
             const permsRes = await http.get("/permissions");
+            const branchesRes = await http.get("/branches");
             setRoles(rolesRes.data);
             setAllPermissions(permsRes.data);
+            setBranches(branchesRes.data);
         } catch (error) {
             console.error("Failed to fetch roles/permissions", error);
             toast.error("Failed to load data");
@@ -46,16 +57,72 @@ const RolesIndex: React.FC = () => {
 
     const fetchRoleUsers = async () => {
         try {
-            const res = await http.get(`/users-by-role?role=${selectedRoleName}`);
+            let url = `/users-by-role?role=${selectedRoleName}`;
+            if (selectedBranchId) {
+                url += `&branch_id=${selectedBranchId}`;
+            }
+            const res = await http.get(url);
             setRoleUsers(res.data);
         } catch (err) {
             console.error(err);
         }
     };
 
+    const fetchSettings = async () => {
+        try {
+            let url = '/settings?group=auth';
+            if (selectedBranchId) {
+                url += `&branch_id=${selectedBranchId}`;
+            } else {
+                url += `&branch_id=null`; // Explicitly ask for global
+            }
+
+            const res = await http.get(url);
+            if (res.data) {
+                setStaffTimeSettings({
+                    start: res.data.staff_login_start_time || '09:00',
+                    end: res.data.staff_login_end_time || '17:00'
+                });
+            }
+        } catch (error) {
+            console.error("Failed to fetch settings", error);
+        }
+    };
+
+    const handleSaveSettings = async () => {
+        try {
+            setLoadingSettings(true);
+
+            await http.post('/settings', {
+                group: 'auth',
+                branch_id: selectedBranchId, // API handles null vs value
+                settings: {
+                    staff_login_start_time: staffTimeSettings.start,
+                    staff_login_end_time: staffTimeSettings.end
+                }
+            });
+            toast.success(selectedBranchId ? "Branch-specific login time saved" : "Global login time settings saved");
+        } catch (error) {
+            console.error("Failed to save settings", error);
+            toast.error("Failed to save settings");
+        } finally {
+            setLoadingSettings(false);
+        }
+    };
+
     useEffect(() => {
         fetchData();
     }, []);
+
+    useEffect(() => {
+        fetchRoleUsers();
+    }, [selectedRoleName, selectedBranchId]); // Refetch users when branch changes
+
+    useEffect(() => {
+        if (selectedRoleName === 'staff') {
+            fetchSettings();
+        }
+    }, [selectedRoleName, selectedBranchId]); // Refetch settings when branch changes
 
     // Set default selected role when roles load
     useEffect(() => {
@@ -68,11 +135,7 @@ const RolesIndex: React.FC = () => {
         }
     }, [roles]);
 
-    useEffect(() => {
-        // When role changes, fetch users for that role and reset selection
-        setSelectedUserId(null);
-        fetchRoleUsers();
-    }, [selectedRoleName]);
+
 
     const handleTogglePermission = async (permName: string) => {
         // If User Selected -> Update User
@@ -224,7 +287,7 @@ const RolesIndex: React.FC = () => {
         <div className="p-6 pb-24">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-text-main dark:text-white font-display">
+                    <h1 className="text-2xl font-bold  dark:text-white font-display">
                         User Privileges
                     </h1>
                     <p className="text-sm text-secondary-text dark:text-gray-400">
@@ -242,7 +305,9 @@ const RolesIndex: React.FC = () => {
                         value={selectedUserId || ""}
                         onChange={(e) => setSelectedUserId(e.target.value ? Number(e.target.value) : null)}
                     >
-                        <option value="">All {selectedRoleName}s (Default)</option>
+                        <option value="">
+                            {selectedBranchId ? `All Branch ${selectedRoleName}s` : `All ${selectedRoleName}s (Global)`}
+                        </option>
                         {roleUsers.map(u => (
                             <option key={u.id} value={u.id}>{u.name}</option>
                         ))}
@@ -255,7 +320,10 @@ const RolesIndex: React.FC = () => {
                 {roles.map((role) => (
                     <button
                         key={role.id}
-                        onClick={() => setSelectedRoleName(role.name)}
+                        onClick={() => {
+                            setSelectedRoleName(role.name);
+                            setSelectedUserId(null); // Reset user selection when role changes
+                        }}
                         className={`px-6 py-2 rounded-md text-sm font-bold transition-all capitalize ${selectedRoleName === role.name
                             ? "bg-primary text-white shadow-md"
                             : "text-secondary-text dark:text-gray-400 hover:text-primary dark:hover:text-white"
@@ -266,20 +334,95 @@ const RolesIndex: React.FC = () => {
                 ))}
             </div>
 
+            {/* Branch Selector (Only for Staff?) */}
+            <div className="mb-6 w-64">
+                <label className="text-xs font-bold text-gray-500 mb-2 block">Filter by Branch</label>
+                <select
+                    className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm dark:text-white focus:ring-2 focus:ring-primary outline-none"
+                    value={selectedBranchId || ''}
+                    onChange={(e) => setSelectedBranchId(e.target.value ? Number(e.target.value) : null)}
+                >
+                    <option value="">All Branches (Global Settings)</option>
+                    {branches.map((branch: any) => (
+                        <option key={branch.id} value={branch.id}>
+                            {branch.branch_name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
             {/* Permissions Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                {/* Staff Login Time Configuration Card */}
+                {selectedRoleName === 'staff' && !selectedUserId && (
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 md:col-span-2 lg:col-span-1">
+                        <div className="flex items-center gap-2 mb-4">
+                            <span className="material-symbols-outlined text-orange-600 bg-orange-100 p-2 rounded-lg">
+                                schedule
+                            </span>
+                            <h3 className="text-lg font-bold dark:text-white">
+                                Login Access Hours
+                            </h3>
+                        </div>
+
+                        <div className="space-y-4">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Restrict staff login access to specific working hours.
+                                Staff attempting to login outside these hours will be denied access.
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 mb-1 block">Start Time</label>
+                                    <input
+                                        type="time"
+                                        className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none dark:text-white "
+                                        value={staffTimeSettings.start}
+                                        onChange={(e) => setStaffTimeSettings({ ...staffTimeSettings, start: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 mb-1 block">End Time</label>
+                                    <input
+                                        type="time"
+                                        className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none dark:text-white"
+                                        value={staffTimeSettings.end}
+                                        onChange={(e) => setStaffTimeSettings({ ...staffTimeSettings, end: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleSaveSettings}
+                                disabled={loadingSettings || (!can('user_privilege.update') && user?.role !== 'developer')}
+                                className="w-full py-2 bg-primary hover:bg-primary-dark text-white rounded-lg text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {loadingSettings ? 'Saving...' : 'Update Login Hours'}
+                            </button>
+                        </div>
+                    </div>
+                )}
                 {Object.entries(allPermissions)
                     .filter(([group]) => {
-                        if (selectedRoleName === 'staff' && ['loan', 'branch', 'user', 'brandkit', 'repledge', 'user_privilege'].includes(group)) {
-                            // Keep existing filter logic but maybe relax it if user wants to give extra rights?
-                            // Currently specific groups are HIDDEN for staff.
-                            // If we want to align permissions for a staff user to have 'brandkit', we must show it.
-                            // Let's remove this hardcoded filter or make it conditional?
-                            // For now, let's keep it consistent with previous logic, OR check if user is Custom.
-                            // If a user is selected, maybe we show ALL groups so we can grant them?
-                            if (selectedUserId) return true; // Allow seeing all groups when customizing a user
-                            return !['loan', 'branch', 'user', 'brandkit', 'user_privilege'].includes(group);
+                        const restrictedForNonDevs = ['user_privilege', 'brandkit', 'user', 'branch', 'loan'];
+
+                        // 1. Strict check: non-developers CANNOT see these groups, period.
+                        if (user?.role !== 'developer') {
+                            if (restrictedForNonDevs.includes(group)) {
+                                return false;
+                            }
                         }
+
+                        // 2. Strict Staff Check: Even developers shouldn't assign these to staff
+                        // "for staff because the satff dont have this"
+                        if (selectedRoleName === 'staff') {
+                            const hiddenForStaff = ['branch', 'brandkit', 'user', 'user_privilege', 'loan'];
+                            if (hiddenForStaff.includes(group)) {
+                                return false;
+                            }
+                        }
+
                         return true;
                     })
                     .map(([group, perms]) => {
@@ -293,7 +436,7 @@ const RolesIndex: React.FC = () => {
                                         <span className="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">
                                             {getIconForGroup(group)}
                                         </span>
-                                        <h3 className="text-lg font-bold capitalize text-text-main dark:text-white">
+                                        <h3 className="text-lg font-bold capitalize dark:text-white">
                                             {group} Access
                                         </h3>
                                     </div>
@@ -327,7 +470,7 @@ const RolesIndex: React.FC = () => {
                                         return (
                                             <div key={perm.id} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors">
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-medium text-text-main dark:text-gray-200">
+                                                    <span className="text-sm font-medium dark:text-gray-200">
                                                     </span>
                                                     <span className="text-xs text-secondary-text dark:text-gray-500">
                                                         {perm.name}

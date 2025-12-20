@@ -21,11 +21,13 @@ Route::get('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::clas
 // FOR LOGIN
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:8,1');
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
     // Developer Routes - Role & Permissions
+    Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index']);
+    Route::post('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'update']);
     Route::get('/roles', [App\Http\Controllers\Admin\RolePermissionController::class, 'index']);
     Route::get('/permissions', [App\Http\Controllers\Admin\RolePermissionController::class, 'getPermissions']);
     Route::put('/roles/{role}', [App\Http\Controllers\Admin\RolePermissionController::class, 'update']);

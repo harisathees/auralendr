@@ -161,6 +161,15 @@ const AdminConfigs: React.FC = () => {
                         link: "/admin/configs/roles",
                         permission: 'user_privilege.view'
                     },
+                    {
+                        title: "Staff Activities",
+                        description: "Staff Activities",
+                        icon: "people",
+                        color: "text-orange-600",
+                        bg: "bg-orange-100",
+                        link: "/admin/configs/roles",
+                        permission: ''
+                    },
                 ]
             },
             {
