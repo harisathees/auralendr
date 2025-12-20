@@ -17,7 +17,7 @@ class RepledgeController extends Controller
     {
         $user = $request->user();
         if (!$user->can('repledge.create')) {
-             return response()->json(['message' => 'Forbidden'], 403);
+            return response()->json(['message' => 'Forbidden'], 403);
         }
 
         $loanNo = trim($request->query('query'));
@@ -86,7 +86,7 @@ class RepledgeController extends Controller
 
     public function index(Request $request)
     {
-        if (!$request->user()->can('repledge.list')) {
+        if (!$request->user()->can('repledge.view')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
         $repledges = Repledge::with('source')->latest()->paginate(20);
@@ -96,7 +96,7 @@ class RepledgeController extends Controller
     public function store(StoreRepledgeRequest $request)
     {
         if (!$request->user()->can('repledge.create')) {
-             return response()->json(['message' => 'Forbidden'], 403);
+            return response()->json(['message' => 'Forbidden'], 403);
         }
 
         $validated = $request->validated();

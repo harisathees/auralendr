@@ -180,20 +180,20 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
       {/* Pledges List */}
       {activeTab === 'loans' && (
         <>
-          {!can('pledge.list') ? (
+          {!can('pledge.view') ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <Lock className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" />
               <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Access Denied
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                You don't have permission to list pledges.
+                You don't have permission to view pledges.
               </p>
               <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-left">
                 <p><strong>ASK ADMIN TO ACCESS IT</strong></p>
               </div>
               <div className="mt-1 p-1 bg-gray-100 dark:bg-gray-800 rounded text-xs text-left">
-               <p>Has Permission: {can('pledge.list') ? 'YES' : 'NO'}</p>
+                <p>Has Permission: {can('pledge.view') ? 'YES' : 'NO'}</p>
               </div>
             </div>
           ) : (
@@ -261,19 +261,19 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
       {/* Repledges List */}
       {activeTab === 'repledges' && (
         <>
-          {!can('repledge.list') ? (
+          {!can('repledge.view') ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <Lock className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" />
               <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Access Denied
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                You don't have permission to list repledges.
+                You don't have permission to view repledges.
               </p>
               <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-left">
                 <p><strong>ASK ADMIN TO ACCESS IT</strong></p>
-                <p>Check: repledge.list</p>
-                <p>Has Permission: {can('repledge.list') ? 'YES' : 'NO'}</p>
+                <p>Check: repledge.view</p>
+                <p>Has Permission: {can('repledge.view') ? 'YES' : 'NO'}</p>
               </div>
             </div>
           ) : (
