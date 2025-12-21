@@ -1,52 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import http from '../api/http';
+import api from '../api/apiClient';
 
-export interface RepledgeEntry {
-    id: string;
-    loan_id: string | null;
-    loan_no: string;
-    re_no: string;
-    net_weight: number;
-    gross_weight: number;
-    stone_weight: number;
-    amount: number;
-    processing_fee: number;
-    bank_id?: string | null; // Deprecated, use repledge_source_id
-    repledge_source_id: string | null;
-    interest_percent: number;
-    validity_period: number;
-    after_interest_percent: number;
-    payment_method: string | null;
-    start_date: string | null;
-    end_date: string | null;
-    due_date: string | null;
-    status: string;
-    created_at: string;
-    source?: {
-        id: number;
-        name: string;
-    } | null;
-}
-
-export interface LoanDetails {
-    loan: {
-        id: string;
-        loan_no: string;
-        amount: number;
-        // Add other fields as expected from backend
-    };
-    totals: {
-        net_weight: number;
-        gross_weight: number; // Assuming backend provides this
-        stone_weight: number;
-    };
-}
-
-export interface LoanSuggestion {
-    loan_no: string;
-    amount: number;
-    status: string;
-}
+import type { Repledge as RepledgeEntry, LoanDetails, LoanSuggestion } from '../types/models';
 
 export const useRepledge = () => {
     const [loading, setLoading] = useState(false);
@@ -59,7 +14,7 @@ export const useRepledge = () => {
     const fetchRepledgeEntries = useCallback(async (page = 1) => {
         setLoading(true);
         try {
-            const res = await http.get(`/repledges?page=${page}`);
+            const res = await api.get(`/repledges?page=${page}`);
             setRepledgeEntries(res.data.data);
             setTotalPages(res.data.last_page);
             setCurrentPage(res.data.current_page);
@@ -77,7 +32,7 @@ export const useRepledge = () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await http.get(`/loans/${loanNo}`);
+            const res = await api.get(`/loans/${loanNo}`);
             // Assuming existing backend structure, might need adjustment
             // Based on typical Laravel response for detail
             return res.data;
@@ -93,7 +48,7 @@ export const useRepledge = () => {
     // Save Repledge Entry
     const saveRepledgeEntry = async (data: Partial<RepledgeEntry>) => {
         try {
-            const res = await http.post('/repledges', data);
+            const res = await api.post('/repledges', data);
             setRepledgeEntries(prev => [res.data, ...prev]);
             return res.data;
         } catch (err: any) {
@@ -105,7 +60,7 @@ export const useRepledge = () => {
     // Delete Repledge Entry
     const deleteRepledgeEntry = async (id: string) => {
         try {
-            await http.delete(`/repledges/${id}`);
+            await api.delete(`/repledges/${id}`);
             setRepledgeEntries(prev => prev.filter(e => e.id !== id));
         } catch (err: any) {
             console.error("Failed to delete entry", err);
@@ -114,9 +69,9 @@ export const useRepledge = () => {
     };
 
     // Search Loan for Repledge (Auto-fetch)
-    const searchLoanSuggestions = async (loanNo: string) => {
+    const searchLoanSuggestions = async (loanNo: string): Promise<LoanSuggestion[] | null> => {
         try {
-            const res = await http.get(`/repledge-loans/search?query=${loanNo}`);
+            const res = await api.get(`/repledge-loans/search?query=${loanNo}`);
             return res.data;
         } catch (err: any) {
             console.error("Search failed", err);

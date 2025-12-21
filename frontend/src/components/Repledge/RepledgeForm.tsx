@@ -2,38 +2,21 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRepledgeSource } from "../../hooks/useRepledgeSource";
 import { useRepledge } from "../../hooks/useRepledge";
 import { useToast } from "../../context";
-import http from "../../api/http"; // Direct HTTP for suggestions
+import api from "../../api/apiClient";
 import CustomDropdown from "../Shared/CustomDropdown";
 
-interface RepledgeItem {
-    id?: string;
-    loanId: string;
-    loanNo: string;
-    reNo: string;
-    netWeight: number;
-    grossWeight: number;
-    stoneWeight: number;
-    amount: number;
-    processingFee: number;
-    interestPercent: number;
-    validityPeriod: number;
-    afterInterestPercent: number;
-    paymentMethod: string;
-    repledgeSourceId: string; // New: Per-item source
-    isBankDetailsOpen?: boolean; // New: UI state per item
-    startDate: string; // New: Per-item start date
-    endDate: string; // New: Per-item end date
-}
+import type { RepledgeItem } from "../../types/models";
 
 interface Props {
     initialData?: any;
     onSubmit: (data: any) => Promise<void>;
     loading?: boolean;
+    onCancel?: () => void;
 }
 
 const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false }) => {
     const { sources, loading: sourcesLoading } = useRepledgeSource();
-    const { searchLoanSuggestions: searchLoan } = useRepledge();
+    const { fetchLoanDetails } = useRepledge();
     const { showToast } = useToast();
 
     // Global State - Removed Bank Specifics
@@ -43,7 +26,7 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false 
     useEffect(() => {
         const fetchPaymentMethods = async () => {
             try {
-                const res = await http.get('/money-sources');
+                const res = await api.get('/money-sources');
                 setPaymentMethods(res.data || []);
             } catch (e) {
                 console.error("Failed to fetch payment methods", e);
@@ -91,7 +74,7 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false 
 
         fetchTimeoutRef.current = setTimeout(async () => {
             try {
-                const res = await http.get('/pledges', { params: { search: query, suggestions: true } });
+                const res = await api.get('/pledges', { params: { search: query, suggestions: true } });
                 setSuggestions(res.data.data || []);
             } catch (e) {
                 console.error(e);
@@ -105,21 +88,21 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false 
     const fetchAndPopulateLoan = async (loanNo: string, index: number) => {
         if (!loanNo) return;
         try {
-            const loan = await searchLoan(loanNo);
-            if (loan) {
+            const loanData = await fetchLoanDetails(loanNo);
+            if (loanData) {
                 setItems(prev => {
                     const newItems = [...prev];
                     const item = newItems[index];
 
                     newItems[index] = {
                         ...item,
-                        loanId: loan.id,
-                        loanNo: loan.loan_no,
-                        amount: loan.amount,
-                        processingFee: Math.round(Math.min(Number(loan.amount) * 0.0012, 200)),
-                        grossWeight: loan.gross_weight,
-                        netWeight: loan.net_weight,
-                        stoneWeight: loan.stone_weight,
+                        loanId: loanData.loan.id.toString(),
+                        loanNo: loanData.loan.loan_no,
+                        amount: Number(loanData.loan.amount),
+                        processingFee: Math.round(Math.min(Number(loanData.loan.amount) * 0.0012, 200)),
+                        grossWeight: loanData.totals.gross_weight,
+                        netWeight: loanData.totals.net_weight,
+                        stoneWeight: loanData.totals.stone_weight,
                         // Keep existing bank settings if set, otherwise 0?
                         // Actually, if bank is NOT set, these remain 0.
                         // If bank IS set, they should persist.

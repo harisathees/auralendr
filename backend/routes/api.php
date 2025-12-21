@@ -1,22 +1,36 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\login\AuthController;
-use App\Http\Controllers\Admin\BranchController;
-use App\Http\Controllers\Admin\StaffController;
-use App\Http\Controllers\pledge\PledgeController;
-use App\Http\Controllers\Admin\JewelTypeController;
-use App\Http\Controllers\Admin\JewelQualityController;
-use App\Http\Controllers\Admin\TaskController;
-use App\Http\Controllers\Admin\CustomerController;
-
+use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Admin\Organization\Branch\BranchController;
+use App\Http\Controllers\Api\V1\Admin\Organization\User\StaffController;
+use App\Http\Controllers\Api\V1\Pledge\PledgeController;
+use App\Http\Controllers\Api\V1\Repledge\RepledgeController;
+use App\Http\Controllers\Api\V1\Transaction\TransactionController;
+use App\Http\Controllers\Api\V1\Admin\Customer\CustomerController;
+use App\Http\Controllers\Api\V1\Admin\Task\TaskController;
+use App\Http\Controllers\Api\V1\Admin\Organization\UserPrivileges\RolePermissionController;
+use App\Http\Controllers\Api\V1\Admin\Organization\UserPrivileges\StaffTimeRestrictionController;
+use App\Http\Controllers\Api\V1\Admin\MoneySource\MoneySourceController;
+use App\Http\Controllers\Api\V1\Admin\MoneySource\MoneySourceTypeController;
+use App\Http\Controllers\Api\V1\Admin\Finance\MetalRateController;
+use App\Http\Controllers\Api\V1\Admin\Finance\PaymentMethodController;
+use App\Http\Controllers\Api\V1\Admin\Finance\RepledgeSourceController;
+use App\Http\Controllers\Api\V1\Admin\Finance\TransactionCategoryController;
+use App\Http\Controllers\Api\V1\Admin\JewelManagement\JewelTypeController;
+use App\Http\Controllers\Api\V1\Admin\JewelManagement\JewelQualityController;
+use App\Http\Controllers\Api\V1\Admin\JewelManagement\JewelNameController;
+use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\InterestRateController;
+use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\LoanController;
+use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\LoanProcessingFeeController;
+use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\ValidityMonthController;
 
 Route::get('/test', function () {
     return response()->json(['status' => 'API Working']);
 });
 
 // Public Metal Rates
-Route::get('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'index']);
+Route::get('/metal-rates', [MetalRateController::class, 'index']);
 
 // FOR LOGIN
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:8,1');
@@ -26,23 +40,22 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
 
     // Developer Routes - Role & Permissions
-    Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index']);
-    Route::post('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'update']);
-    Route::get('/roles', [App\Http\Controllers\Admin\RolePermissionController::class, 'index']);
-    Route::get('/permissions', [App\Http\Controllers\Admin\RolePermissionController::class, 'getPermissions']);
-    Route::put('/roles/{role}', [App\Http\Controllers\Admin\RolePermissionController::class, 'update']);
+    Route::get('/settings', [StaffTimeRestrictionController::class, 'index']);
+    Route::post('/settings', [StaffTimeRestrictionController::class, 'update']);
+    Route::get('/roles', [RolePermissionController::class, 'index']);
+    Route::get('/permissions', [RolePermissionController::class, 'getPermissions']);
+    Route::put('/roles/{role}', [RolePermissionController::class, 'update']);
     
     // User Permissions - select seperate user for give permissions
-    Route::get('/users-by-role', [App\Http\Controllers\Admin\RolePermissionController::class, 'getUsersByRole']);
-    Route::put('/users/{user}/permissions', [App\Http\Controllers\Admin\RolePermissionController::class, 'updateUserPermissions']);
+    Route::get('/users-by-role', [RolePermissionController::class, 'getUsersByRole']);
+    Route::put('/users/{user}/permissions', [RolePermissionController::class, 'updateUserPermissions']);
 
     // Pledge Routes
     Route::apiResource('pledges', PledgeController::class);
 
-
     // Repledge Routes
-    Route::get('repledge-loans/search', [\App\Http\Controllers\Repledge\RepledgeController::class, 'searchLoan']);
-    Route::apiResource('repledges', \App\Http\Controllers\Repledge\RepledgeController::class);
+    Route::get('repledge-loans/search', [RepledgeController::class, 'searchLoan']);
+    Route::apiResource('repledges', RepledgeController::class);
 
     // Permission Controlled Routes
     Route::apiResource('branches', BranchController::class);
@@ -54,50 +67,52 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
         Route::apiResource('tasks', TaskController::class);
         Route::apiResource('jewel-types', JewelTypeController::class);
         Route::apiResource('jewel-qualities', JewelQualityController::class);
-        Route::apiResource('jewel-names', \App\Http\Controllers\Admin\JewelNameController::class);
-        Route::apiResource('interest-rates', \App\Http\Controllers\Admin\InterestRateController::class);
-        Route::apiResource('loan-validities', \App\Http\Controllers\Admin\LoanValidityController::class);
-        Route::apiResource('payment-methods', \App\Http\Controllers\Admin\PaymentMethodController::class);
-        Route::apiResource('transaction-categories', \App\Http\Controllers\Admin\TransactionCategoryController::class);
-        Route::post('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'store']);
+        Route::apiResource('jewel-names', JewelNameController::class);
+        Route::apiResource('interest-rates', InterestRateController::class);
+        Route::apiResource('loan-validities', ValidityMonthController::class);
+        Route::apiResource('payment-methods', PaymentMethodController::class);
+        Route::apiResource('transaction-categories', TransactionCategoryController::class);
+        Route::post('/processing-fees', [LoanProcessingFeeController::class, 'store']);
     });
 
     // Shared Routes (Admin + Staff)
-    Route::get('/admin-all-loans', [App\Http\Controllers\Admin\LoanController::class, 'index']);
+    Route::get('/admin-all-loans', [LoanController::class, 'index']);
+    
+    // Read-only access for shared resources often needed by staff
     Route::get('/jewel-types', [JewelTypeController::class, 'index']);
     Route::get('/jewel-qualities', [JewelQualityController::class, 'index']);
-    Route::get('/jewel-names', [\App\Http\Controllers\Admin\JewelNameController::class, 'index']);
-    Route::get('/interest-rates', [\App\Http\Controllers\Admin\InterestRateController::class, 'index']);
-    Route::get('/loan-validities', [\App\Http\Controllers\Admin\LoanValidityController::class, 'index']);
-    Route::get('/payment-methods', [\App\Http\Controllers\Admin\PaymentMethodController::class, 'index']);
-    Route::get('/processing-fees', [App\Http\Controllers\Admin\ProcessingFeeController::class, 'index']);
-    Route::get('jewel-qualities', [JewelQualityController::class, 'index']);
-    Route::get('transaction-categories', [\App\Http\Controllers\Admin\TransactionCategoryController::class, 'index']);
+    Route::get('/jewel-names', [JewelNameController::class, 'index']);
+    Route::get('/interest-rates', [InterestRateController::class, 'index']);
+    Route::get('/loan-validities', [ValidityMonthController::class, 'index']);
+    Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
+    Route::get('/processing-fees', [LoanProcessingFeeController::class, 'index']);
+    Route::get('transaction-categories', [TransactionCategoryController::class, 'index']);
 
     // Repledge Sources (Shared for read/write as configured in controller)
-    Route::apiResource('repledge-sources', \App\Http\Controllers\Repledge\RepledgeSourceController::class);
+    Route::apiResource('repledge-sources', RepledgeSourceController::class);
 
     // Customer Search and List
     Route::get('/customers/search', [CustomerController::class, 'search']);
     Route::get('/customers', [CustomerController::class, 'index']);
 
-    // Metal Rates
-    Route::post('/metal-rates', [App\Http\Controllers\Admin\MetalRateController::class, 'store']);
+    // Metal Rates (Admin write, Staff read - Controller handles specific logic if needed, or route middleware)
+    Route::post('/metal-rates', [MetalRateController::class, 'store']);
 
     // Money Sources
-    Route::get('/money-sources', [App\Http\Controllers\Admin\MoneySourceController::class, 'index']);
-    Route::post('/money-sources', [App\Http\Controllers\Admin\MoneySourceController::class, 'store']);
-    Route::put('/money-sources/{id}', [App\Http\Controllers\Admin\MoneySourceController::class, 'update']);
-    Route::delete('/money-sources/{id}', [App\Http\Controllers\Admin\MoneySourceController::class, 'destroy']);
-    Route::get('/money-source-types', [\App\Http\Controllers\MoneySourceTypeController::class, 'index']);
+    Route::get('/money-sources', [MoneySourceController::class, 'index']);
+    Route::post('/money-sources', [MoneySourceController::class, 'store']);
+    Route::put('/money-sources/{id}', [MoneySourceController::class, 'update']);
+    Route::delete('/money-sources/{id}', [MoneySourceController::class, 'destroy']);
+    Route::get('/money-source-types', [MoneySourceTypeController::class, 'index']);
 
 
     // Transactions
-    Route::get('/transactions', [App\Http\Controllers\TransactionController::class, 'index']);
-    Route::post('/transactions', [App\Http\Controllers\TransactionController::class, 'store']);
+    Route::get('/transactions', [TransactionController::class, 'index']);
+    Route::post('/transactions', [TransactionController::class, 'store']);
 
     // Staff Task Routes
     Route::get('/my-tasks', [TaskController::class, 'myTasks']);
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus']);
 });
+
 

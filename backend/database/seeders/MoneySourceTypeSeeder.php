@@ -12,17 +12,17 @@ class MoneySourceTypeSeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\MoneySourceType::firstOrCreate(['value' => 'cash'], [
+        \App\Models\Admin\MoneySource\MoneySourceType::firstOrCreate(['value' => 'cash'], [
             'name' => 'Cash',
             'icon' => 'payments'
         ]);
 
-        \App\Models\MoneySourceType::firstOrCreate(['value' => 'bank'], [
+        \App\Models\Admin\MoneySource\MoneySourceType::firstOrCreate(['value' => 'bank'], [
             'name' => 'Bank Account',
             'icon' => 'account_balance'
         ]);
 
-        \App\Models\MoneySourceType::firstOrCreate(['value' => 'wallet'], [
+        \App\Models\Admin\MoneySource\MoneySourceType::firstOrCreate(['value' => 'wallet'], [
             'name' => 'Wallet / UPI',
             'icon' => 'account_balance_wallet'
         ]);

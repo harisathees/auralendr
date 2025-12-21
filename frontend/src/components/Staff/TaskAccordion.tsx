@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Task } from '../../types/models';
-import http from '../../api/http';
+import api from '../../api/apiClient';
 
 interface TaskAccordionProps {
     task: Task;
@@ -14,7 +14,7 @@ const TaskAccordion: React.FC<TaskAccordionProps> = ({ task, onUpdate }) => {
     const handleStatusUpdate = async (newStatus: string) => {
         setUpdating(true);
         try {
-            await http.patch(`/tasks/${task.id}/status`, { status: newStatus });
+            await api.patch(`/tasks/${task.id}/status`, { status: newStatus });
             onUpdate();
         } catch (error) {
             console.error("Failed to update status:", error);

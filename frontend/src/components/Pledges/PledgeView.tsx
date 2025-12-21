@@ -65,7 +65,7 @@ interface Props {
   data: any;
 }
 
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/Auth/AuthContext";
 
 const PledgeView: React.FC<Props> = ({ data }) => {
   const navigate = useNavigate();

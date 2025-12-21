@@ -1,10 +1,10 @@
 import React, { Suspense } from "react";
 import { Outlet } from "react-router-dom";
-import AdminBottomNavigation from "../components/Shared/AdminBottomNavigation";
-import GoldCoinSpinner from "../components/Shared/GoldCoinSpinner";
+import AdminBottomNavigation from "../components/Shared/Navigation/AdminNavigation/AdminBottomNavigation";
+import GoldCoinSpinner from "../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
 
-import { useAuth } from "../context/AuthContext";
-import DeveloperBottomNavigation from "../components/Shared/DeveloperBottomNavigation";
+import { useAuth } from "../context/Auth/AuthContext";
+import DeveloperBottomNavigation from "../components/Shared/Navigation/DeveloperNavigation/DeveloperBottomNavigation";
 
 const AdminLayout: React.FC = () => {
     const { user } = useAuth();

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Policies\pledge;
+namespace App\Policies\Pledge;
 
-use App\Models\BranchAndUser\User;
-use App\Models\pledge\Pledge;
+use App\Models\Admin\Organization\User\User;
+use App\Models\Pledge\Pledge;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class PledgePolicy

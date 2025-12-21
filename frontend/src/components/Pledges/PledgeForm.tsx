@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import http from "../../api/http";
-import { AudioRecorder } from "../../components/audiocamera/AudioRecorder";
-import { CameraCapture } from "../../components/audiocamera/CameraCapture";
+import api from "../../api/apiClient";
+import { AudioRecorder } from "../../components/AudioCamera/AudioRecorder";
+import { CameraCapture } from "../../components/AudioCamera/CameraCapture";
 
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/Auth/AuthContext";
 
 // --- UI Components from Create.tsx ---
 
@@ -136,7 +136,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
       return;
     }
     try {
-      const res = await http.get(`/customers/search?query=${query}`);
+      const res = await api.get(`/customers/search?query=${query}`);
       setCustomerSuggestions(res.data || []);
       setActiveSearchField(field);
     } catch (err) {
@@ -241,7 +241,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
   // Fetch processing fees when branch ID is available
   useEffect(() => {
     if (user?.branch_id) {
-      http.get(`/processing-fees?branch_id=${user.branch_id}`)
+      api.get(`/processing-fees?branch_id=${user.branch_id}`)
         .then(res => setProcessingFeesConfigs(res.data))
         .catch(console.error);
     }
@@ -436,17 +436,17 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
 
   useEffect(() => {
     // Load metadata
-    http.get("/jewel-types").then(res => Array.isArray(res.data) && setJewelTypes(res.data)).catch(console.error);
-    http.get("/jewel-qualities").then(res => Array.isArray(res.data) && setJewelQualities(res.data)).catch(console.error);
-    http.get("/jewel-names").then(res => Array.isArray(res.data) && setJewelNames(res.data)).catch(console.error);
-    http.get("/interest-rates").then(res => Array.isArray(res.data) && setInterestRates(res.data)).catch(console.error);
-    http.get("/loan-validities").then(res => Array.isArray(res.data) && setLoanValidities(res.data)).catch(console.error);
-    http.get("/money-sources").then(res => {
+    api.get("/jewel-types").then(res => Array.isArray(res.data) && setJewelTypes(res.data)).catch(console.error);
+    api.get("/jewel-qualities").then(res => Array.isArray(res.data) && setJewelQualities(res.data)).catch(console.error);
+    api.get("/jewel-names").then(res => Array.isArray(res.data) && setJewelNames(res.data)).catch(console.error);
+    api.get("/interest-rates").then(res => Array.isArray(res.data) && setInterestRates(res.data)).catch(console.error);
+    api.get("/loan-validities").then(res => Array.isArray(res.data) && setLoanValidities(res.data)).catch(console.error);
+    api.get("/money-sources").then(res => {
       if (Array.isArray(res.data)) {
         setPaymentMethods(res.data.filter((m: any) => m.is_outbound));
       }
     }).catch(console.error);
-    http.get("/metal-rates").then(res => Array.isArray(res.data) && setMetalRates(res.data)).catch(console.error); // Added this line
+    api.get("/metal-rates").then(res => Array.isArray(res.data) && setMetalRates(res.data)).catch(console.error); // Added this line
   }, []);
 
   useEffect(() => {

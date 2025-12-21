@@ -1,31 +1,31 @@
 import React, { lazy } from "react";
 import { Routes, Route, Navigate, Link } from "react-router-dom";
-import ProtectedRoute from "../components/ProtectedRoute";
-import PublicRoute from "../components/PublicRoute";
-import Login from "../pages/login/Login";
+import ProtectedRoute from "../pages/Auth/Guards/ProtectedRoute";
+import PublicRoute from "../pages/Auth/Guards/PublicRoute";
+import Login from "../pages/Auth/Login/Login";
 import DashboardLayout from "../layouts/DashboardLayout";
 import AdminLayout from "../layouts/AdminLayout";
 
 // Lazy load dashboard pages to enable transition animations
-const Dashboard = lazy(() => import("../pages/dashboard/Dashboard"));
-const TransactionHistory = lazy(() => import("../pages/dashboard/TransactionHistory")); // Added TransactionHistory
-const TransactionForm = lazy(() => import("../pages/dashboard/TransactionForm"));
-const List = lazy(() => import("../pages/Pledges/List"));
-const Create = lazy(() => import("../pages/Pledges/Create"));
-const Edit = lazy(() => import("../pages/Pledges/Edit"));
-const View = lazy(() => import("../pages/Pledges/View"));
-const Receipt = lazy(() => import("../pages/Pledges/Receipt"));
-const BranchList = lazy(() => import("../pages/dashboard/admin/configs/Branches/List"));
-const UsersList = lazy(() => import("../pages/dashboard/admin/configs/Users/List"));
-const CustomersList = lazy(() => import("../pages/admin/Customers/List"));
-const TasksList = lazy(() => import("../pages/admin/Tasks/List"));
-const LoansList = lazy(() => import("../pages/admin/Loans/List"));
-const AdminConfigs = lazy(() => import("../pages/dashboard/admin/configs/index"));
-const MoneySources = lazy(() => import("../pages/dashboard/admin/configs/MoneySources"));
-const InterestSettings = lazy(() => import("../pages/dashboard/admin/configs/InterestSettings"));
-const ValidityPeriods = lazy(() => import("../pages/dashboard/admin/configs/ValidityPeriods"));
-const ProcessingFees = lazy(() => import("../pages/dashboard/admin/configs/ProcessingFees"));
-const RepledgeSources = lazy(() => import("../pages/dashboard/admin/configs/RepledgeSources"));
+const Dashboard = lazy(() => import("../pages/Dashboards/Index"));
+const TransactionHistory = lazy(() => import("../pages/Transaction/History"));
+const TransactionForm = lazy(() => import("../pages/Transaction/Create"));
+const List = lazy(() => import("../pages/Pledge/List"));
+const Create = lazy(() => import("../pages/Pledge/Create"));
+const Edit = lazy(() => import("../pages/Pledge/Edit"));
+const View = lazy(() => import("../pages/Pledge/View"));
+const Receipt = lazy(() => import("../pages/Pledge/Receipt"));
+const BranchList = lazy(() => import("../pages/Admin/Organization/Branch/List"));
+const UsersList = lazy(() => import("../pages/Admin/Organization/User/List"));
+const CustomersList = lazy(() => import("../pages/Admin/Customer/List"));
+const TasksList = lazy(() => import("../pages/Admin/Task/List"));
+const LoansList = lazy(() => import("../pages/Admin/LoanConfiguration/LoanList"));
+const AdminConfigs = lazy(() => import("../pages/Admin/Configs"));
+const MoneySources = lazy(() => import("../pages/Admin/MoneySource/Index"));
+const InterestSettings = lazy(() => import("../pages/Admin/LoanConfiguration/InterestRates"));
+const ValidityPeriods = lazy(() => import("../pages/Admin/LoanConfiguration/LoanValidities"));
+const ProcessingFees = lazy(() => import("../pages/Admin/LoanConfiguration/ProcessingFees"));
+const RepledgeSources = lazy(() => import("../pages/Admin/Finance/RepledgeSources"));
 
 // Repledge Pages
 const RepledgeList = lazy(() => import("../pages/Repledge/List"));
@@ -33,20 +33,20 @@ const RepledgeCreate = lazy(() => import("../pages/Repledge/Create"));
 const RepledgeEdit = lazy(() => import("../pages/Repledge/Edit"));
 const RepledgeView = lazy(() => import("../pages/Repledge/View"));
 
-const MetalRates = lazy(() => import("../pages/dashboard/admin/configs/MetalRates"));
-const JewelTypesIndex = lazy(() => import("../pages/dashboard/admin/configs/JewelTypes"));
+const MetalRates = lazy(() => import("../pages/Admin/Finance/MetalRates"));
+const JewelTypesIndex = lazy(() => import("../pages/Admin/JewelManagement/JewelTypes"));
 
-const JewelTypeForm = lazy(() => import("../pages/dashboard/admin/configs/JewelTypeForm"));
-const JewelQualitiesIndex = lazy(() => import("../pages/dashboard/admin/configs/JewelQualities"));
-const JewelQualityForm = lazy(() => import("../pages/dashboard/admin/configs/JewelQualityForm"));
-const JewelNamesIndex = lazy(() => import("../pages/dashboard/admin/configs/JewelNames"));
-const JewelNameForm = lazy(() => import("../pages/dashboard/admin/configs/JewelNameForm"));
-const InterestRateForm = lazy(() => import("../pages/dashboard/admin/configs/InterestRateForm"));
-const ValidityPeriodForm = lazy(() => import("../pages/dashboard/admin/configs/ValidityPeriodForm"));
-const RolesIndex = lazy(() => import("../pages/dashboard/developer/configs/Roles/index"));
+const JewelTypeForm = lazy(() => import("../pages/Admin/JewelManagement/JewelTypeForm"));
+const JewelQualitiesIndex = lazy(() => import("../pages/Admin/JewelManagement/JewelQualities"));
+const JewelQualityForm = lazy(() => import("../pages/Admin/JewelManagement/JewelQualityForm"));
+const JewelNamesIndex = lazy(() => import("../pages/Admin/JewelManagement/JewelNames"));
+const JewelNameForm = lazy(() => import("../pages/Admin/JewelManagement/JewelNameForm"));
+const InterestRateForm = lazy(() => import("../pages/Admin/LoanConfiguration/InterestRateForm"));
+const ValidityPeriodForm = lazy(() => import("../pages/Admin/LoanConfiguration/LoanValidityForm"));
+const RolesIndex = lazy(() => import("../pages/Developer/index"));
 
-const TransactionCategories = lazy(() => import("../pages/dashboard/admin/configs/TransactionCategories"));
-const TransactionCategoryForm = lazy(() => import("../pages/dashboard/admin/configs/TransactionCategoryForm"));
+const TransactionCategories = lazy(() => import("../pages/Admin/Finance/TransactionCategories"));
+const TransactionCategoryForm = lazy(() => import("../pages/Admin/Finance/TransactionCategoryForm"));
 
 const AppRoutes: React.FC = () => {
   return (
@@ -81,11 +81,11 @@ const AppRoutes: React.FC = () => {
         <Route path="/pledges/:id/receipt" element={<Receipt />} />
         <Route path="/pledges/:id" element={<View />} />
 
-      {/* Repledge Routes */}
-      <Route path="/re-pledge" element={<RepledgeList />} />
-      <Route path="/re-pledge/create" element={<RepledgeCreate />} />
-      <Route path="/re-pledge/:id/edit" element={<RepledgeEdit />} />
-      <Route path="/re-pledge/:id" element={<RepledgeView />} />
+        {/* Repledge Routes */}
+        <Route path="/re-pledge" element={<RepledgeList />} />
+        <Route path="/re-pledge/create" element={<RepledgeCreate />} />
+        <Route path="/re-pledge/:id/edit" element={<RepledgeEdit />} />
+        <Route path="/re-pledge/:id" element={<RepledgeView />} />
 
         {/* Placeholder Routes for Staff Navigation */}
         <Route path="/notices" element={<div className="p-8 text-center min-h-screen bg-background-light dark:bg-background-dark"><h1 className="text-2xl font-bold">Notice Printing Page</h1><p className="text-gray-500 mt-2">Coming Soon...</p></div>} />

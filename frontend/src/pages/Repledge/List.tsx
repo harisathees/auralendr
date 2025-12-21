@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useRepledge } from "../../hooks/useRepledge";
 import { Link, useNavigate } from "react-router-dom";
-import GoldCoinSpinner from "../../components/Shared/GoldCoinSpinner";
+import GoldCoinSpinner from "../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
 
 const List: React.FC = () => {
     const { repledgeEntries, fetchRepledgeEntries, loading, deleteRepledgeEntry } = useRepledge();

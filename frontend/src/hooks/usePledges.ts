@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { listPledges } from "../api/pledgeService";
 
+import type { Pledge } from "../types/models";
+
 export const usePledges = (search = "") => {
-  const [pledges, setPledges] = useState<any[]>([]);
+  const [pledges, setPledges] = useState<Pledge[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

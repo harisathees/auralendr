@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import http from "../../api/http";
+import api from "../../api/apiClient";
 
 interface MetalRate {
     rate: string;
@@ -23,7 +23,7 @@ const MetalRatesCard: React.FC = () => {
 
     const fetchRates = async () => {
         try {
-            const response = await http.get("/metal-rates");
+            const response = await api.get("/metal-rates");
             setRates(response.data);
         } catch (error) {
             console.error("Failed to fetch rates:", error);

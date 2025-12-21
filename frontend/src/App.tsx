@@ -1,6 +1,6 @@
 import { BrowserRouter } from "react-router-dom";
 import AppRoutes from "./routes";
-import { ToastProvider } from "./context/ToastContext";
+import { ToastProvider } from "./context/Toast/ToastContext";
 import Snowfall from "react-snowfall";
 
 function App() {

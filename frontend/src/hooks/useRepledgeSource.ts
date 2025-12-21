@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import http from '../api/http';
+import api from '../api/apiClient';
 import type { RepledgeSource } from '../types/models';
 
 export const useRepledgeSource = () => {
@@ -10,7 +10,7 @@ export const useRepledgeSource = () => {
     const fetchSources = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await http.get('/repledge-sources');
+            const res = await api.get('/repledge-sources');
             setSources(res.data || []);
         } catch (err: any) {
             console.error("Failed to fetch sources", err);
@@ -23,7 +23,7 @@ export const useRepledgeSource = () => {
     const createSource = async (data: Partial<RepledgeSource>) => {
         setLoading(true);
         try {
-            const res = await http.post('/repledge-sources', data);
+            const res = await api.post('/repledge-sources', data);
             setSources(prev => [...prev, res.data]);
             return res.data;
         } catch (err: any) {

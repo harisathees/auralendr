@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\pledge;
+namespace App\Models\Pledge;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

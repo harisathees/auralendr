@@ -20,8 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
-            'admin' => \App\Http\Middleware\EnsureAdmin::class,
-            'check.time' => \App\Http\Middleware\CheckLoginTime::class,
+            'admin' => \App\Http\Middleware\LoginCheck\EnsureAdmin::class,
+            'check.time' => \App\Http\Middleware\StaffLoginTime\CheckLoginTime::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

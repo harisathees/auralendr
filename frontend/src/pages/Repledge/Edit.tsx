@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import http from "../../api/http";
+import api from "../../api/apiClient";
 import RepledgeForm from "../../components/Repledge/RepledgeForm";
 import { useToast } from "../../context";
-import { useAuth } from "../../context/AuthContext";
-import GoldCoinSpinner from "../../components/Shared/GoldCoinSpinner";
+import { useAuth } from "../../context/Auth/AuthContext";
+import GoldCoinSpinner from "../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
 
 const Edit: React.FC = () => {
     const { id } = useParams();
@@ -17,7 +17,7 @@ const Edit: React.FC = () => {
     useEffect(() => {
         const fetchRepledge = async () => {
             try {
-                const res = await http.get(`/repledges/${id}`);
+                const res = await api.get(`/repledges/${id}`);
                 setInitialData(res.data);
             } catch (error) {
                 console.error(error);
@@ -32,7 +32,7 @@ const Edit: React.FC = () => {
 
     const handleSubmit = async (data: any) => {
         try {
-            await http.put(`/repledges/${id}`, data);
+            await api.put(`/repledges/${id}`, data);
             showToast("Repledge updated successfully", "success");
             navigate("/repledge");
         } catch (error) {

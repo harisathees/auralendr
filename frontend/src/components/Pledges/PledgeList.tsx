@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, X, SlidersHorizontal, Lock } from "lucide-react";
-import http from "../../api/http";
+import api from "../../api/apiClient";
 import { useRepledge } from "../../hooks/useRepledge";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/Auth/AuthContext";
+
+import type { Pledge } from "../../types/models";
 
 interface Props {
-  pledges: any[];
+  pledges: Pledge[];
   searchTerm: string;
   onSearchChange: (term: string) => void;
   loading: boolean;
@@ -50,7 +52,7 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
   useEffect(() => {
     const timer = setTimeout(() => {
       if (inputValue.length > 1 && inputValue !== searchTerm) {
-        http.get('/pledges', { params: { search: inputValue, suggestions: true } })
+        api.get('/pledges', { params: { search: inputValue, suggestions: true } })
           .then(res => {
             setSuggestions(res.data.data || []);
             setShowDropdown(true);
@@ -230,7 +232,7 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
                             <h3 className="font-semibold text-sm text-gray-900 dark:text-white truncate">
                               {p.customer?.name || 'Unknown'}
                             </h3>
-                            <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${getStatusColor(p.status)}`}>
+                            <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${getStatusColor(p.status || '')}`}>
                               {p.status || 'Active'}
                             </span>
                           </div>

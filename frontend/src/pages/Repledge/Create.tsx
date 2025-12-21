@@ -1,10 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useRepledge } from "../../hooks/useRepledge";
-import http from "../../api/http";
+import api from "../../api/apiClient";
 import RepledgeForm from "../../components/Repledge/RepledgeForm";
 import { useToast } from "../../context";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/Auth/AuthContext";
 
 const Create: React.FC = () => {
     const navigate = useNavigate();
@@ -27,7 +27,7 @@ const Create: React.FC = () => {
 
     React.useEffect(() => {
         // Fetch metal rates
-        http.get("/metal-rates").then(res => {
+        api.get("/metal-rates").then(res => {
             const rates = res.data;
             const gold = rates.find((r: any) => r.name === 'Gold')?.metal_rate?.rate || "";
             const silver = rates.find((r: any) => r.name === 'Silver')?.metal_rate?.rate || "";

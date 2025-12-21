@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import http from "../../api/http";
-import GoldCoinSpinner from "../../components/Shared/GoldCoinSpinner";
+import api from "../../api/apiClient";
+import GoldCoinSpinner from "../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
 import { useToast } from "../../context";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/Auth/AuthContext";
 
 const View: React.FC = () => {
     const { id } = useParams();
@@ -16,7 +16,7 @@ const View: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await http.get(`/repledges/${id}`);
+                const res = await api.get(`/repledges/${id}`);
                 setRepledge(res.data);
             } catch (err: any) {
                 console.error(err);
@@ -58,7 +58,7 @@ const View: React.FC = () => {
                             onClick={() => {
                                 // Assuming delete handled in list or here via hook, keeping simple for now
                                 if (confirm("Are you sure?")) {
-                                    http.delete(`/repledges/${id}`).then(() => {
+                                    api.delete(`/repledges/${id}`).then(() => {
                                         showToast("Deleted successfully", "success");
                                         navigate("/repledge");
                                     });
