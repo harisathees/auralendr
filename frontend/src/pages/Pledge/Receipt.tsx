@@ -23,11 +23,14 @@ const formatDate = (isoDateString: string) => {
     return `${day}/${month}/${year}`;
 };
 
+const DynamicReceipt = React.lazy(() => import('./components/DynamicReceipt'));
+
 const Receipt = () => {
-    const { id } = useParams(); // changed from loanId to id to match typical route param
+    const { id } = useParams();
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [config, setConfig] = useState<any>(null);
     const frontRef = useRef<HTMLDivElement>(null);
     const backRef = useRef<HTMLDivElement>(null);
 
@@ -36,11 +39,8 @@ const Receipt = () => {
     useEffect(() => {
         const fetchLatestRates = async () => {
             try {
-                // Assuming API endpoint for metal rates exists, otherwise defaulting
                 const { data } = await api.get('/metal-rates');
-                // Check if data is array or object wrapped in data
                 const rates = Array.isArray(data) ? data : (data.data || []);
-
                 const goldRate = rates.find((r: any) => r.metal_type === "Gold")?.rate || 0;
                 const silverRate = rates.find((r: any) => r.metal_type === "Silver")?.rate || 0;
                 return { goldRate, silverRate };
@@ -50,26 +50,33 @@ const Receipt = () => {
             }
         };
 
+        const fetchConfig = async () => {
+            try {
+                const { data } = await api.get('/templates/receipt');
+                return data;
+            } catch (error) {
+                console.error("Failed to load receipt config", error);
+                return null;
+            }
+        };
+
         const fetchData = async () => {
             if (!id) return;
 
             try {
-                const [pledgeResponse, rates] = await Promise.all([
+                const [pledgeResponse, rates, configData] = await Promise.all([
                     getPledge(Number(id)),
-                    fetchLatestRates()
+                    fetchLatestRates(),
+                    fetchConfig()
                 ]);
+
+                setConfig(configData);
 
                 const loan = pledgeResponse.data.data || pledgeResponse.data;
                 const customer = loan.customer;
-                // Assuming 'jewel' is singular or taking the first one if it's a list
-                // Adjust based on your API response structure. 
-                // If loan has 'jewels' array:
                 const jewel = Array.isArray(loan.jewels) ? loan.jewels[0] : loan.jewel;
 
-                // Construct image URLs
-                // Ensure backend sends full URLs or prepend base URL
                 const customerImageUrl = customer?.customer_image_url || customer?.photo_url || null;
-                // Jewel image might be in jewel object
                 const jewelImageUrl = jewel?.image_url || null;
 
                 setData({
@@ -78,10 +85,10 @@ const Receipt = () => {
                     phone: customer?.mobile_no || 'N/A',
                     whatsapp: customer?.whatsapp_no || '',
                     date: formatDate(loan.date),
-                    duedate: formatDate(loan.due_date), // check API field name (duedate vs due_date)
-                    weight: jewel?.gross_weight || jewel?.net_weight || 0, // check API field name
+                    duedate: formatDate(loan.due_date),
+                    weight: jewel?.gross_weight || jewel?.net_weight || 0,
                     interest: loan.interest_rate,
-                    interestTaken: loan.interest_taken === 1 || loan.interest_taken === true, // normalize boolean
+                    interestTaken: loan.interest_taken === 1 || loan.interest_taken === true,
                     jewelName: jewel?.description || jewel?.jewel_name || 'N/A',
                     faults: jewel?.faults || 'N/A',
                     quality: jewel?.quality || 'N/A',
@@ -167,6 +174,14 @@ const Receipt = () => {
                 {error || "Loan not found"}
             </div>
         )
+    }
+
+    if (config?.type === 'dynamic') {
+        return (
+            <React.Suspense fallback={<div className="flex items-center justify-center p-20">Loading template...</div>}>
+                <DynamicReceipt data={data} config={config} />
+            </React.Suspense>
+        );
     }
 
     return (
