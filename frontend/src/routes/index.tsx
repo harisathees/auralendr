@@ -28,6 +28,7 @@ const ProcessingFees = lazy(() => import("../pages/Admin/LoanConfiguration/Proce
 const RepledgeSources = lazy(() => import("../pages/Admin/Finance/RepledgeSources"));
 
 // Repledge Pages
+const Notices = lazy(() => import("../pages/Staff/Notices/Notices"));
 const RepledgeList = lazy(() => import("../pages/Repledge/List"));
 const RepledgeCreate = lazy(() => import("../pages/Repledge/Create"));
 const RepledgeEdit = lazy(() => import("../pages/Repledge/Edit"));
@@ -44,6 +45,11 @@ const JewelNameForm = lazy(() => import("../pages/Admin/JewelManagement/JewelNam
 const InterestRateForm = lazy(() => import("../pages/Admin/LoanConfiguration/InterestRateForm"));
 const ValidityPeriodForm = lazy(() => import("../pages/Admin/LoanConfiguration/LoanValidityForm"));
 const RolesIndex = lazy(() => import("../pages/Developer/index"));
+
+// Organization Configurations
+const PledgeClosingCalculations = lazy(() => import("../pages/Admin/LoanConfiguration/Calculations/PledgeClosingCalculations"));
+const RepledgeClosingCalculations = lazy(() => import("../pages/Admin/LoanConfiguration/Calculations/RepledgeClosingCalculations"));
+const RepledgeProcessingFees = lazy(() => import("../pages/Admin/LoanConfiguration/Calculations/RepledgeProcessingFees"));
 
 const TransactionCategories = lazy(() => import("../pages/Admin/Finance/TransactionCategories"));
 const TransactionCategoryForm = lazy(() => import("../pages/Admin/Finance/TransactionCategoryForm"));
@@ -88,7 +94,9 @@ const AppRoutes: React.FC = () => {
         <Route path="/re-pledge/:id" element={<RepledgeView />} />
 
         {/* Placeholder Routes for Staff Navigation */}
-        <Route path="/notices" element={<div className="p-8 text-center min-h-screen bg-background-light dark:bg-background-dark"><h1 className="text-2xl font-bold">Notice Printing Page</h1><p className="text-gray-500 mt-2">Coming Soon...</p></div>} />
+
+        {/* Placeholder Routes for Staff Navigation */}
+        <Route path="/notices" element={<Notices />} />
         <Route path="/privileges" element={
           <div className="p-8 flex flex-col items-center justify-center min-h-screen bg-background-light dark:bg-background-dark">
             <h1 className="text-2xl font-bold mb-6">User Privileges</h1>
@@ -165,6 +173,11 @@ const AppRoutes: React.FC = () => {
 
         {/* Developer - Privileges */}
         <Route path="/admin/configs/roles" element={<RolesIndex />} />
+
+        {/* Organization - Calculations */}
+        <Route path="/admin/configs/pledge-closing-calculations" element={<PledgeClosingCalculations />} />
+        <Route path="/admin/configs/repledge-closing-calculations" element={<RepledgeClosingCalculations />} />
+        <Route path="/admin/configs/repledge-processing-fees" element={<RepledgeProcessingFees />} />
 
         {/* FAB Action Routes (if they are pages) */}
         <Route path="/admin/analysis" element={<div>Advanced Analysis Page (Placeholder)</div>} />

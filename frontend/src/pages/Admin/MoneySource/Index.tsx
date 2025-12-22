@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../../../api/apiClient";
 import type { MoneySource } from "../../../types/models";
 import { useNavigate } from "react-router-dom";
-import MoneySourceForm from "./MoneySourceForm";
+import MoneySourceForm from "./Form";
 import ConfirmationModal from "../../../components/Shared/ConfirmationModal";
 import { useToast } from "../../../context";
 

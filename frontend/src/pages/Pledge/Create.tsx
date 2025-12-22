@@ -10,11 +10,20 @@ const Create: React.FC = () => {
 
   const handleSubmit = async (fd: FormData) => {
     try {
-      await api.post("/pledges", fd);
+      await api.post("/pledges", fd, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       navigate("/pledges");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to create pledge", err);
-      // Toast handling would go here
+      if (err.response && err.response.data) {
+        console.error("Validation Errors:", err.response.data);
+        alert(`Failed: ${err.response.data.message || 'Validation Error'}\n${JSON.stringify(err.response.data.errors || {}, null, 2)}`);
+      } else {
+        alert("Failed to create pledge. See console for details.");
+      }
     }
   };
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/apiClient';
 
@@ -6,6 +6,7 @@ interface MoneySource {
     id: number;
     name: string;
     balance: string;
+    show_balance: boolean;
 }
 
 const TransactionForm = () => {
@@ -30,7 +31,7 @@ const TransactionForm = () => {
             if (Array.isArray(res.data)) {
                 setMoneySources(res.data);
                 if (res.data.length > 0) {
-                    setFormData(prev => ({ ...prev, money_source_id: res.data[0].id }));
+                    setFormData(prev => ({ ...prev, money_source_id: String(res.data[0].id) }));
                 }
             }
         });
@@ -43,8 +44,36 @@ const TransactionForm = () => {
         });
     }, []);
 
+    const isIncome = formData.type === 'credit';
+    const selectedSource = moneySources.find(s => String(s.id) === String(formData.money_source_id));
+
+    const balanceValidation = useMemo(() => {
+        if (!selectedSource || isIncome) return null;
+
+        const amount = parseFloat(formData.amount || "0");
+        const balance = parseFloat(String(selectedSource.balance).replace(/,/g, ''));
+
+        if (isNaN(amount) || isNaN(balance)) return null;
+
+        const isSufficient = balance >= amount;
+
+        return {
+            isSufficient,
+            message: isSufficient
+                ? "Sufficient funds available"
+                : "Insufficient funds in selected source"
+        };
+    }, [selectedSource, formData.amount, isIncome]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Block if insufficient funds
+        if (balanceValidation && !balanceValidation.isSufficient) {
+            alert("Cannot proceed: Insufficient funds.");
+            return;
+        }
+
         setLoading(true);
         try {
             await api.post('/transactions', formData);
@@ -57,150 +86,166 @@ const TransactionForm = () => {
         }
     };
 
-    const isIncome = formData.type === 'credit';
-
     return (
-        <div className="max-w-md mx-auto min-h-screen bg-background-light dark:bg-background-dark pb-10">
-            <header className="px-4 pt-6 pb-2 flex items-center gap-3 border-b border-gray-100 dark:border-gray-800">
-                <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
-                    <span className="material-symbols-outlined text-gray-700 dark:text-gray-200">arrow_back_ios_new</span>
-                </button>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">New Transaction</h1>
-            </header>
-
-            <form onSubmit={handleSubmit} className="p-4 flex flex-col gap-6">
-
-                {/* Type Toggle */}
-                <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-xl flex">
-                    <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, type: 'credit' })}
-                        className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${isIncome
-                            ? 'bg-green-500 text-white shadow-md'
-                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                            }`}
-                    >
-                        <span className="material-symbols-outlined text-lg">arrow_downward</span>
-                        Income
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, type: 'debit' })}
-                        className={`flex-1 py-3 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${!isIncome
-                            ? 'bg-red-500 text-white shadow-md'
-                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                            }`}
-                    >
-                        <span className="material-symbols-outlined text-lg">arrow_upward</span>
-                        Expense
-                    </button>
-                </div>
-
-                {/* Amount */}
-                <label className="flex flex-col gap-2">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Amount</span>
-                    <div className={`flex items-center px-4 rounded-xl border-2 transition-colors ${isIncome
-                        ? 'border-green-100 dark:border-green-900/30 bg-green-50/50 dark:bg-green-900/10 focus-within:border-green-500'
-                        : 'border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-900/10 focus-within:border-red-500'
-                        }`}>
-                        <span className={`text-xl font-bold ${isIncome ? 'text-green-600' : 'text-red-600'}`}>₹</span>
-                        <input
-                            type="number"
-                            value={formData.amount}
-                            onChange={e => setFormData({ ...formData, amount: e.target.value })}
-                            className={`w-full h-14 bg-transparent outline-none text-2xl font-bold px-2 ${isIncome ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}
-                            placeholder="0"
-                            autoFocus
-                            required
-                        />
+        <div className="max-w-md mx-auto bg-background-light dark:bg-background-dark min-h-screen p-4 flex items-center justify-center">
+            <div className="w-full bg-white dark:bg-gray-900 shadow-xl rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
+                {/* Header */}
+                <header className="px-6 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <span className="material-symbols-outlined text-gray-500 dark:text-gray-400">arrow_back</span>
+                        </button>
+                        <h1 className="text-lg font-bold text-gray-900 dark:text-white">New Transaction</h1>
                     </div>
-                </label>
+                </header>
 
-                {/* Date */}
-                <label className="flex flex-col gap-2">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Date</span>
-                    <input
-                        type="date"
-                        value={formData.date}
-                        onChange={e => setFormData({ ...formData, date: e.target.value })}
-                        className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                        required
-                    />
-                </label>
+                <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6">
 
-                {/* Money Source */}
-                <label className="flex flex-col gap-2">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Wallet / Account</span>
-                    <div className="relative">
-                        <select
-                            value={formData.money_source_id}
-                            onChange={e => setFormData({ ...formData, money_source_id: e.target.value })}
-                            className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none"
-                            required
+                    {/* Type Selector (Tabs) */}
+                    <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+                        <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, type: 'credit' })}
+                            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${isIncome
+                                ? 'bg-white dark:bg-gray-700 text-green-600 shadow-sm'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                                }`}
                         >
-                            <option value="" disabled>Select Source</option>
-                            {moneySources.map(s => (
-                                <option key={s.id} value={s.id}>
-                                    {s.name} (₹{s.balance})
-                                </option>
-                            ))}
-                        </select>
-                        <span className="material-symbols-outlined absolute right-4 top-3.5 pointer-events-none text-gray-500">expand_more</span>
-                    </div>
-                </label>
-
-                {/* Category */}
-                <label className="flex flex-col gap-2">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Category</span>
-                    <div className="relative">
-                        <select
-                            value={formData.category}
-                            onChange={e => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none"
-                            required
+                            <span className="material-symbols-outlined text-[18px]">arrow_downward</span>
+                            Income
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, type: 'debit' })}
+                            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${!isIncome
+                                ? 'bg-white dark:bg-gray-700 text-red-600 shadow-sm'
+                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                                }`}
                         >
-                            <option value="" disabled>Select Category</option>
-                            {categories
-                                .filter(c => c.type === 'both' || c.type === (isIncome ? 'credit' : 'debit'))
-                                .map((c, i) => (
-                                    <option key={i} value={c.name}>{c.name}</option>
-                                ))}
-                        </select>
-                        <span className="material-symbols-outlined absolute right-4 top-3.5 pointer-events-none text-gray-500">expand_more</span>
+                            <span className="material-symbols-outlined text-[18px]">arrow_upward</span>
+                            Expense
+                        </button>
                     </div>
-                </label>
 
-                {/* Description */}
-                <label className="flex flex-col gap-2">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</span>
-                    <textarea
-                        value={formData.description}
-                        onChange={e => setFormData({ ...formData, description: e.target.value })}
-                        className="w-full p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none h-24"
-                        placeholder="What is this for?"
-                        required
-                    ></textarea>
-                </label>
+                    {/* Amount Input */}
+                    <label className="flex flex-col gap-2">
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Amount</span>
+                        <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">₹</span>
+                            <input
+                                type="number"
+                                value={formData.amount}
+                                onChange={e => setFormData({ ...formData, amount: e.target.value })}
+                                className={`w-full h-12 pl-8 pr-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-1 transition-all font-semibold ${isIncome ? 'focus:border-primary focus:ring-primary' : 'focus:border-red-500 focus:ring-red-500'}`}
+                                placeholder="0.00"
+                                autoFocus
+                                required
+                            />
+                        </div>
+                        {/* Balance Validation Message */}
+                        {balanceValidation && (
+                            <span className={`text-xs font-bold px-1 ${balanceValidation.isSufficient ? 'text-green-600' : 'text-red-600'}`}>
+                                {balanceValidation.message}
+                            </span>
+                        )}
+                    </label>
 
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className={`mt-4 w-full h-14 rounded-xl font-bold text-white shadow-lg active:scale-95 transition-all text-lg flex items-center justify-center gap-2 ${isIncome
-                        ? 'bg-green-600 hover:bg-green-700 shadow-green-200 dark:shadow-none'
-                        : 'bg-red-600 hover:bg-red-700 shadow-red-200 dark:shadow-none'
-                        } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                    {loading ? (
-                        <span className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                    ) : (
-                        <>
-                            <span className="material-symbols-outlined">check</span>
-                            Save Transaction
-                        </>
-                    )}
-                </button>
+                    {/* Money Source & Date Row */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <label className="flex flex-col gap-2">
+                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Paid Via</span>
+                            <div className="relative">
+                                <select
+                                    value={formData.money_source_id}
+                                    onChange={e => setFormData({ ...formData, money_source_id: e.target.value })}
+                                    className={`w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-1 appearance-none transition-all ${isIncome ? 'focus:border-primary focus:ring-primary' : 'focus:border-red-500 focus:ring-red-500'}`}
+                                    required
+                                >
+                                    <option value="" disabled>Select Source</option>
+                                    {moneySources.map(s => (
+                                        <option key={s.id} value={s.id}>
+                                            {s.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <span className="material-symbols-outlined absolute right-4 top-3.5 pointer-events-none text-gray-500 text-sm">expand_more</span>
+                            </div>
+                            {/* Available Balance Display */}
+                            {selectedSource && selectedSource.show_balance && (
+                                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium px-1">
+                                    Bal: <span className="text-gray-800 dark:text-gray-200">₹{selectedSource.balance}</span>
+                                </span>
+                            )}
+                        </label>
 
-            </form>
+                        <label className="flex flex-col gap-2">
+                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Date</span>
+                            <input
+                                type="date"
+                                value={formData.date}
+                                onChange={e => setFormData({ ...formData, date: e.target.value })}
+                                className={`w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-1 transition-all ${isIncome ? 'focus:border-primary focus:ring-primary' : 'focus:border-red-500 focus:ring-red-500'}`}
+                                required
+                            />
+                        </label>
+                    </div>
+
+                    {/* Category */}
+                    <label className="flex flex-col gap-2">
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Category</span>
+                        <div className="relative">
+                            <select
+                                value={formData.category}
+                                onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                className={`w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-1 appearance-none transition-all ${isIncome ? 'focus:border-primary focus:ring-primary' : 'focus:border-red-500 focus:ring-red-500'}`}
+                                required
+                            >
+                                <option value="" disabled>Select Category</option>
+                                {categories
+                                    .filter(c => (isIncome && c.is_credit) || (!isIncome && c.is_debit))
+                                    .map((c, i) => (
+                                        <option key={i} value={c.name}>{c.name}</option>
+                                    ))}
+                            </select>
+                            <span className="material-symbols-outlined absolute right-4 top-3.5 pointer-events-none text-gray-500 text-sm">expand_more</span>
+                        </div>
+                    </label>
+
+                    {/* Description */}
+                    <label className="flex flex-col gap-2">
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Description</span>
+                        <textarea
+                            value={formData.description}
+                            onChange={e => setFormData({ ...formData, description: e.target.value })}
+                            className={`w-full p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-1 resize-none h-24 transition-all ${isIncome ? 'focus:border-primary focus:ring-primary' : 'focus:border-red-500 focus:ring-red-500'}`}
+                            placeholder="Add notes..."
+                            required
+                        ></textarea>
+                    </label>
+
+                    {/* Footer / Buttons */}
+                    <div className="flex justify-end gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={() => navigate(-1)}
+                            className="flex-1 px-6 py-3 rounded-xl font-bold transition-colors bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading || (balanceValidation ? !balanceValidation.isSufficient : false)}
+                            className={`flex-1 px-8 py-3 rounded-xl text-white font-bold shadow-lg shadow-primary/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${loading || (balanceValidation && !balanceValidation.isSufficient)
+                                ? 'bg-gray-400 cursor-not-allowed opacity-70'
+                                : 'bg-primary hover:bg-primary-dark'
+                                }`}
+                        >
+                            {loading ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> : 'Save'}
+                        </button>
+                    </div>
+
+                </form>
+            </div>
         </div>
     );
 };

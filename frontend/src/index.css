@@ -54,3 +54,11 @@
     scrollbar-width: none;
     /* Firefox */
 }
+
+/* A4 Receipt Preview Wrapper */
+.a4-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+}

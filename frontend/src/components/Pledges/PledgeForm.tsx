@@ -725,6 +725,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
                 <div className="relative">
                   <select
                     value={jewel.jewel_type} onChange={e => updateJewel(index, 'jewel_type', e.target.value)}
+                    required
                     className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
                   >
                     <option value="" disabled>Select</option>

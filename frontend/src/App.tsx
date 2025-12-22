@@ -1,13 +1,13 @@
 import { BrowserRouter } from "react-router-dom";
 import AppRoutes from "./routes";
 import { ToastProvider } from "./context/Toast/ToastContext";
-import Snowfall from "react-snowfall";
+// import Snowfall from "react-snowfall";
 
 function App() {
   return (
     <BrowserRouter>
       <ToastProvider>
-        <Snowfall 
+        {/* <Snowfall 
          color="#82C3D9"
           snowflakeCount={30}
           style={{
@@ -17,7 +17,7 @@ function App() {
             zIndex: 9999,
             pointerEvents: 'none'
           }}
-        />
+        /> */}
         <AppRoutes />
       </ToastProvider>
     </BrowserRouter>

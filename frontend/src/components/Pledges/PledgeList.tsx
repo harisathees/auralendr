@@ -82,6 +82,7 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
   // Helper for random color or logic based on status
   const getStatusColor = (status: string) => {
     if (status === 'closed') return 'text-red-500 bg-red-100 dark:bg-red-500/20 border-red-200 dark:border-red-500/30';
+    if (status === 'overdue') return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-600/20 border-yellow-200 dark:border-yellow-600/30';
     return 'text-primary bg-green-50 dark:bg-primary/20 border-green-100 dark:border-primary/30';
   };
 
