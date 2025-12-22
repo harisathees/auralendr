@@ -40,11 +40,11 @@ class Pledge extends Model
 
     public function branch()
     {
-        return $this->belongsTo(\App\Models\BranchAndUser\Branch::class);
+        return $this->belongsTo(\App\Models\Admin\Organization\Branch\Branch::class);
     }
 
     public function user()
     {
-        return $this->belongsTo(\App\Models\BranchAndUser\User::class, 'created_by');
+        return $this->belongsTo(\App\Models\Admin\Organization\User\User::class, 'created_by');
     }
 }

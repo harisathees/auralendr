@@ -17,7 +17,7 @@ class Transaction extends Model
 
     public function moneySource()
     {
-        return $this->belongsTo(\App\Models\MoneySource::class);
+        return $this->belongsTo(\App\Models\Admin\MoneySource\MoneySource::class);
     }
 
     public function transactionable()
@@ -27,6 +27,6 @@ class Transaction extends Model
 
     public function creator()
     {
-        return $this->belongsTo(\App\Models\BranchAndUser\User::class, 'created_by');
+        return $this->belongsTo(\App\Models\Admin\Organization\User\User::class, 'created_by');
     }
 }

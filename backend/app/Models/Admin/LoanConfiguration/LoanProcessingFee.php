@@ -11,6 +11,8 @@ class LoanProcessingFee extends Model
 {
     use HasFactory;
 
+    protected $table = 'processing_fees';
+
     protected $fillable = [
         'jewel_type_id',
         'branch_id',

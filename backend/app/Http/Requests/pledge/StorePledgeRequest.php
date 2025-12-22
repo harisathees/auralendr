@@ -81,8 +81,8 @@ class StorePledgeRequest extends FormRequest
             // Files
             'files' => 'nullable|array',
             'files.*' => 'nullable|file|max:51200|mimes:jpg,jpeg,png,pdf,mp3,wav,mp4,webm,ogg,m4a',
-            'file_categories' => 'nullable|array',
-            'file_categories.*' => 'nullable|string|max:100',
+            'categories' => 'nullable|array',
+            'categories.*' => 'nullable|string|max:100',
         ];
     }
 }

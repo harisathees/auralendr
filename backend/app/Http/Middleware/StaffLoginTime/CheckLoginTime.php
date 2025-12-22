@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\Admin\Organization\UserPrivileges\StaffTimeRestriction;
+use App\Models\Settings;
 use Carbon\Carbon;
 
 class CheckLoginTime
@@ -21,18 +22,18 @@ class CheckLoginTime
 
         if ($user && $user->hasRole('staff')) {
             $branchId = $user->branch_id;
-            
+
             // Efficient Query for Settings
             $settings = Settings::whereIn('key', ['staff_login_start_time', 'staff_login_end_time'])
-                ->where(function($q) use ($branchId) {
+                ->where(function ($q) use ($branchId) {
                     $q->where('branch_id', $branchId)
-                      ->orWhereNull('branch_id');
+                        ->orWhereNull('branch_id');
                 })
                 ->get();
 
             $startSetting = $settings->where('key', 'staff_login_start_time')->sortByDesc('branch_id')->first();
             $endSetting = $settings->where('key', 'staff_login_end_time')->sortByDesc('branch_id')->first();
-            
+
             $startStr = $startSetting ? $startSetting->value : null;
             $endStr = $endSetting ? $endSetting->value : null;
 
@@ -40,7 +41,7 @@ class CheckLoginTime
                 try {
                     $now = now();
                     $start = Carbon::createFromFormat('H:i', $startStr);
-                    $end   = Carbon::createFromFormat('H:i', $endStr);
+                    $end = Carbon::createFromFormat('H:i', $endStr);
 
                     // Check if current time is outside allowed window
                     if (!$now->between($start, $end)) {

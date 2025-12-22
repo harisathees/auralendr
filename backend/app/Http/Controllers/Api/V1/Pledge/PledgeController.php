@@ -40,6 +40,24 @@ class PledgeController extends Controller
             $query->where('branch_id', $user->branch_id);
         }
 
+
+        // Report Filtering
+        if ($reportType = $request->query('report_type')) {
+            if ($reportType === 'overdue') {
+                $query->whereHas('loan', function ($q) {
+                    $q->where('status', 'active') // Assuming 'active' is the status for open loans
+                        ->where('due_date', '<', now());
+                });
+            } elseif ($reportType === 'annual') {
+                $query->whereHas('loan', function ($q) {
+                    // Annual due: active loans created more than 1 year ago
+                    $oneYearAgo = now()->subYear();
+                    $q->where('status', 'active')
+                        ->where('date', '<', $oneYearAgo);
+                });
+            }
+        }
+
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 // Search Customer Name or Mobile
@@ -198,7 +216,7 @@ class PledgeController extends Controller
                         $moneySource->decrement('balance', $loan->amount_to_be_given);
 
                         // Create Transaction Record
-                        \App\Models\Transaction::create([
+                        \App\Models\Transaction\Transaction::create([
                             'branch_id' => $user->branch_id,
                             'money_source_id' => $moneySource->id,
                             'type' => 'debit',
@@ -206,7 +224,7 @@ class PledgeController extends Controller
                             'date' => now(), // or $loan->date if strictly following loan date
                             'description' => "Loan Disbursment for Pledge #{$pledge->id} (Cust: {$customer->name})",
                             'category' => 'loan',
-                            'transactionable_type' => \App\Models\pledge\Loan::class,
+                            'transactionable_type' => \App\Models\Pledge\Loan::class,
                             'transactionable_id' => $loan->id,
                             'created_by' => $user->id,
                         ]);
@@ -376,7 +394,7 @@ class PledgeController extends Controller
                                         }
                                         $moneySource->decrement('balance', $diff);
 
-                                        \App\Models\Transaction::create([
+                                        \App\Models\Transaction\Transaction::create([
                                             'branch_id' => $pledge->branch_id,
                                             'money_source_id' => $moneySource->id,
                                             'type' => 'debit',
@@ -394,7 +412,7 @@ class PledgeController extends Controller
                                         Log::debug('Decreasing Loan Amount', ['refund_amount' => $refundAmount]);
                                         $moneySource->increment('balance', $refundAmount);
 
-                                        \App\Models\Transaction::create([
+                                        \App\Models\Transaction\Transaction::create([
                                             'branch_id' => $pledge->branch_id,
                                             'money_source_id' => $moneySource->id,
                                             'type' => 'credit',

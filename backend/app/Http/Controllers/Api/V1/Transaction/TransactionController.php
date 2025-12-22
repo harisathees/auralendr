@@ -55,6 +55,7 @@ class TransactionController extends Controller
                 'description' => $validated['description'],
                 'category' => $validated['category'] ?? 'general',
                 'created_by' => auth()->id(),
+                'branch_id' => auth()->user()->branch_id,
                 // 'transactionable' can be null for manual entries
             ]);
 
