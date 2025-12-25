@@ -79,8 +79,8 @@ const TransactionHistory = () => {
     }, {} as Record<string, Transaction[]>);
 
     return (
-        <div className="max-w-md mx-auto min-h-screen relative flex flex-col pb-24 bg-background-light dark:bg-background-dark">
-            <header className="sticky top-0 z-20 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm px-4 pt-6 pb-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
+        <div className="max-w-md mx-auto h-full flex flex-col overflow-hidden bg-background-light dark:bg-background-dark">
+            <header className="flex-none bg-background-light dark:bg-background-dark px-4 pt-6 pb-2 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 z-20">
                 <button
                     onClick={() => navigate(-1)}
                     className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -98,7 +98,7 @@ const TransactionHistory = () => {
             </header>
 
             {/* Filter Bar */}
-            <div className="sticky top-[69px] z-10 bg-background-light dark:bg-background-dark px-4 py-3 flex flex-wrap gap-3 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex-none bg-background-light dark:bg-background-dark px-4 py-3 flex flex-wrap gap-3 border-b border-gray-100 dark:border-gray-800 z-10">
 
                 {/* Money Source Filter */}
                 <div className="relative">
@@ -150,7 +150,7 @@ const TransactionHistory = () => {
                 </button>
             </div>
 
-            <main className="flex-1 px-4 pt-4">
+            <main className="flex-1 px-4 pt-4 overflow-y-auto no-scrollbar">
                 {loading ? (
                     <div className="flex justify-center py-10">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -212,7 +212,7 @@ const TransactionHistory = () => {
                         </div>
                     ))
                 )}
-                <div className="h-8"></div>
+                <div className="h-32"></div>
             </main>
         </div>
     );

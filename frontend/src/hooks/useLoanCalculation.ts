@@ -75,7 +75,7 @@ export const useLoanCalculation = (loanId: string | null) => {
         fetchLoanData();
     }, [loanId]);
 
-    const saveCalculationAndCloseLoan = async (toDate: string, reductionAmount: number, method: string, calculationResult: any) => {
+    const saveCalculationAndCloseLoan = async (toDate: string, reductionAmount: number, method: string, calculationResult: any, paymentSourceId: number, amountPaid: number) => {
         if (!loanId) return false;
         setSaving(true);
         try {
@@ -84,6 +84,8 @@ export const useLoanCalculation = (loanId: string | null) => {
                 reduction_amount: reductionAmount,
                 calculation_method: method,
                 metal_rate: calculationResult.metal_rate,
+                payment_source_id: paymentSourceId,
+                amount_paid: amountPaid,
                 ...calculationResult
             });
             toast.success('Pledge closed successfully');

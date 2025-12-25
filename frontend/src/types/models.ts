@@ -22,10 +22,11 @@ export interface Task {
     id: number;
     title: string;
     description: string | null;
-    assigned_to: number;
+    assigned_to: number | null;
     created_by: number;
     status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
     due_date: string | null;
+    branch_id?: number | null;
     created_at: string;
     updated_at: string;
     assignee?: User;

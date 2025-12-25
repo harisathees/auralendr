@@ -62,8 +62,15 @@ class TaskController extends Controller
 
     public function myTasks()
     {
+        $user = Auth::user();
         $tasks = Task::with(['creator'])
-            ->where('assigned_to', Auth::id())
+            ->where(function ($query) use ($user) {
+                $query->where('assigned_to', $user->id)
+                    ->orWhere(function ($q) use ($user) {
+                        $q->whereNull('assigned_to')
+                            ->where('branch_id', $user->branch_id);
+                    });
+            })
             ->latest()
             ->get();
         return response()->json($tasks);
@@ -71,8 +78,12 @@ class TaskController extends Controller
 
     public function updateStatus(Request $request, Task $task)
     {
-        // verify the task is assigned to the current user
-        if ($task->assigned_to !== Auth::id()) {
+        // verify the task is assigned to the current user OR unassigned but in same branch
+        $user = Auth::user();
+        $isAssigned = $task->assigned_to === $user->id;
+        $isBranchTask = is_null($task->assigned_to) && $task->branch_id === $user->branch_id;
+
+        if (!$isAssigned && !$isBranchTask && !$user->hasRole('admin')) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

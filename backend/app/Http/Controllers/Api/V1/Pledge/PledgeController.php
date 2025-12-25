@@ -616,6 +616,8 @@ class PledgeController extends Controller
             'totalMonths' => 'nullable|string',
             'finalInterestRate' => 'nullable|string',
             'metal_rate' => 'nullable|numeric',
+            'payment_source_id' => 'required|exists:money_sources,id',
+            'amount_paid' => 'required|numeric|min:0',
         ]);
 
         try {
@@ -638,10 +640,47 @@ class PledgeController extends Controller
                     'metal_rate' => $validated['metal_rate'] ?? null,
                 ]);
 
-                // 2. Update Pledge Status
+                // 2. Handle Payment Source & Transaction
+                $moneySource = MoneySource::lockForUpdate()->find($validated['payment_source_id']);
+                $amountPaid = $validated['amount_paid'];
+
+                if ($amountPaid > 0) {
+                    // Credit the amount to the money source (Income)
+                    $moneySource->increment('balance', $amountPaid);
+
+                    // Create Transaction Record
+                    \App\Models\Transaction\Transaction::create([
+                        'branch_id' => $request->user()->branch_id,
+                        'money_source_id' => $moneySource->id,
+                        'type' => 'credit', // Income
+                        'amount' => $amountPaid,
+                        'date' => $validated['closed_date'],
+                        'description' => "Pledge Closure Payment #{$pledge->id} (Cust: {$pledge->customer->name})",
+                        'category' => 'loan_repayment',
+                        'transactionable_type' => \App\Models\Pledge\PledgeClosure::class,
+                        'transactionable_id' => $closure->id,
+                        'created_by' => $request->user()->id,
+                    ]);
+                }
+
+                // 3. Handle Pending Balance Task
+                $balanceAmount = $validated['balance_amount'] ?? 0;
+                if ($balanceAmount > 0) {
+                    \App\Models\Admin\Task\Task::create([
+                        'title' => "Pending Balance: {$pledge->loan->loan_no}",
+                        'description' => "Collect pending balance of ₹{$balanceAmount} from customer {$pledge->customer->name} (Mobile: {$pledge->customer->mobile_no}).",
+                        'assigned_to' => null, // Branch Task
+                        'created_by' => $request->user()->id,
+                        'status' => 'pending',
+                        'branch_id' => $pledge->branch_id,
+                        'due_date' => now()->addDays(7), // Default due date
+                    ]);
+                }
+
+                // 4. Update Pledge Status
                 $pledge->update(['status' => 'closed']);
 
-                // 3. Update Loan Status
+                // 4. Update Loan Status
                 if ($pledge->loan) {
                     $pledge->loan->update(['status' => 'closed']);
                 }

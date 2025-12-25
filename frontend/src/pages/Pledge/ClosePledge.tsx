@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
 import { calculateInterest, type CalculationMethod } from '../../lib/calculateInterest';
 import { useLoanCalculation } from "../../hooks/useLoanCalculation";
@@ -74,9 +74,27 @@ const ClosePledge: React.FC = () => {
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     const [currentMetalRate, setCurrentMetalRate] = useState<string | null>(null);
 
+    // Payment Source State
+    const [moneySources, setMoneySources] = useState<any[]>([]);
+    const [paymentSourceId, setPaymentSourceId] = useState<string>('');
+    const [amountPaid, setAmountPaid] = useState<string>('');
+
     useEffect(() => {
         const today = new Date().toISOString().split('T')[0];
         setToDate(today);
+
+        // Fetch Money Sources
+        import('../../api/apiClient').then(module => {
+            module.default.get('/money-sources').then(res => {
+                if (Array.isArray(res.data)) {
+                    setMoneySources(res.data);
+                    // Auto-select first source if available
+                    if (res.data.length > 0) {
+                        setPaymentSourceId(String(res.data[0].id));
+                    }
+                }
+            });
+        });
     }, []);
 
     // Determine current metal rate
@@ -93,14 +111,15 @@ const ClosePledge: React.FC = () => {
         }
     }, [loanData, metalRates]);
 
+    // Calculate result at top level (safe from early returns)
+    // using useMemo to ensure stable reference and derived from current state
+    const redAmount = Number(reductionAmount) || 0;
 
-    const handleClosePledge = async () => {
-        if (!loanData || !toDate) return;
-        const redAmount = Number(reductionAmount) || 0;
-        const balAmount = Number(balanceAmount) || 0;
-
-        // Use loanData.amount for calculation (Original Principal)
-        const result = calculateInterest(
+    // Memoize the result based on loanData and inputs. 
+    // Handle the null loanData case gracefully inside useMemo.
+    const result = useMemo(() => {
+        if (!loanData) return null;
+        return calculateInterest(
             selectedMethod,
             loanData.date,
             toDate,
@@ -110,8 +129,22 @@ const ClosePledge: React.FC = () => {
             loanData.interest_taken ? 'taken' : 'notTaken',
             redAmount
         );
+    }, [loanData, selectedMethod, toDate, redAmount]);
 
-        // Pass balance_amount and metal_rate in the extra data as separate independent fields
+    // Auto-calculate Amount Paid based on Balance Amount
+    useEffect(() => {
+        if (!result) return;
+        const total = result.totalAmount;
+        const bal = Number(balanceAmount) || 0;
+        const payNow = Math.max(0, total - bal);
+        setAmountPaid(String(payNow));
+    }, [result?.totalAmount, balanceAmount]);
+
+    const handleClosePledge = async () => {
+        if (!loanData || !toDate || !paymentSourceId || !amountPaid || !result) return;
+        const balAmount = Number(balanceAmount) || 0;
+        const paidAmt = Number(amountPaid) || 0;
+
         const success = await saveCalculationAndCloseLoan(
             toDate,
             redAmount,
@@ -120,7 +153,9 @@ const ClosePledge: React.FC = () => {
                 ...result,
                 balance_amount: balAmount,
                 metal_rate: currentMetalRate ? Number(currentMetalRate) : null
-            }
+            },
+            Number(paymentSourceId),
+            paidAmt
         );
         if (success) {
             setShowSuccessMessage(true);
@@ -128,27 +163,7 @@ const ClosePledge: React.FC = () => {
         }
     };
 
-    if (loading) return <LoadingState text="Fetching Loan Details..." />;
-    if (showSuccessMessage) return <SuccessState />;
-    if (error || !loanData) return <ErrorState error={error || 'Loan data not found.'} onBack={() => navigate('/pledges')} />;
-
-    const redAmount = Number(reductionAmount) || 0;
-    // Calculate display result using original principal
-    const result = calculateInterest(
-        selectedMethod,
-        loanData.date,
-        toDate,
-        loanData.amount,
-        loanData.interest_rate,
-        loanData.validity_months,
-        loanData.interest_taken ? 'taken' : 'notTaken',
-        redAmount
-    );
-
-    // Helper boolean to style differently based on Gold/Silver if needed,
-    // but the design uses Amber/Slate classes directly.
-    // We already know the rate, let's look at the type again for color decision or just generic if mixed.
-    // For simplicity, let's assume if it includes "Silver" use slate, else standard Amber (Gold).
+    // Helper boolean to style differently based on Gold/Silver if needed
     const isSilverRatio = loanData?.jewels?.[0]?.jewel_type?.toLowerCase().includes("silver");
 
     const methodOptions = [
@@ -157,6 +172,11 @@ const ClosePledge: React.FC = () => {
         { value: 'method3', label: 'Scheme 3 (Medium Interest)' },
         { value: 'method4', label: 'Scheme 4 (Day Basis)' },
     ];
+
+    // EARLY RETURN CHECKS (Must be AFTER all Hooks)
+    if (loading) return <LoadingState text="Fetching Loan Details..." />;
+    if (showSuccessMessage) return <SuccessState />;
+    if (error || !loanData || !result) return <ErrorState error={error || 'Loan data not found.'} onBack={() => navigate('/pledges')} />;
 
     return (
         <div className="flex flex-col h-full bg-background-light dark:bg-background-dark font-display overflow-y-auto no-scrollbar">
@@ -306,20 +326,56 @@ const ClosePledge: React.FC = () => {
                         <span className="material-symbols-outlined text-amber-700 dark:text-amber-500">account_balance_wallet</span>
                         <h3 className="text-amber-800 dark:text-amber-400 text-xl font-bold">Balance Payment</h3>
                     </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-amber-800 dark:text-amber-300 flex items-center gap-1">
-                            Pending / Balance Amount (₹)
-                        </label>
-                        <input
-                            type="number"
-                            value={balanceAmount}
-                            onChange={(e) => setBalanceAmount(e.target.value)}
-                            placeholder="Enter remaining amount if any"
-                            className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-gray-900 dark:text-white font-bold placeholder:font-normal"
-                        />
-                        <p className="text-xs text-amber-700 dark:text-amber-500/80">
-                            * This amount will be recorded as pending due after closing the pledge.
-                        </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                                Pending / Balance Amount (₹)
+                            </label>
+                            <input
+                                type="number"
+                                value={balanceAmount}
+                                onChange={(e) => setBalanceAmount(e.target.value)}
+                                placeholder="Enter remaining amount if any"
+                                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-gray-900 dark:text-white font-bold placeholder:font-normal"
+                            />
+                            <p className="text-xs text-amber-700 dark:text-amber-500/80">
+                                * This amount will be recorded as pending due.
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                                Deposit Payment To <span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative">
+                                <select
+                                    value={paymentSourceId}
+                                    onChange={(e) => setPaymentSourceId(e.target.value)}
+                                    className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-gray-900 dark:text-white appearance-none cursor-pointer"
+                                >
+                                    <option value="" disabled>Select Source</option>
+                                    {moneySources.map(source => (
+                                        <option key={source.id} value={source.id}>
+                                            {source.name} (₹{source.balance})
+                                        </option>
+                                    ))}
+                                </select>
+                                <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">expand_more</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2 sm:col-span-2">
+                            <label className="text-sm font-medium text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                                Amount Paid Now (₹) <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="number"
+                                value={amountPaid}
+                                onChange={(e) => setAmountPaid(e.target.value)}
+                                placeholder="Enter amount being paid now"
+                                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-gray-900 dark:text-white font-bold placeholder:font-normal"
+                            />
+                        </div>
                     </div>
                 </section>
 
@@ -327,7 +383,7 @@ const ClosePledge: React.FC = () => {
                 <div className="pt-4 pb-8">
                     <button
                         onClick={handleClosePledge}
-                        disabled={saving || loanData.status === 'closed' || !toDate}
+                        disabled={saving || loanData.status === 'closed' || !toDate || !paymentSourceId || !amountPaid}
                         className="group w-full h-14 bg-rose-600 hover:bg-rose-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2"
                     >
                         {saving ? (

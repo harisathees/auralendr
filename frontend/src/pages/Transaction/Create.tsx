@@ -198,7 +198,6 @@ const TransactionForm = () => {
                                 value={formData.category}
                                 onChange={e => setFormData({ ...formData, category: e.target.value })}
                                 className={`w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-1 appearance-none transition-all ${isIncome ? 'focus:border-primary focus:ring-primary' : 'focus:border-red-500 focus:ring-red-500'}`}
-                                required
                             >
                                 <option value="" disabled>Select Category</option>
                                 {categories

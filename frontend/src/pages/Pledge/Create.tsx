@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api/apiClient";
 import PledgeForm from "../../components/Pledges/PledgeForm";
 import { useAuth } from "../../context/Auth/AuthContext";
+import { useToast } from "../../context/Toast/ToastContext";
 
 const Create: React.FC = () => {
   const navigate = useNavigate();
   const { can, user } = useAuth();
+  const toast = useToast();
 
   const handleSubmit = async (fd: FormData) => {
     try {
@@ -15,14 +17,17 @@ const Create: React.FC = () => {
           "Content-Type": "multipart/form-data",
         },
       });
+      toast.success("Pledge created successfully!");
       navigate("/pledges");
     } catch (err: any) {
       console.error("Failed to create pledge", err);
       if (err.response && err.response.data) {
         console.error("Validation Errors:", err.response.data);
-        alert(`Failed: ${err.response.data.message || 'Validation Error'}\n${JSON.stringify(err.response.data.errors || {}, null, 2)}`);
+        const errorMessage = err.response.data.message || 'Validation Error';
+        // const details = err.response.data.errors ? JSON.stringify(err.response.data.errors, null, 2) : '';
+        toast.error(`Failed: ${errorMessage}`);
       } else {
-        alert("Failed to create pledge. See console for details.");
+        toast.error("Failed to create pledge. See console for details.");
       }
     }
   };
