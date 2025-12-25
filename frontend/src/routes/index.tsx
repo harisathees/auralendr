@@ -15,6 +15,7 @@ const Create = lazy(() => import("../pages/Pledge/Create"));
 const Edit = lazy(() => import("../pages/Pledge/Edit"));
 const View = lazy(() => import("../pages/Pledge/View"));
 const Receipt = lazy(() => import("../pages/Pledge/Receipt"));
+const ClosePledge = lazy(() => import("../pages/Pledge/ClosePledge"));
 const BranchList = lazy(() => import("../pages/Admin/Organization/Branch/List"));
 const UsersList = lazy(() => import("../pages/Admin/Organization/User/List"));
 const CustomersList = lazy(() => import("../pages/Admin/Customer/List"));
@@ -87,6 +88,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/pledges/:id/edit" element={<Edit />} />
         <Route path="/pledges/:id/receipt" element={<Receipt />} />
         <Route path="/pledges/:id" element={<View />} />
+        <Route path="/pledges/:loanId/close" element={<ClosePledge />} />
 
         {/* Repledge Routes */}
         <Route path="/re-pledge" element={<RepledgeList />} />

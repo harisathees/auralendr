@@ -47,4 +47,9 @@ class Pledge extends Model
     {
         return $this->belongsTo(\App\Models\Admin\Organization\User\User::class, 'created_by');
     }
+
+    public function closure()
+    {
+        return $this->hasOne(PledgeClosure::class);
+    }
 }

@@ -51,6 +51,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::put('/users/{user}/permissions', [RolePermissionController::class, 'updateUserPermissions']);
 
     // Pledge Routes
+    Route::post('pledges/{pledge}/close', [PledgeController::class, 'close']);
     Route::apiResource('pledges', PledgeController::class);
 
     // Repledge Routes

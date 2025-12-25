@@ -34,7 +34,7 @@ class PledgeController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $query = Pledge::with(['customer', 'loan', 'jewels', 'media']);
+        $query = Pledge::with(['customer', 'loan', 'jewels', 'media', 'closure']);
 
         if (!$user->hasRole('admin')) {
             $query->where('branch_id', $user->branch_id);
@@ -335,7 +335,7 @@ class PledgeController extends Controller
     public function show(Pledge $pledge, Request $request)
     {
         $this->authorize('view', $pledge);
-        return response()->json($pledge->load(['customer', 'loan', 'jewels', 'media']));
+        return response()->json($pledge->load(['customer', 'loan', 'jewels', 'media', 'closure']));
     }
 
     /**
@@ -596,5 +596,71 @@ class PledgeController extends Controller
         }
 
         return response()->json(['message' => 'Pledge, Customer, and all associated data deleted successfully']);
+    }
+    /**
+     * POST /api/pledges/{pledge}/close
+     */
+    public function close(Request $request, Pledge $pledge)
+    {
+        $this->authorize('update', $pledge);
+
+        $validated = $request->validate([
+            'closed_date' => 'required|date',
+            'calculation_method' => 'required|string',
+            'balance_amount' => 'nullable|numeric',
+            'reduction_amount' => 'required|numeric',
+            'totalInterest' => 'required|numeric',
+            'interestReduction' => 'nullable|numeric',
+            'additionalReduction' => 'nullable|numeric',
+            'totalAmount' => 'required|numeric',
+            'totalMonths' => 'nullable|string',
+            'finalInterestRate' => 'nullable|string',
+            'metal_rate' => 'nullable|numeric',
+        ]);
+
+        try {
+            return DB::transaction(function () use ($validated, $pledge, $request) {
+                // 1. Create Closure Record
+                $closure = \App\Models\Pledge\PledgeClosure::create([
+                    'pledge_id' => $pledge->id,
+                    'created_by' => $request->user()->id,
+                    'closed_date' => $validated['closed_date'],
+                    'calculation_method' => $validated['calculation_method'],
+                    'balance_amount' => $validated['balance_amount'] ?? 0,
+                    'reduction_amount' => $validated['reduction_amount'],
+                    'calculated_interest' => $validated['totalInterest'],
+                    'interest_reduction' => $validated['interestReduction'] ?? 0,
+                    'additional_reduction' => $validated['additionalReduction'] ?? 0,
+                    'total_payable' => $validated['totalAmount'],
+                    'duration_str' => $validated['totalMonths'],
+                    'interest_rate_snapshot' => $validated['finalInterestRate'],
+                    'status' => $pledge->status, // Save current status (e.g. overdue/active)
+                    'metal_rate' => $validated['metal_rate'] ?? null,
+                ]);
+
+                // 2. Update Pledge Status
+                $pledge->update(['status' => 'closed']);
+
+                // 3. Update Loan Status
+                if ($pledge->loan) {
+                    $pledge->loan->update(['status' => 'closed']);
+                }
+
+                return response()->json([
+                    'message' => 'Pledge closed successfully',
+                    'data' => $closure
+                ]);
+            });
+        } catch (\Exception $e) {
+            Log::error('Error closing pledge: ' . $e->getMessage(), [
+                'pledge_id' => $pledge->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to close pledge',
+                'error' => config('app.debug') ? $e->getMessage() : 'server_error'
+            ], 500);
+        }
     }
 }
