@@ -4,9 +4,13 @@ namespace App\Http\Controllers\Api\V1\Transaction;
 
 use App\Models\Transaction\Transaction;
 use App\Models\Admin\MoneySource\MoneySource;
+use App\Models\Pledge\PledgeClosure;
+use App\Models\Pledge\Pledge;
+use App\Models\Admin\Task\Task;
 use App\Http\Controllers\Api\V1\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
@@ -43,6 +47,7 @@ class TransactionController extends Controller
             'date' => 'required|date',
             'description' => 'required|string|max:255',
             'category' => 'nullable|string|max:50',
+            'pledge_id' => 'nullable|exists:pledges,id',
         ]);
 
         return DB::transaction(function () use ($validated) {
@@ -69,6 +74,40 @@ class TransactionController extends Controller
             }
 
             $moneySource->save();
+
+            // 3. Handle Pledge Balance (if linked)
+            if (!empty($validated['pledge_id'])) {
+                $pledgeId = $validated['pledge_id'];
+                $pledgeClosure = PledgeClosure::where('pledge_id', $pledgeId)->first();
+
+                if ($pledgeClosure) {
+                    // Decrement balance (ensure it doesn't go below 0 purely for logic sanity, though DB might allow)
+                    $paidAmount = $validated['amount'];
+                    if ($validated['type'] === 'credit') { // Assuming credit means customer paid us
+                        $pledgeClosure->decrement('balance_amount', $paidAmount);
+                    }
+
+                    // Check if balance is cleared
+                    if ($pledgeClosure->fresh()->balance_amount <= 0) {
+                        $pledgeClosure->update(['balance_amount' => 0]); // clean up negative values
+
+                        // Find and Close Task
+                        $pledge = Pledge::with('loan')->find($pledgeId);
+                        if ($pledge && $pledge->loan) {
+                            $loanNo = $pledge->loan->loan_no;
+                            // Look for the specific task created by PledgeController
+                            $task = Task::where('title', 'LIKE', "%Pending Balance: {$loanNo}%")
+                                ->where('status', 'pending')
+                                ->first();
+
+                            if ($task) {
+                                $task->update(['status' => 'completed']);
+                                Log::info("Auto-completed task for pledge balance", ['task_id' => $task->id, 'pledge_id' => $pledgeId]);
+                            }
+                        }
+                    }
+                }
+            }
 
             return response()->json([
                 'message' => 'Transaction created successfully',

@@ -186,6 +186,10 @@ export interface Pledge {
     jewels: Jewel[];
     loan: Loan;
     media: any[];
+    closure?: {
+        balance_amount?: string | number;
+        [key: string]: any;
+    };
     status?: string; // Inferred from usage in PledgeList
 }
 

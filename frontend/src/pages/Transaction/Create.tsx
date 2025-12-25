@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../api/apiClient';
 
 interface MoneySource {
@@ -11,16 +11,18 @@ interface MoneySource {
 
 const TransactionForm = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [loading, setLoading] = useState(false);
     const [moneySources, setMoneySources] = useState<MoneySource[]>([]);
 
     const [formData, setFormData] = useState({
-        type: 'credit', // 'credit' = Income, 'debit' = Expense
-        amount: '',
+        type: searchParams.get('type') || 'credit', // 'credit' = Income, 'debit' = Expense
+        amount: searchParams.get('amount') || '',
         date: new Date().toISOString().split('T')[0],
         money_source_id: '',
-        category: '',
-        description: ''
+        category: searchParams.get('category') || '',
+        description: searchParams.get('description') || '',
+        pledge_id: searchParams.get('pledgeId') || ''
     });
 
     const [categories, setCategories] = useState<{ name: string, is_credit: boolean, is_debit: boolean, type?: string }[]>([]);

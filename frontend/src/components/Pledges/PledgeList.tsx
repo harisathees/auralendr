@@ -267,21 +267,35 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
                         <div className="overflow-hidden">
                           <div className={`pt-4 mt-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-3 gap-2 ${expandedPledgeId === p.id ? "opacity-100" : "opacity-0 invisible"
                             } transition-all duration-300 delay-75`}>
-                            <button className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-100 dark:border-blue-800 cursor-pointer">
-                              <Banknote size={14} />
-                              Partial Payment
-                            </button>
-                            <button className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-semibold rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors border border-amber-100 dark:border-amber-800 cursor-pointer">
-                              <PlusCircle size={14} />
-                              Add Amount
-                            </button>
-                            <button
-                              onClick={() => navigate(`/pledges/${p.id}/close`)}
-                              className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors border border-rose-100 dark:border-rose-800 cursor-pointer"
-                            >
-                              <CheckCircle size={14} />
-                              Close Loan
-                            </button>
+                            {p.status === 'closed' ? (
+                              Number(p.closure?.balance_amount) > 0 && (
+                                <button
+                                  onClick={() => navigate(`/transactions/create?amount=${p.closure?.balance_amount}&description=Balance payment for Loan ${p.loan?.loan_no}&type=credit&pledgeId=${p.id}`)}
+                                  className="col-span-3 flex items-center justify-center gap-1.5 px-2 py-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors border border-emerald-100 dark:border-emerald-800 cursor-pointer"
+                                >
+                                  <Banknote size={14} />
+                                  Pay Balance (₹{p.closure?.balance_amount})
+                                </button>
+                              )
+                            ) : (
+                              <>
+                                <button className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-100 dark:border-blue-800 cursor-pointer">
+                                  <Banknote size={14} />
+                                  Partial Payment
+                                </button>
+                                <button className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-semibold rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors border border-amber-100 dark:border-amber-800 cursor-pointer">
+                                  <PlusCircle size={14} />
+                                  Add Amount
+                                </button>
+                                <button
+                                  onClick={() => navigate(`/pledges/${p.id}/close`)}
+                                  className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors border border-rose-100 dark:border-rose-800 cursor-pointer"
+                                >
+                                  <CheckCircle size={14} />
+                                  Close Loan
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>

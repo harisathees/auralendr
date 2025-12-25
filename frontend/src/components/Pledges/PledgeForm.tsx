@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import api from "../../api/apiClient";
-import { AudioRecorder } from "../../components/AudioCamera/AudioRecorder";
-import { CameraCapture } from "../../components/AudioCamera/CameraCapture";
+import { AudioRecorder } from "../../components/audiocamera/AudioRecorder";
+import { CameraCapture } from "../../components/audiocamera/CameraCapture";
 
 import { useAuth } from "../../context/Auth/AuthContext";
+import { compressImage } from "../../utils/imageCompression";
 
 // --- UI Components from Create.tsx ---
 
@@ -530,22 +531,26 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
     });
 
     // Files & Categories
-    if (docFile) {
-      fd.append("files[]", docFile);
-      fd.append("categories[]", "customer_document");
-    }
-    if (jewelFile) {
-      fd.append("files[]", jewelFile);
-      fd.append("categories[]", "jewel_image");
-    }
+    const compressAndAppend = async (file: File, category: string) => {
+      // Import the utility dynamically or we can just import at top. 
+      // Given the structure, I'll add the import at the top in a separate step if needed,
+      // but for now I'll use the imported function.
+      const compressed = await compressImage(file);
+      fd.append("files[]", compressed);
+      fd.append("categories[]", category);
+    };
+
+    if (docFile) await compressAndAppend(docFile, "customer_document");
+    if (jewelFile) await compressAndAppend(jewelFile, "jewel_image");
     if (evidenceFile) {
-      fd.append("files[]", evidenceFile);
-      fd.append("categories[]", "evidence_media");
+      if (evidenceFile.type.startsWith('image/')) {
+        await compressAndAppend(evidenceFile, "evidence_media");
+      } else {
+        fd.append("files[]", evidenceFile);
+        fd.append("categories[]", "evidence_media");
+      }
     }
-    if (customerImageFile) {
-      fd.append("files[]", customerImageFile);
-      fd.append("categories[]", "customer_image");
-    }
+    if (customerImageFile) await compressAndAppend(customerImageFile, "customer_image");
 
     // Deleted IDs
     deletedFileIds.forEach(id => fd.append("deleted_file_ids[]", String(id)));
