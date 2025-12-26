@@ -71,6 +71,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         email: res.data.user.email,
         role: res.data.user.role,
         branch_id: res.data.user.branch_id,
+        branch: res.data.user.branch,
         permissions: res.data.user.permissions || [],
       };
 
@@ -112,6 +113,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             email: res.data.email,
             role: res.data.role,
             branch_id: res.data.branch_id,
+            branch: res.data.branch,
             permissions: res.data.permissions || [],
           };
           setUser(userData);

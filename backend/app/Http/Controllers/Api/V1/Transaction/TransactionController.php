@@ -18,15 +18,19 @@ class TransactionController extends Controller
     {
         $user = $request->user();
 
-        $query = Transaction::with(['moneySource', 'creator'])
+        $query = Transaction::with(['moneySource', 'creator.branch'])
             ->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc');
 
-        // Filter by branch if user is assigned to one
-        if ($user->branch_id) {
-            $query->whereHas('creator', function ($q) use ($user) {
-                $q->where('branch_id', $user->branch_id);
-            });
+        // Filter by branch if user is assigned to one AND is not an admin/superuser
+        // This allows admins to see all transactions even if they have a branch_id assigned
+        if ($user->branch_id && !$user->hasRole(['admin', 'superadmin', 'developer'])) {
+            $query->where('branch_id', $user->branch_id);
+        }
+
+        // Allow explicit filtering by branch (e.g. for Admins)
+        if ($request->has('branch_id') && $request->branch_id) {
+            $query->where('branch_id', $request->branch_id);
         }
 
         if ($request->has('money_source_id') && $request->money_source_id != '') {

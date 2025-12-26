@@ -16,7 +16,7 @@ class RolePermissionController extends Controller
         }
 
         $query = Role::with('permissions');
-        
+
         // ALWAYS hide 'developer' role - it should be immutable via UI
         $query->where('name', '!=', 'developer');
 
@@ -25,7 +25,7 @@ class RolePermissionController extends Controller
         if (!$request->user()->hasRole('developer')) {
             $query->where('name', '!=', 'admin');
         }
-        
+
         $roles = $query->get();
         return response()->json($roles);
     }
@@ -33,8 +33,8 @@ class RolePermissionController extends Controller
     public function getPermissions()
     {
         // ... existing implementation ...
-        $permissions = Permission::all()->groupBy(function($item) {
-            return explode('.', $item->name)[0]; 
+        $permissions = Permission::all()->groupBy(function ($item) {
+            return explode('.', $item->name)[0];
         });
         return response()->json($permissions);
     }
@@ -48,46 +48,47 @@ class RolePermissionController extends Controller
 
         // Only developer can update admin permissions
         if ($role->name === 'admin' && !$request->user()->hasRole('developer')) {
-             return response()->json(['message' => 'Only developers can manage admin privileges'], 403);
+            return response()->json(['message' => 'Only developers can manage admin privileges'], 403);
         }
 
         $permissions = $request->permissions;
 
         // STRICT: If user is NOT developer, they CANNOT touch restricted groups
         if (!$request->user()->hasRole('developer')) {
-            $restrictedPrefixes = ['user_privilege', 'brandkit', 'user', 'branch','loan'];
-            
+            $restrictedPrefixes = ['user_privilege', 'brandkit', 'user', 'branch', 'loan'];
+
             // Filter input: Remove any restricted permissions from the input array
-            $permissions = array_filter($permissions, function($perm) use ($restrictedPrefixes) {
+            $permissions = array_filter($permissions, function ($perm) use ($restrictedPrefixes) {
                 foreach ($restrictedPrefixes as $prefix) {
                     if (str_starts_with($perm, $prefix)) {
-                        return false; 
+                        return false;
                     }
                 }
                 return true;
             });
-            
+
             // Staff should NEVER have these restricted permissions
             if ($role->name === 'staff') {
-                $restrictedForStaff = ['user_privilege', 'brandkit', 'user', 'branch','loan'];
-                
-                $permissions = array_filter($permissions, function($perm) use ($restrictedForStaff) {
+                $restrictedForStaff = ['user_privilege', 'brandkit', 'user', 'branch', 'loan'];
+
+                $permissions = array_filter($permissions, function ($perm) use ($restrictedForStaff) {
                     foreach ($restrictedForStaff as $prefix) {
-                        if (str_starts_with($perm, $prefix)) return false;
+                        if (str_starts_with($perm, $prefix))
+                            return false;
                     }
                     return true;
                 });
                 // Re-index array
                 $permissions = array_values($permissions);
-            }    
+            }
             // Re-index
             $permissions = array_values($permissions);
-            
+
             // IMPORTANT: We must also append any EXISTING restricted permissions 
             // the role already has, so we don't accidentally wipe them out.
             // (Since the UI won't send them, we need to preserve them)
             $existingPermissions = $role->permissions->pluck('name')->toArray();
-            $existingRestricted = array_filter($existingPermissions, function($perm) use ($restrictedPrefixes) {
+            $existingRestricted = array_filter($existingPermissions, function ($perm) use ($restrictedPrefixes) {
                 foreach ($restrictedPrefixes as $prefix) {
                     if (str_starts_with($perm, $prefix)) {
                         return true;
@@ -95,7 +96,7 @@ class RolePermissionController extends Controller
                 }
                 return false;
             });
-            
+
             // Merge allowed new input + existing restricted
             $permissions = array_unique(array_merge($permissions, $existingRestricted));
         }
@@ -124,7 +125,7 @@ class RolePermissionController extends Controller
 
         // Enforce strict branch isolation
         $targetBranchId = $request->input('branch_id'); // Explicit input
-        
+
         // If user is restricted (not dev/admin) and has branch, force it.
         // Assuming 'developer' and 'super-admin' can view all.
         $user = $request->user();
@@ -133,11 +134,11 @@ class RolePermissionController extends Controller
         }
 
         $users = \App\Models\Admin\Organization\User\User::where('role', $role)
-                    ->when($targetBranchId, function($q) use ($targetBranchId) {
-                        return $q->where('branch_id', $targetBranchId);
-                    })
-                    ->with('permissions')
-                    ->get();
+            ->when($targetBranchId !== null && $targetBranchId !== '', function ($q) use ($targetBranchId) {
+                return $q->where('branch_id', $targetBranchId);
+            })
+            ->with('permissions')
+            ->get();
 
         // Attach effective permissions for UI
         $users->transform(function ($user) {
@@ -156,7 +157,7 @@ class RolePermissionController extends Controller
 
         // Enforce strict branch isolation
         if ($request->user()->branch_id && $user->branch_id !== $request->user()->branch_id) {
-             return response()->json(['message' => 'Unauthorized: Cannot manage users from other branches'], 403);
+            return response()->json(['message' => 'Unauthorized: Cannot manage users from other branches'], 403);
         }
 
         $permissions = $request->permissions;
@@ -164,26 +165,28 @@ class RolePermissionController extends Controller
         // STRICT CHECK for User Permissions as well
         if (!$request->user()->hasRole('developer')) {
             $restrictedPrefixes = ['user_privilege', 'brandkit', 'user', 'branch'];
-            
+
             // 1. Filter input to remove attempts to ADD restricted perms
-            $permissions = array_filter($permissions, function($perm) use ($restrictedPrefixes) {
+            $permissions = array_filter($permissions, function ($perm) use ($restrictedPrefixes) {
                 foreach ($restrictedPrefixes as $prefix) {
-                    if (str_starts_with($perm, $prefix)) return false;
+                    if (str_starts_with($perm, $prefix))
+                        return false;
                 }
                 return true;
             });
-            
+
             // 2. Preserve existing restricted permissions the user might already have
             // (Unlikely for Staff, but critical safety if an Admin edits another Admin/Dev)
             $existingUserPerms = $user->permissions->pluck('name')->toArray();
-            $existingRestricted = array_filter($existingUserPerms, function($perm) use ($restrictedPrefixes) {
+            $existingRestricted = array_filter($existingUserPerms, function ($perm) use ($restrictedPrefixes) {
                 foreach ($restrictedPrefixes as $prefix) {
-                    if (str_starts_with($perm, $prefix)) return true;
+                    if (str_starts_with($perm, $prefix))
+                        return true;
                 }
                 return false;
             });
 
-             $permissions = array_unique(array_merge($permissions, $existingRestricted));
+            $permissions = array_unique(array_merge($permissions, $existingRestricted));
         }
 
         // Sync Direct Permissions

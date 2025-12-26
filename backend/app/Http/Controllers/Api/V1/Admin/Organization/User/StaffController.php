@@ -45,6 +45,9 @@ class StaffController extends Controller
             'role' => $data['role']
         ]);
 
+        // Sync Spatie Role
+        $user->syncRoles($data['role']);
+
         return response()->json($user, 201);
     }
 
@@ -77,6 +80,12 @@ class StaffController extends Controller
         }
 
         $staff->update($data);
+
+        // Sync Spatie Role if changed
+        if (isset($data['role'])) {
+            $staff->syncRoles($data['role']);
+        }
+
         return response()->json($staff);
     }
 

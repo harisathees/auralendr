@@ -125,6 +125,7 @@ export interface Transaction {
         type: string;
     };
     created_at: string;
+    creator?: User;
 }
 
 export interface Permission {

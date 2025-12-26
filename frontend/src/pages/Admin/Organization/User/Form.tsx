@@ -189,7 +189,7 @@ const UserForm: React.FC = () => {
                                 onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
                                 className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             >
-                                <option value="">No Branch</option>
+                                <option value="">All Branches (Global Access)</option>
                                 {branches.map((b) => (
                                     <option key={b.id} value={b.id}>
                                         {b.branch_name}

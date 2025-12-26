@@ -62,17 +62,7 @@ const AdminBottomNavigation: React.FC = () => {
                     <span className="text-xs font-bold">Cashflow</span>
                 </Link>
 
-                {/* Repledges */}
-                <Link
-                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/repledges") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
-                        }`}
-                    to="/re-pledge/"
-                >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/re-pledge") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        currency_exchange
-                    </span>
-                    <span className="text-xs font-bold">Repledge</span>
-                </Link>
+
 
                 {/* Assign Tasks */}
                 <Link
