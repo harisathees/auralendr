@@ -2,6 +2,7 @@
 
 namespace App\Models\Admin\Organization\Branch;
 
+use App\Models\Admin\Organization\User\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
