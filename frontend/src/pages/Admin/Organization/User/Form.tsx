@@ -75,7 +75,7 @@ const UserForm: React.FC = () => {
             } else {
                 await api.post("/staff", payload);
             }
-            navigate("/admin/users");
+            navigate("/admin/configs/users");
         } catch (err: any) {
             setError(err.response?.data?.message || "Failed to save user.");
         } finally {
@@ -96,7 +96,7 @@ const UserForm: React.FC = () => {
                     You don't have permission to {isEdit ? 'update' : 'create'} users.
                 </p>
                 <button
-                    onClick={() => navigate("/admin/users")}
+                    onClick={() => navigate("/admin/configs/users")}
                     className="mt-6 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition"
                 >
                     Go Back
@@ -109,7 +109,7 @@ const UserForm: React.FC = () => {
         <div className="p-6 max-w-2xl mx-auto">
             <div className="flex items-center gap-4 mb-6">
                 <button
-                    onClick={() => navigate("/admin/users")}
+                    onClick={() => navigate("/admin/configs/users")}
                     className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                 >
                     <span className="material-symbols-outlined">arrow_back</span>
@@ -202,7 +202,7 @@ const UserForm: React.FC = () => {
                     <div className="pt-4 flex justify-end gap-3">
                         <button
                             type="button"
-                            onClick={() => navigate("/admin/users")}
+                            onClick={() => navigate("/admin/configs/users")}
                             className="px-4 py-2 text-secondary-text dark:text-gray-300 hover:text-primary-text dark:hover:text-white transition-colors"
                         >
                             Cancel

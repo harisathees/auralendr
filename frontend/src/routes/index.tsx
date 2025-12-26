@@ -19,6 +19,7 @@ const ClosePledge = lazy(() => import("../pages/Pledge/ClosePledge"));
 const BranchList = lazy(() => import("../pages/Admin/Organization/Branch/List"));
 const BranchForm = lazy(() => import("../pages/Admin/Organization/Branch/Form"));
 const UsersList = lazy(() => import("../pages/Admin/Organization/User/List"));
+const UserForm = lazy(() => import("../pages/Admin/Organization/User/Form"));
 const CustomersList = lazy(() => import("../pages/Admin/Customer/List"));
 const TasksList = lazy(() => import("../pages/Admin/Task/List"));
 const LoansList = lazy(() => import("../pages/Admin/LoanConfiguration/LoanList"));
@@ -141,6 +142,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/configs/branches/create" element={<BranchForm />} />
         <Route path="/admin/configs/branches/edit/:id" element={<BranchForm />} />
         <Route path="/admin/configs/users" element={<UsersList />} />
+        <Route path="/admin/configs/users/create" element={<UserForm />} />
+        <Route path="/admin/configs/users/edit/:id" element={<UserForm />} />
         <Route path="/admin/loans" element={<LoansList />} />
         <Route path="/admin/customers" element={<CustomersList />} />
         <Route path="/admin/pledges/:id" element={<View />} />

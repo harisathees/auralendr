@@ -103,7 +103,7 @@ const UserList: React.FC = () => {
                 </div>
                 {can('user.create') ? (
                     <button
-                        onClick={() => navigate("/admin/users/create")}
+                        onClick={() => navigate("/admin/configs/users/create")}
                         className="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 font-bold w-full sm:w-auto"
                     >
                         <span className="material-symbols-outlined">add</span>
@@ -219,7 +219,7 @@ const UserList: React.FC = () => {
                                         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             {can('user.update') ? (
                                                 <button
-                                                    onClick={() => navigate(`/admin/users/edit/${user.id}`)}
+                                                    onClick={() => navigate(`/admin/configs/users/edit/${user.id}`)}
                                                     className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                                     title="Edit User"
                                                 >
@@ -299,7 +299,7 @@ const UserList: React.FC = () => {
                             <div className="flex gap-2">
                                 {can('user.update') ? (
                                     <button
-                                        onClick={() => navigate(`/admin/users/edit/${user.id}`)}
+                                        onClick={() => navigate(`/admin/configs/users/edit/${user.id}`)}
                                         className="p-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl transition-colors"
                                     >
                                         <Edit2 className="w-4 h-4" />

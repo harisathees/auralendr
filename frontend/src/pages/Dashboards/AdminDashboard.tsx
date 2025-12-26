@@ -1,9 +1,9 @@
 import { useAuth } from "../../context/Auth/AuthContext";
 import { useTheme } from "../../context/Theme/ThemeContext";
-// import MetalRatesCard from "../../components/Dashboard/MetalRatesCard";
 import StatsCard from "../../components/Dashboard/StatsCard";
 import DashboardFilters from "../../components/Dashboard/DashboardFilters";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import ReportCard from "../../components/Dashboard/ReportCard";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { useState, useEffect } from "react";
 import api from "../../api/apiClient";
 import { toast } from "react-hot-toast";
@@ -77,23 +77,21 @@ const AdminDashboard: React.FC = () => {
     }).format(Number(amount));
   };
 
+  // Calculate growth percentage from trends
+  const calculateGrowth = (key: 'total_amount' | 'count') => {
+    if (!stats?.trends || stats.trends.length < 2) return null;
+    const current = stats.trends[stats.trends.length - 1][key];
+    const previous = stats.trends[stats.trends.length - 2][key];
+    if (previous === 0) return current > 0 ? '+100%' : '0%';
+    const growth = ((current - previous) / previous) * 100;
+    return `${growth > 0 ? '+' : ''}${growth.toFixed(1)}%`;
+  };
+
   return (
-    <div className="p-4 md:p-8 space-y-8 min-h-screen transition-colors duration-300">
+    <div className="p-4 md:p-8 space-y-8 min-h-screen transition-colors duration-300 relative">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white/80 dark:bg-[#121417]/80 backdrop-blur-md px-4 md:px-8 py-4 flex justify-between items-center border-b border-gray-100 dark:border-gray-800 -mx-4 md:-mx-8 -mt-4 md:-mt-8 mb-4 transition-colors duration-300">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-[#00E676] transition-colors duration-300">Admin Dashboard</h1>
-          <p className="text-gray-500 dark:text-gray-400 transition-colors duration-300">Welcome back, Admin</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={toggleTheme}
-            className="w-10 h-10 rounded-full bg-white dark:bg-[#1A1D1F] flex items-center justify-center border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white shadow-sm transition-all duration-300"
-          >
-            <span className="material-symbols-outlined">
-              {theme === 'dark' ? 'light_mode' : 'dark_mode'}
-            </span>
-          </button>
+        <div className="flex items-center gap-3">
           <div className="relative">
             <div
               className="w-10 h-10 rounded-full bg-[#FDB931] flex items-center justify-center text-black font-bold border-2 border-white dark:border-[#1A1D1F] overflow-hidden shadow-md cursor-pointer hover:opacity-80 transition-opacity"
@@ -105,7 +103,7 @@ const AdminDashboard: React.FC = () => {
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute top-12 right-0 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-20 animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute top-12 left-0 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-20 animate-in fade-in zoom-in-95 duration-200">
                   <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-[#FDB931] flex items-center justify-center text-black font-bold border border-white dark:border-[#1A1D1F] overflow-hidden shrink-0">
                       <img src={`https://ui-avatars.com/api/?name=${user?.name || 'Admin'}&background=FDB931&color=000`} alt="Admin" />
@@ -126,144 +124,148 @@ const AdminDashboard: React.FC = () => {
               </>
             )}
           </div>
+          <div>
+            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium leading-tight">Welcome back,</p>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-[#00E676] transition-colors duration-300 leading-tight">
+              {user?.name || 'Admin'}
+            </h1>
+          </div>
         </div>
-      </div>
 
-      {/* Filters */}
-      <DashboardFilters onFilterChange={setFilters} />
-
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatsCard
-          title="Total Principal"
-          value={stats?.summary ? formatCurrency(stats.summary.total_loan_amount) : "..."}
-          valueColor="text-[#00E676]"
-          icon="payments"
-        />
-        <StatsCard
-          title="Interest Collected"
-          value={stats?.summary ? formatCurrency(stats.summary.interest_collected) : "..."}
-          valueColor="text-[#2979FF]"
-          icon="account_balance_wallet"
-        />
-        <StatsCard
-          title="Total Pledges"
-          value={stats?.summary ? stats.summary.total_pledges.toString() : "..."}
-          valueColor="text-[#FFAB00]"
-          icon="description"
-        />
-        <StatsCard
-          title="Active Pledges"
-          value={stats?.summary ? stats.summary.active_pledges.toString() : "..."}
-          valueColor="text-[#00E676]"
-          icon="check_circle"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Metal Rates Card - Commented as requested */}
-        {/* <div className="lg:col-span-1">
-          <MetalRatesCard />
-        </div> */}
-
-        {/* Loan Trends */}
-        <div className="lg:col-span-3 bg-white dark:bg-[#1A1D1F] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
-          <h3 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Loan Trends (Last 6 Months)</h3>
-          <div className="h-[300px]">
-            {loading ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00E676]"></div>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats?.trends ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#2d3339' : '#e5e7eb'} />
-                  <XAxis dataKey="month" stroke={theme === 'dark' ? '#94a3b8' : '#64748b'} />
-                  <YAxis stroke={theme === 'dark' ? '#94a3b8' : '#64748b'} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: theme === 'dark' ? '#1A1D1F' : '#fff', border: 'none', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    labelStyle={{ color: '#00E676', fontWeight: 'bold' }}
-                  />
-                  <Bar dataKey="total_amount" fill="#00E676" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
+        <div className="flex items-center gap-4">
+          <div className="hidden lg:block text-right mr-2">
+            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Status</h2>
+            <div className="flex items-center gap-1.5 justify-end">
+              <span className="w-2 h-2 rounded-full bg-[#00E676] animate-pulse"></span>
+              <span className="text-[10px] font-black text-gray-600 dark:text-gray-300 uppercase">Live Systems</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="w-10 h-10 rounded-full bg-white dark:bg-[#1A1D1F] flex items-center justify-center border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white shadow-sm transition-all duration-300"
+            >
+              <span className="material-symbols-outlined">
+                {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+              </span>
+            </button>
+            <DashboardFilters onFilterChange={setFilters} isLoading={loading} />
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Branch Distribution */}
-        <div className="lg:col-span-2 bg-white dark:bg-[#1A1D1F] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm min-h-[400px]">
-          <h3 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Branch Wise Lending</h3>
-          {loading ? (
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00E676]"></div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left border-b border-gray-100 dark:border-gray-800">
-                    <th className="pb-4 font-bold text-gray-500 dark:text-gray-400">Branch</th>
-                    <th className="pb-4 font-bold text-gray-500 dark:text-gray-400 text-right">Pledges</th>
-                    <th className="pb-4 font-bold text-gray-500 dark:text-gray-400 text-right">Total Leant</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
-                  {stats?.branch_distribution?.map((branch, idx) => (
-                    <tr key={idx} className="group">
-                      <td className="py-4 font-medium text-gray-900 dark:text-white">{branch.branch_name}</td>
-                      <td className="py-4 text-right text-gray-600 dark:text-gray-400">{branch.count}</td>
-                      <td className="py-4 text-right font-bold text-[#00E676]">{formatCurrency(branch.total_amount)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+      {/* Dashboard Body */}
+      <div className="space-y-8 transition-all duration-500">
+        {/* Stats Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatsCard
+            title="Total Principal"
+            value={stats?.summary ? formatCurrency(stats.summary.total_loan_amount) : "..."}
+            valueColor="text-gray-900 dark:text-white"
+            growth={calculateGrowth('total_amount') || undefined}
+            description="Total lending value"
+            trendColor="#00E676"
+            trendData={stats?.trends?.map(t => ({ value: t.total_amount }))}
+          />
+          <StatsCard
+            title="Interest Collected"
+            value={stats?.summary ? formatCurrency(stats.summary.interest_collected) : "..."}
+            valueColor="text-gray-900 dark:text-white"
+            growth={calculateGrowth('total_amount') || undefined} // Fallback to loan growth for now
+            description="Total revenue earned"
+            trendColor="#2979FF"
+            trendData={stats?.trends?.map(t => ({ value: t.total_amount }))}
+          />
+          <StatsCard
+            title="Total Pledges"
+            value={stats?.summary ? stats.summary.total_pledges.toString() : "..."}
+            valueColor="text-gray-900 dark:text-white"
+            growth={calculateGrowth('count') || undefined}
+            description="Tickets generated"
+            trendColor="#FFAB00"
+            trendData={stats?.trends?.map(t => ({ value: t.count }))}
+          />
+          <StatsCard
+            title="Active Pledges"
+            value={stats?.summary ? stats.summary.active_pledges.toString() : "..."}
+            valueColor="text-gray-900 dark:text-white"
+            growth={calculateGrowth('count') || undefined}
+            description="Current portfolio"
+            trendColor="#00E676"
+            trendData={stats?.trends?.map(t => ({ value: t.count }))}
+          />
         </div>
 
-        {/* Status Distribution Pie Chart */}
-        <div className="lg:col-span-1 bg-white dark:bg-[#1A1D1F] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
-          <h3 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">Pledge Status</h3>
-          <div className="h-[250px]">
-            {loading ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00E676]"></div>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={stats?.status_distribution || []}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="count"
-                    nameKey="status"
-                  >
-                    {(stats?.status_distribution || []).map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Report Card */}
+          <div className="lg:col-span-2">
+            <ReportCard
+              title="Lending Report"
+              chartData={stats?.trends || []}
+              chartColor="#AA00FF"
+              summaryStats={[
+                {
+                  label: 'Monthly',
+                  value: stats?.summary ? formatCurrency(stats.summary.total_loan_amount / 12) : '...',
+                  growth: calculateGrowth('total_amount') || '0%',
+                  icon: 'star',
+                  iconBg: 'bg-green-100',
+                  iconColor: 'text-green-600'
+                },
+                {
+                  label: 'Yearly',
+                  value: stats?.summary ? formatCurrency(stats.summary.total_loan_amount) : '...',
+                  growth: calculateGrowth('total_amount') || '0%',
+                  icon: 'military_tech',
+                  iconBg: 'bg-amber-100',
+                  iconColor: 'text-amber-600'
+                }
+              ]}
+              listItems={stats?.branch_distribution?.map(b => ({
+                label: b.branch_name,
+                value: formatCurrency(b.total_amount)
+              })) || []}
+            />
           </div>
-          <div className="mt-4 space-y-2">
-            {stats?.status_distribution?.map((entry, index) => (
-              <div key={index} className="flex justify-between items-center text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                  <span className="capitalize text-gray-600 dark:text-gray-400">{entry.status}</span>
-                </div>
-                <span className="font-bold text-gray-900 dark:text-white">{entry.count}</span>
+
+          {/* Secondary Info / Status Distribution */}
+          <div className="space-y-8">
+            <div className="bg-white dark:bg-[#1A1D1F] rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm h-full flex flex-col">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Status Distribution</h3>
+              <div className="flex-1 min-h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={stats?.status_distribution || []}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={80}
+                      outerRadius={100}
+                      paddingAngle={8}
+                      dataKey="count"
+                      nameKey="status"
+                      stroke="none"
+                    >
+                      {stats?.status_distribution?.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            ))}
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                {stats?.status_distribution?.map((entry, index) => (
+                  <div key={entry.status} className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400 capitalize">{entry.status}</span>
+                    <span className="text-xs font-black text-gray-900 dark:text-white ml-auto">{entry.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -297,7 +299,6 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };
