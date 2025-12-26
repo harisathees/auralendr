@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\InterestRateController;
 use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\LoanController;
 use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\LoanProcessingFeeController;
 use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\ValidityMonthController;
+use App\Http\Controllers\Api\V1\Admin\DashboardController;
 
 Route::get('/test', function () {
     return response()->json(['status' => 'API Working']);
@@ -65,6 +66,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
 
     // Admin-only routes
     Route::middleware('admin')->group(function () {
+        Route::get('/dashboard/stats', [DashboardController::class, 'getStats']);
         Route::apiResource('tasks', TaskController::class);
         Route::apiResource('jewel-types', JewelTypeController::class);
         Route::apiResource('jewel-qualities', JewelQualityController::class);
