@@ -11,17 +11,15 @@ export const useRepledge = () => {
     const [totalPages, setTotalPages] = useState(1);
 
     // Fetch Repledge Entries
-    const fetchRepledgeEntries = useCallback(async (page = 1) => {
+    const fetchRepledgeEntries = useCallback(async (page = 1, search = "") => {
         setLoading(true);
         try {
-            const res = await api.get(`/repledges?page=${page}`);
+            const res = await api.get(`/repledges`, { params: { page, search } });
             setRepledgeEntries(res.data.data);
             setTotalPages(res.data.last_page);
             setCurrentPage(res.data.current_page);
         } catch (err: any) {
             console.error("Failed to fetch repledge entries", err);
-            // setError(err.response?.data?.message || "Failed to fetch entries");
-            // Don't set global error for background fetch
         } finally {
             setLoading(false);
         }

@@ -206,12 +206,6 @@ const StaffDashboard: React.FC = () => {
                 </button>
               )}
             </div>
-            <button
-              onClick={fetchTasks}
-              className="p-2 -mr-2 text-gray-500 hover:text-primary transition-colors"
-            >
-              <span className="material-symbols-outlined">refresh</span>
-            </button>
           </div>
 
           {loading ? (

@@ -2,7 +2,7 @@
 
 namespace App\Policies\Repledge;
 
-use App\Models\Admin\Organization\User;
+use App\Models\Admin\Organization\User\User;
 use App\Models\Repledge\Repledge;
 use Illuminate\Auth\Access\HandlesAuthorization;
 

@@ -89,7 +89,25 @@ class RepledgeController extends Controller
         if (!$request->user()->can('repledge.view')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
-        $repledges = Repledge::with('source')->latest()->paginate(20);
+        $search = $request->query('search');
+
+        $query = Repledge::with(['source', 'loan.pledge.customer']);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('loan_no', 'like', "%{$search}%")
+                    ->orWhere('re_no', 'like', "%{$search}%")
+                    ->orWhereHas('source', function ($sq) use ($search) {
+                        $sq->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('loan.pledge.customer', function ($cq) use ($search) {
+                        $cq->where('name', 'like', "%{$search}%")
+                            ->orWhere('mobile_no', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $repledges = $query->latest()->paginate(20);
         return response()->json($repledges);
     }
 
@@ -103,7 +121,7 @@ class RepledgeController extends Controller
 
         $createdRepledges = [];
 
-        DB::transaction(function () use ($validated, &$createdRepledges) {
+        DB::transaction(function () use ($validated, &$createdRepledges, $request) {
             // Process items in original order (1, 2, 3...)
             foreach ($validated['items'] as $item) {
                 // Auto-link loan if not provided but loan_no exists (optional logic)
@@ -140,7 +158,21 @@ class RepledgeController extends Controller
                         if ($netAmount > 0) {
                             $moneySource->increment('balance', $netAmount);
 
-                            \Illuminate\Support\Facades\Log::info('Repledge money source balance incremented', [
+                            // Create Transaction Record
+                            \App\Models\Transaction\Transaction::create([
+                                'branch_id' => $repledge->branch_id ?? $request->user()->branch_id,
+                                'money_source_id' => $moneySource->id,
+                                'type' => 'credit',
+                                'amount' => $netAmount,
+                                'date' => $repledge->start_date ?? now(),
+                                'description' => "Repledge Creation #{$repledge->id} (Loan: {$repledge->loan_no})",
+                                'category' => 'repledge_credit',
+                                'transactionable_type' => Repledge::class,
+                                'transactionable_id' => $repledge->id,
+                                'created_by' => $request->user()->id,
+                            ]);
+
+                            \Illuminate\Support\Facades\Log::info('Repledge transaction recorded and source incremented', [
                                 'repledge_id' => $repledge->id,
                                 'source' => $moneySource->name,
                                 'incremented' => $netAmount,
@@ -163,7 +195,7 @@ class RepledgeController extends Controller
     public function show(Repledge $repledge)
     {
         $this->authorize('view', $repledge);
-        return response()->json($repledge->load('source', 'loan'));
+        return response()->json($repledge->load(['source', 'loan.pledge.customer']));
     }
 
     public function update(UpdateRepledgeRequest $request, Repledge $repledge)
