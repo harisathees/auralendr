@@ -9,7 +9,7 @@ class StaffTimeRestriction extends Model
 {
     use HasFactory;
 
-    protected $table = 'settings';
+    protected $table = 'staff_time_restrictions';
 
     protected $fillable = ['key', 'value', 'group', 'branch_id'];
 }

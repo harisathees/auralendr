@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('settings', function (Blueprint $table) {
+        Schema::create('staff_time_restrictions', function (Blueprint $table) {
             $table->id();
             $table->string('key');
             $table->text('value')->nullable();
