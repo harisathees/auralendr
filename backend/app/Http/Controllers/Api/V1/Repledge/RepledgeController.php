@@ -182,4 +182,64 @@ class RepledgeController extends Controller
         $repledge->delete();
         return response()->json(null, 204);
     }
+
+    /**
+     * POST /api/repledges/{repledge}/close
+     */
+    public function close(Request $request, Repledge $repledge)
+    {
+        // $this->authorize('repledge.close'); // Use policy or permission
+
+        $validated = $request->validate([
+            'closed_date' => 'required|date',
+            'amount_paid' => 'required|numeric|min:0', // Total Paid
+            'principal_amount' => 'required|numeric|min:0',
+            'interest_paid' => 'nullable|numeric|min:0',
+            'payment_source_id' => 'required|exists:money_sources,id',
+            'remarks' => 'nullable|string',
+        ]);
+
+        return DB::transaction(function () use ($validated, $repledge, $request) {
+            // 1. Create Closure Record
+            $closure = \App\Models\Repledge\RepledgeClosure::create([
+                'repledge_id' => $repledge->id,
+                'created_by' => $request->user()->id,
+                'closed_date' => $validated['closed_date'],
+                'principal_amount' => $validated['principal_amount'],
+                'interest_paid' => $validated['interest_paid'] ?? 0,
+                'total_paid_amount' => $validated['amount_paid'],
+                'remarks' => $validated['remarks'],
+                'status' => 'closed',
+            ]);
+
+            // 2. Handle Payment (Debit from Source) - Paying BACK the loan
+            $moneySource = MoneySource::lockForUpdate()->find($validated['payment_source_id']);
+
+            // Check for outbound permission
+            if (!$moneySource->is_outbound) {
+                throw new \Exception("Payment source '{$moneySource->name}' is not allowed for outbound payments.");
+            }
+
+            $moneySource->decrement('balance', $validated['amount_paid']);
+
+            // 3. Create Transaction
+            \App\Models\Transaction\Transaction::create([
+                'branch_id' => $request->user()->branch_id,
+                'money_source_id' => $moneySource->id,
+                'type' => 'debit', // Expense/Outflow
+                'amount' => $validated['amount_paid'],
+                'date' => $validated['closed_date'],
+                'description' => "Repledge Closure #{$repledge->id} (Loan: {$repledge->loan->loan_no})",
+                'category' => 'repledge_payment', // Ensure this category exists or is handled
+                'transactionable_type' => \App\Models\Repledge\RepledgeClosure::class,
+                'transactionable_id' => $closure->id,
+                'created_by' => $request->user()->id,
+            ]);
+
+            // 4. Update Repledge Status
+            $repledge->update(['status' => 'closed']);
+
+            return response()->json($closure);
+        });
+    }
 }

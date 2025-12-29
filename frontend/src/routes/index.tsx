@@ -37,6 +37,7 @@ const ReceiptTemplateConfig = lazy(() => import("../pages/Admin/Configs/Template
 const RepledgeCreate = lazy(() => import("../pages/Repledge/Create"));
 const RepledgeEdit = lazy(() => import("../pages/Repledge/Edit"));
 const RepledgeView = lazy(() => import("../pages/Repledge/View"));
+const CloseRepledge = lazy(() => import("../pages/Repledge/CloseRepledge"));
 
 const MetalRates = lazy(() => import("../pages/Admin/Finance/MetalRates"));
 const JewelTypesIndex = lazy(() => import("../pages/Admin/JewelManagement/JewelTypes"));
@@ -56,7 +57,6 @@ const RepledgeClosingCalculations = lazy(() => import("../pages/Admin/LoanConfig
 const RepledgeProcessingFees = lazy(() => import("../pages/Admin/LoanConfiguration/Calculations/RepledgeProcessingFees"));
 
 const TransactionCategories = lazy(() => import("../pages/Admin/Finance/TransactionCategories"));
-const TransactionCategoryForm = lazy(() => import("../pages/Admin/Finance/TransactionCategoryForm"));
 
 const AppRoutes: React.FC = () => {
   return (
@@ -97,6 +97,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/re-pledge/create" element={<RepledgeCreate />} />
         <Route path="/re-pledge/:id/edit" element={<RepledgeEdit />} />
         <Route path="/re-pledge/:id" element={<RepledgeView />} />
+        <Route path="/re-pledge/:id/close" element={<CloseRepledge />} />
 
         {/* Placeholder Routes for Staff Navigation */}
 
@@ -156,8 +157,6 @@ const AppRoutes: React.FC = () => {
 
         {/* Transaction Categories */}
         <Route path="/admin/configs/transaction-categories" element={<TransactionCategories />} />
-        <Route path="/admin/configs/transaction-categories/create" element={<TransactionCategoryForm />} />
-        <Route path="/admin/configs/transaction-categories/edit/:id" element={<TransactionCategoryForm />} />
 
         {/* Jewel Types */}
         <Route path="/admin/configs/jewel-types" element={<JewelTypesIndex />} />

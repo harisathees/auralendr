@@ -37,17 +37,85 @@ class TransactionController extends Controller
             $query->where('money_source_id', $request->money_source_id);
         }
 
+        if ($request->has('start_date') && $request->start_date != '') {
+            $query->whereDate('date', '>=', $request->start_date);
+        }
+
+        if ($request->has('end_date') && $request->end_date != '') {
+            $query->whereDate('date', '<=', $request->end_date);
+        }
+
         $transactions = $query->paginate(50);
 
         return response()->json($transactions);
+    }
+
+    public function report(Request $request)
+    {
+        $user = $request->user();
+        $startDate = $request->start_date;
+        $endDate = $request->end_date;
+        $moneySourceId = $request->money_source_id;
+        $branchId = $request->branch_id;
+
+        // 1. Calculate Opening Balance
+        $opQuery = Transaction::query();
+
+        // Apply branch restrictions same as index
+        if ($user->branch_id && !$user->hasRole(['admin', 'superadmin', 'developer'])) {
+            $opQuery->where('branch_id', $user->branch_id);
+        }
+        if ($branchId) {
+            $opQuery->where('branch_id', $branchId);
+        }
+        if ($moneySourceId) {
+            $opQuery->where('money_source_id', $moneySourceId);
+        }
+
+        if ($startDate) {
+            $opQuery->whereDate('date', '<', $startDate);
+        } else {
+            // If no start date, opening balance is 0
+            $opQuery->whereRaw('1 = 0');
+        }
+
+        $openingBalance = $opQuery->selectRaw('SUM(CASE WHEN type = "credit" THEN amount ELSE -amount END) as balance')
+            ->value('balance') ?? 0;
+
+        // 2. Fetch Transactions for the period
+        $query = Transaction::with(['moneySource', 'creator.branch'])
+            ->orderBy('date', 'asc')
+            ->orderBy('created_at', 'asc');
+
+        if ($user->branch_id && !$user->hasRole(['admin', 'superadmin', 'developer'])) {
+            $query->where('branch_id', $user->branch_id);
+        }
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+        if ($moneySourceId) {
+            $query->where('money_source_id', $moneySourceId);
+        }
+        if ($startDate) {
+            $query->whereDate('date', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->whereDate('date', '<=', $endDate);
+        }
+
+        return response()->json([
+            'opening_balance' => (float) $openingBalance,
+            'transactions' => $query->get(),
+        ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'amount' => 'required|numeric|min:1',
-            'type' => 'required|in:credit,debit',
+            'type' => 'required|in:credit,debit,transfer',
             'money_source_id' => 'required|exists:money_sources,id',
+            'to_money_source_id' => 'required_if:type,transfer|exists:money_sources,id|different:money_source_id',
             'date' => 'required|date',
             'description' => 'required|string|max:255',
             'category' => 'nullable|string|max:50',
@@ -55,26 +123,75 @@ class TransactionController extends Controller
         ]);
 
         return DB::transaction(function () use ($validated) {
-            // 1. Create Transaction
+            $user = auth()->user();
+            $amount = $validated['amount'];
+            $date = $validated['date'];
+            $description = $validated['description'];
+            $category = $validated['category'] ?? 'general';
+
+            if ($validated['type'] === 'transfer') {
+                if (!$user->hasRole(['admin', 'superadmin', 'developer'])) {
+                    return response()->json(['message' => 'Unauthorized. Only admins can perform transfers.'], 403);
+                }
+
+                $fromSource = MoneySource::lockForUpdate()->find($validated['money_source_id']);
+                $toSource = MoneySource::lockForUpdate()->find($validated['to_money_source_id']);
+
+                // 1. Debit from Source
+                $debitTransaction = Transaction::create([
+                    'amount' => $amount,
+                    'type' => 'debit',
+                    'money_source_id' => $fromSource->id,
+                    'date' => $date,
+                    'description' => $description . " (Transfer to {$toSource->name})",
+                    'category' => 'transfer',
+                    'created_by' => $user->id,
+                    'branch_id' => $user->branch_id,
+                ]);
+
+                $fromSource->balance -= $amount;
+                $fromSource->save();
+
+                // 2. Credit to Source
+                $creditTransaction = Transaction::create([
+                    'amount' => $amount,
+                    'type' => 'credit',
+                    'money_source_id' => $toSource->id,
+                    'date' => $date,
+                    'description' => $description . " (Transfer from {$fromSource->name})",
+                    'category' => 'transfer',
+                    'created_by' => $user->id,
+                    'branch_id' => $user->branch_id,
+                ]);
+
+                $toSource->balance += $amount;
+                $toSource->save();
+
+                return response()->json([
+                    'message' => 'Transfer completed successfully',
+                    'debit_transaction' => $debitTransaction,
+                    'credit_transaction' => $creditTransaction
+                ], 201);
+            }
+
+            // Standard Transaction Logic
             $transaction = Transaction::create([
-                'amount' => $validated['amount'],
+                'amount' => $amount,
                 'type' => $validated['type'],
                 'money_source_id' => $validated['money_source_id'],
-                'date' => $validated['date'],
-                'description' => $validated['description'],
-                'category' => $validated['category'] ?? 'general',
-                'created_by' => auth()->id(),
-                'branch_id' => auth()->user()->branch_id,
-                // 'transactionable' can be null for manual entries
+                'date' => $date,
+                'description' => $description,
+                'category' => $category,
+                'created_by' => $user->id,
+                'branch_id' => $user->branch_id,
             ]);
 
-            // 2. Update Money Source Balance
             $moneySource = MoneySource::lockForUpdate()->find($validated['money_source_id']);
 
             if ($validated['type'] === 'credit') {
-                $moneySource->balance += $validated['amount'];
+                $moneySource->balance += $amount;
             } else {
-                $moneySource->balance -= $validated['amount'];
+                $moneySource->balance -= $amount;
             }
 
             $moneySource->save();
@@ -85,21 +202,15 @@ class TransactionController extends Controller
                 $pledgeClosure = PledgeClosure::where('pledge_id', $pledgeId)->first();
 
                 if ($pledgeClosure) {
-                    // Decrement balance (ensure it doesn't go below 0 purely for logic sanity, though DB might allow)
-                    $paidAmount = $validated['amount'];
-                    if ($validated['type'] === 'credit') { // Assuming credit means customer paid us
-                        $pledgeClosure->decrement('balance_amount', $paidAmount);
+                    if ($validated['type'] === 'credit') {
+                        $pledgeClosure->decrement('balance_amount', $amount);
                     }
 
-                    // Check if balance is cleared
                     if ($pledgeClosure->fresh()->balance_amount <= 0) {
-                        $pledgeClosure->update(['balance_amount' => 0]); // clean up negative values
-
-                        // Find and Close Task
+                        $pledgeClosure->update(['balance_amount' => 0]);
                         $pledge = Pledge::with('loan')->find($pledgeId);
                         if ($pledge && $pledge->loan) {
                             $loanNo = $pledge->loan->loan_no;
-                            // Look for the specific task created by PledgeController
                             $task = Task::where('title', 'LIKE', "%Pending Balance: {$loanNo}%")
                                 ->where('status', 'pending')
                                 ->first();
