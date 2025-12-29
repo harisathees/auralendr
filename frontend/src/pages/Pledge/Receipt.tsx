@@ -3,8 +3,8 @@ import { useParams } from 'react-router-dom';
 import * as htmlToImage from 'html-to-image';
 import { FiShare2, FiLoader } from 'react-icons/fi';
 import { FaIdCard } from 'react-icons/fa';
-import bg1 from '../../assets/front.jpg';
-import bg2 from '../../assets/back.jpg';
+const bg1 = '/assets/front.jpg';
+const bg2 = '/assets/back.jpg';
 import GoldCoinSpinner from '../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner';
 import { getPledge } from '../../api/pledgeService';
 import api from '../../api/apiClient';
@@ -23,11 +23,14 @@ const formatDate = (isoDateString: string) => {
     return `${day}/${month}/${year}`;
 };
 
+const DynamicReceipt = React.lazy(() => import('./components/DynamicReceipt'));
+
 const Receipt = () => {
-    const { id } = useParams(); // changed from loanId to id to match typical route param
+    const { id } = useParams();
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [config, setConfig] = useState<any>(null);
     const frontRef = useRef<HTMLDivElement>(null);
     const backRef = useRef<HTMLDivElement>(null);
 
@@ -36,11 +39,8 @@ const Receipt = () => {
     useEffect(() => {
         const fetchLatestRates = async () => {
             try {
-                // Assuming API endpoint for metal rates exists, otherwise defaulting
                 const { data } = await api.get('/metal-rates');
-                // Check if data is array or object wrapped in data
                 const rates = Array.isArray(data) ? data : (data.data || []);
-
                 const goldRate = rates.find((r: any) => r.metal_type === "Gold")?.rate || 0;
                 const silverRate = rates.find((r: any) => r.metal_type === "Silver")?.rate || 0;
                 return { goldRate, silverRate };
@@ -50,26 +50,33 @@ const Receipt = () => {
             }
         };
 
+        const fetchConfig = async () => {
+            try {
+                const { data } = await api.get('/templates/receipt');
+                return data;
+            } catch (error) {
+                console.error("Failed to load receipt config", error);
+                return null;
+            }
+        };
+
         const fetchData = async () => {
             if (!id) return;
 
             try {
-                const [pledgeResponse, rates] = await Promise.all([
+                const [pledgeResponse, rates, configData] = await Promise.all([
                     getPledge(Number(id)),
-                    fetchLatestRates()
+                    fetchLatestRates(),
+                    fetchConfig()
                 ]);
+
+                setConfig(configData);
 
                 const loan = pledgeResponse.data.data || pledgeResponse.data;
                 const customer = loan.customer;
-                // Assuming 'jewel' is singular or taking the first one if it's a list
-                // Adjust based on your API response structure. 
-                // If loan has 'jewels' array:
                 const jewel = Array.isArray(loan.jewels) ? loan.jewels[0] : loan.jewel;
 
-                // Construct image URLs
-                // Ensure backend sends full URLs or prepend base URL
                 const customerImageUrl = customer?.customer_image_url || customer?.photo_url || null;
-                // Jewel image might be in jewel object
                 const jewelImageUrl = jewel?.image_url || null;
 
                 setData({
@@ -78,10 +85,10 @@ const Receipt = () => {
                     phone: customer?.mobile_no || 'N/A',
                     whatsapp: customer?.whatsapp_no || '',
                     date: formatDate(loan.date),
-                    duedate: formatDate(loan.due_date), // check API field name (duedate vs due_date)
-                    weight: jewel?.gross_weight || jewel?.net_weight || 0, // check API field name
+                    duedate: formatDate(loan.due_date),
+                    weight: jewel?.gross_weight || jewel?.net_weight || 0,
                     interest: loan.interest_rate,
-                    interestTaken: loan.interest_taken === 1 || loan.interest_taken === true, // normalize boolean
+                    interestTaken: loan.interest_taken === 1 || loan.interest_taken === true,
                     jewelName: jewel?.description || jewel?.jewel_name || 'N/A',
                     faults: jewel?.faults || 'N/A',
                     quality: jewel?.quality || 'N/A',
@@ -169,137 +176,171 @@ const Receipt = () => {
         )
     }
 
+    if (config?.type === 'dynamic') {
+        return (
+            <React.Suspense fallback={<div className="flex items-center justify-center p-20">Loading template...</div>}>
+                <DynamicReceipt data={data} config={config} />
+            </React.Suspense>
+        );
+    }
+
     return (
-        <>
-            <div className="flex justify-center gap-5 my-5 print:hidden">
-                <button
-                    onClick={() => handleShare(frontRef, 'notice-front.png', 'front')}
-                    disabled={sharingTarget !== null}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-blue-700 transition disabled:bg-blue-400 disabled:cursor-wait"
-                >
-                    {sharingTarget === 'front' ? (
-                        <>
-                            <FiLoader className="animate-spin" />
-                            <span>Sharing...</span>
-                        </>
-                    ) : (
-                        <>
-                            <FiShare2 size={16} />
-                            <span>Share Front Page</span>
-                        </>
-                    )}
-                </button>
+        <div className="min-h-screen bg-slate-900 overflow-y-auto overflow-x-hidden py-8 font-sans print:bg-white print:p-0">
+            <div className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between print:hidden">
+                <h1 className="text-white font-bold text-lg hidden sm:block">Receipt Preview</h1>
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                    <button
+                        onClick={() => handleShare(frontRef, 'notice-front.png', 'front')}
+                        disabled={sharingTarget !== null}
+                        className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-blue-700 transition disabled:bg-blue-400 disabled:cursor-wait"
+                    >
+                        {sharingTarget === 'front' ? (
+                            <>
+                                <FiLoader className="animate-spin" />
+                                <span>Sharing...</span>
+                            </>
+                        ) : (
+                            <>
+                                <FiShare2 size={16} />
+                                <span>Front</span>
+                            </>
+                        )}
+                    </button>
 
-                <button
-                    onClick={() => handleShare(backRef, 'notice-back.png', 'back')}
-                    disabled={sharingTarget !== null}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-green-700 transition disabled:bg-green-400 disabled:cursor-wait"
-                >
-                    {sharingTarget === 'back' ? (
-                        <>
-                            <FiLoader className="animate-spin" />
-                            <span>Sharing...</span>
-                        </>
-                    ) : (
-                        <>
-                            <FiShare2 size={16} />
-                            <span>Share Back Page</span>
-                        </>
-                    )}
-                </button>
+                    <button
+                        onClick={() => handleShare(backRef, 'notice-back.png', 'back')}
+                        disabled={sharingTarget !== null}
+                        className="flex-1 sm:flex-none px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold flex items-center justify-center gap-2 hover:bg-green-700 transition disabled:bg-green-400 disabled:cursor-wait"
+                    >
+                        {sharingTarget === 'back' ? (
+                            <>
+                                <FiLoader className="animate-spin" />
+                                <span>Sharing...</span>
+                            </>
+                        ) : (
+                            <>
+                                <FiShare2 size={16} />
+                                <span>Back</span>
+                            </>
+                        )}
+                    </button>
+                </div>
             </div>
 
+            <div className="mt-16 flex flex-col items-center gap-8 print:mt-0 print:block">
+                {/* Front */}
+                <div className="relative w-full flex justify-center print:block print:w-auto">
+                    <div className="a4-wrapper origin-top print:transform-none transform scale-[0.4] sm:scale-[0.6] md:scale-[0.8] lg:scale-100 transition-transform duration-300">
+                        <div
+                            ref={frontRef}
+                            className="bg-white shadow-2xl print:shadow-none relative"
+                            style={{
+                                width: '210mm',
+                                height: '297mm',
+                                overflow: 'hidden'
+                            }}
+                        >
+                            <img src={bg1} alt="front" style={{ position: 'absolute', width: '210mm', height: '297mm', pointerEvents: 'none' }} />
 
-            {/* Front */}
-            <div
-                ref={frontRef}
-                style={{ position: 'relative', width: '210mm', height: '297mm', margin: '0 auto', overflow: 'hidden', background: 'white' }}
-            >
-                <img src={bg1} alt="front" style={{ position: 'absolute', width: '210mm', height: '297mm' }} />
+                            {data.customerImage && (
+                                <div style={{
+                                    position: 'absolute', top: '90mm', left: '70mm', width: '26mm', height: '33mm',
+                                    transform: 'rotate(90deg)', transformOrigin: 'left top', overflow: 'hidden',
+                                    border: '2px solid black', zIndex: 1,
+                                    backgroundColor: '#eee'
+                                }}>
+                                    <img
+                                        src={data.customerImage}
+                                        alt="Customer"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        onError={(e: any) => e.target.style.display = 'none'}
+                                    />
+                                </div>
+                            )}
+                            {data.jewelImage && (
+                                <div style={{
+                                    position: 'absolute', top: '120mm', left: '179mm', width: '26mm', height: '33mm',
+                                    transform: 'rotate(90deg)', transformOrigin: 'left top', overflow: 'hidden',
+                                    border: '2px solid black', zIndex: 1,
+                                    backgroundColor: '#eee'
+                                }}>
+                                    <img
+                                        src={data.jewelImage}
+                                        alt="Jewel"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        onError={(e: any) => e.target.style.display = 'none'}
+                                    />
+                                </div>
+                            )}
 
+                            {/* Duplicate images logic/Office Copy */}
+                            {data.customerImage && (
+                                <div style={{
+                                    position: 'absolute', top: '91mm', left: '179mm', width: '26mm', height: '33mm',
+                                    transform: 'rotate(90deg)', transformOrigin: 'left top', overflow: 'hidden',
+                                    border: '2px solid black', zIndex: 1,
+                                    backgroundColor: '#eee'
+                                }}>
+                                    <img
+                                        src={data.customerImage}
+                                        alt="Customer"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        onError={(e: any) => e.target.style.display = 'none'}
+                                    />
+                                </div>
+                            )}
+                            {data.jewelImage && (
+                                <div style={{
+                                    position: 'absolute', top: '119mm', left: '70mm', width: '26mm', height: '33mm',
+                                    transform: 'rotate(90deg)', transformOrigin: 'left top', overflow: 'hidden',
+                                    border: '2px solid black', zIndex: 1,
+                                    backgroundColor: '#eee'
+                                }}>
+                                    <img
+                                        src={data.jewelImage}
+                                        alt="Jewel"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        onError={(e: any) => e.target.style.display = 'none'}
+                                    />
+                                </div>
+                            )}
 
-                {data.customerImage && (
-                    <div style={{
-                        position: 'absolute', top: '90mm', left: '70mm', width: '26mm', height: '33mm',
-                        transform: 'rotate(90deg)', transformOrigin: 'left top', overflow: 'hidden',
-                        border: '2px solid black', zIndex: 1,
-                        backgroundColor: '#eee'
-                    }}>
-                        <img
-                            src={data.customerImage}
-                            alt="Customer"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            onError={(e: any) => e.target.style.display = 'none'}
-                        />
+                            {fields(data).map((field, index) => (
+                                <div key={index} style={{
+                                    position: 'absolute',
+                                    top: field.top, left: field.left,
+                                    transform: 'rotate(90deg)', transformOrigin: 'left top',
+                                    fontSize: '15px', zIndex: 1, whiteSpace: 'nowrap',
+                                    overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '150mm',
+                                    fontFamily: 'sans-serif', fontWeight: 'bold'
+                                }}>
+                                    {field.label}
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                )}
-                {data.jewelImage && (
-                    <div style={{
-                        position: 'absolute', top: '120mm', left: '179mm', width: '26mm', height: '33mm',
-                        transform: 'rotate(90deg)', transformOrigin: 'left top', overflow: 'hidden',
-                        border: '2px solid black', zIndex: 1,
-                        backgroundColor: '#eee'
-                    }}>
-                        <img
-                            src={data.jewelImage}
-                            alt="Jewel"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            onError={(e: any) => e.target.style.display = 'none'}
-                        />
-                    </div>
-                )}
+                </div>
 
-                {/* Duplicate images logic from user code? It seems duplicates were for office/customer copies probably. */}
-                {data.customerImage && (
-                    <div style={{
-                        position: 'absolute', top: '91mm', left: '179mm', width: '26mm', height: '33mm',
-                        transform: 'rotate(90deg)', transformOrigin: 'left top', overflow: 'hidden',
-                        border: '2px solid black', zIndex: 1,
-                        backgroundColor: '#eee'
-                    }}>
-                        <img
-                            src={data.customerImage}
-                            alt="Customer"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            onError={(e: any) => e.target.style.display = 'none'}
-                        />
+                {/* Back */}
+                <div className="relative w-full flex justify-center print:block print:w-auto print:page-break-before-always">
+                    <div className="a4-wrapper origin-top print:transform-none transform scale-[0.4] sm:scale-[0.6] md:scale-[0.8] lg:scale-100 transition-transform duration-300">
+                        <div
+                            ref={backRef}
+                            className="bg-white shadow-2xl print:shadow-none"
+                            style={{
+                                width: '210mm',
+                                height: '297mm',
+                                overflow: 'hidden'
+                            }}
+                        >
+                            <img src={bg2} alt="back" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
                     </div>
-                )}
-                {data.jewelImage && (
-                    <div style={{
-                        position: 'absolute', top: '119mm', left: '70mm', width: '26mm', height: '33mm',
-                        transform: 'rotate(90deg)', transformOrigin: 'left top', overflow: 'hidden',
-                        border: '2px solid black', zIndex: 1,
-                        backgroundColor: '#eee'
-                    }}>
-                        <img
-                            src={data.jewelImage}
-                            alt="Jewel"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            onError={(e: any) => e.target.style.display = 'none'}
-                        />
-                    </div>
-                )}
-
-                {fields(data).map((field, index) => (
-                    <div key={index} style={{
-                        position: 'absolute',
-                        top: field.top, left: field.left,
-                        transform: 'rotate(90deg)', transformOrigin: 'left top',
-                        fontSize: '15px', zIndex: 1, whiteSpace: 'nowrap',
-                        overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '150mm',
-                        fontFamily: 'sans-serif'
-                    }}>
-                        <b>{field.label}</b>
-                    </div>
-                ))}
+                </div>
             </div>
-
-            {/* Back */}
-            <div ref={backRef} style={{ width: '210mm', height: '297mm', margin: '0 auto', pageBreakBefore: 'always' }}>
-                <img src={bg2} alt="back" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-        </>
+            {/* Dynamic Height Spacer for scroll area adjustment based on scale if needed, usually wrapper handles it via flex/margin */}
+            <div className="h-24 sm:h-0"></div>
+        </div>
     );
 };
 

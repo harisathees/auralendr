@@ -45,7 +45,7 @@ const MetalRates: React.FC = () => {
     }
 
     return (
-        <div className="p-6 max-w-4xl mx-auto pb-24">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24 w-full">
             <header className="mb-8 flex items-center gap-4">
                 <button
                     onClick={() => window.history.back()}

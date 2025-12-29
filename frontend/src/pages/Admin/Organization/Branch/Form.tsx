@@ -49,7 +49,7 @@ const BranchForm: React.FC = () => {
             } else {
                 await api.post("/branches", formData);
             }
-            navigate("/admin/branches");
+            navigate("/admin/configs/branches");
         } catch (err: any) {
             setError(err.response?.data?.message || "Failed to save branch.");
         } finally {
@@ -83,7 +83,7 @@ const BranchForm: React.FC = () => {
         <div className="p-6 max-w-2xl mx-auto">
             <div className="flex items-center gap-4 mb-6">
                 <button
-                    onClick={() => navigate("/admin/branches")}
+                    onClick={() => navigate("/admin/configs/branches")}
                     className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                 >
                     <span className="material-symbols-outlined">arrow_back</span>
@@ -128,7 +128,7 @@ const BranchForm: React.FC = () => {
                     <div className="pt-4 flex justify-end gap-3">
                         <button
                             type="button"
-                            onClick={() => navigate("/admin/branches")}
+                            onClick={() => navigate("/admin/configs/branches")}
                             className="px-4 py-2 text-secondary-text dark:text-gray-300 hover:text-primary-text dark:hover:text-white transition-colors"
                         >
                             Cancel

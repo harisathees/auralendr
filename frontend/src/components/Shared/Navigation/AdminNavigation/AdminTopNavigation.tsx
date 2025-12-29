@@ -25,23 +25,23 @@ const AdminNavigation: React.FC = () => {
 
             {/* Branches */}
             <Link
-                className={`flex flex-col items-center gap-1 transition-colors ${isActive("/admin/branches") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                className={`flex flex-col items-center gap-1 transition-colors ${isActive("/admin/configs/branches") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
                     }`}
-                to="/admin/branches"
+                to="/admin/configs/branches"
             >
-                <span className="material-symbols-outlined" style={isActive("/admin/branches") ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                <span className="material-symbols-outlined" style={isActive("/admin/configs/branches") ? { fontVariationSettings: "'FILL' 1" } : {}}>
                     store
                 </span>
                 <span className="text-xs font-medium">Branches</span>
             </Link>
 
-            {/* Users (To be implemented next) */}
+            {/* Users */}
             <Link
-                className={`flex flex-col items-center gap-1 transition-colors ${isActive("/admin/users") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                className={`flex flex-col items-center gap-1 transition-colors ${isActive("/admin/configs/users") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
                     }`}
-                to="/admin/users"
+                to="/admin/configs/users"
             >
-                <span className="material-symbols-outlined">group</span>
+                <span className="material-symbols-outlined" style={isActive("/admin/configs/users") ? { fontVariationSettings: "'FILL' 1" } : {}}>group</span>
                 <span className="text-xs font-medium">Staff</span>
             </Link>
 

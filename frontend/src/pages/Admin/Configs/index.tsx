@@ -117,6 +117,30 @@ const AdminConfigs: React.FC = () => {
                         bg: "bg-orange-100",
                         link: "/admin/configs/processing-fees"
                     },
+                    {
+                        title: "Pledge Closing",
+                        description: "Configure closing calculations",
+                        icon: "calculate",
+                        color: "text-blue-600",
+                        bg: "bg-blue-100",
+                        link: "/admin/configs/pledge-closing-calculations"
+                    },
+                    {
+                        title: "Repledge Closing",
+                        description: "Repledge closing settings",
+                        icon: "functions",
+                        color: "text-green-600",
+                        bg: "bg-green-100",
+                        link: "/admin/configs/repledge-closing-calculations"
+                    },
+                    {
+                        title: "Repledge Fees",
+                        description: "Repledge processing fees",
+                        icon: "request_quote",
+                        color: "text-purple-600",
+                        bg: "bg-purple-100",
+                        link: "/admin/configs/repledge-processing-fees"
+                    },
                 ]
             },
             {

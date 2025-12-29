@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../../../api/apiClient";
 import type { MoneySource } from "../../../types/models";
 import { useNavigate } from "react-router-dom";
-import MoneySourceForm from "./MoneySourceForm";
+import MoneySourceForm from "./Form";
 import ConfirmationModal from "../../../components/Shared/ConfirmationModal";
 import { useToast } from "../../../context";
 
@@ -93,13 +93,15 @@ const MoneySources: React.FC = () => {
                 >
                     <span className="material-symbols-outlined text-secondary-text dark:text-white">arrow_back</span>
                 </button>
-                <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                        <span className="material-symbols-outlined text-green-600 dark:text-green-400">payments</span>
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold text-primary-text dark:text-white">Payment Methods</h1>
-                        <p className="text-xs text-secondary-text dark:text-gray-400">Manage cash & bank accounts</p>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-green-600 dark:text-green-400">payments</span>
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-bold text-primary-text dark:text-white">Payment Methods</h1>
+                            <p className="text-xs text-secondary-text dark:text-gray-400">Manage cash & bank accounts</p>
+                        </div>
                     </div>
                 </div>
                 <button

@@ -73,7 +73,7 @@ const StaffDashboard: React.FC = () => {
     <div className="flex flex-col h-full overflow-y-auto bg-background-light dark:bg-background-dark group/design-root font-display scrollbar-hide">
 
       {/* Header */}
-      <header className="flex items-center bg-background-light dark:bg-background-dark p-4 pt-6 pb-4 justify-between sticky top-0 z-10">
+      <header className="flex items-center bg-background-light dark:bg-background-dark p-4 pt-6 pb-4 justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
           <div className="flex size-10 shrink-0 items-center">
             <div
@@ -156,11 +156,26 @@ const StaffDashboard: React.FC = () => {
       {/* Main Content */}
       <main className="flex-1 px-4 pb-4">
         {/* Task Progress Card */}
-        <div className="flex flex-col gap-3 rounded-xl bg-gradient-to-br from-[#E8F5E9] to-[#F1F8E9] dark:from-gray-800 dark:to-gray-900 p-5 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#166534] dark:text-primary">bolt</span>
-              <p className="text-[#166534] dark:text-gray-200 text-base font-bold leading-normal">Daily Task Progress</p>
+        <div className="flex flex-col gap-3 rounded-xl bg-gradient-to-br from-[#E8F5E9] to-[#F1F8E9] dark:from-gray-800 dark:to-gray-900 p-5 mb-6 relative overflow-hidden">
+          {/* Decorative Background Icon */}
+          <span className="material-symbols-outlined absolute -bottom-4 -right-4 text-9xl text-[#166534]/5 dark:text-gray-700/5 rotate-12 pointer-events-none">
+            task_alt
+          </span>
+
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#166534] dark:text-primary">bolt</span>
+                <p className="text-[#166534] dark:text-gray-200 text-base font-bold leading-normal">Daily Task Progress</p>
+              </div>
+              {user?.branch && (
+                <div className="flex items-center gap-1.5 ml-0.5">
+                  <span className="material-symbols-outlined text-[#166534]/70 dark:text-gray-400 text-sm">store</span>
+                  <p className="text-[#166534]/80 dark:text-gray-400 text-sm font-medium">
+                    {user.branch.branch_name}
+                  </p>
+                </div>
+              )}
             </div>
             <div className="relative flex items-center justify-center size-20">
               <svg className="size-full -rotate-90" viewBox="0 0 36 36">

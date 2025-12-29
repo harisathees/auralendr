@@ -15,8 +15,11 @@ const Create = lazy(() => import("../pages/Pledge/Create"));
 const Edit = lazy(() => import("../pages/Pledge/Edit"));
 const View = lazy(() => import("../pages/Pledge/View"));
 const Receipt = lazy(() => import("../pages/Pledge/Receipt"));
+const ClosePledge = lazy(() => import("../pages/Pledge/ClosePledge"));
 const BranchList = lazy(() => import("../pages/Admin/Organization/Branch/List"));
+const BranchForm = lazy(() => import("../pages/Admin/Organization/Branch/Form"));
 const UsersList = lazy(() => import("../pages/Admin/Organization/User/List"));
+const UserForm = lazy(() => import("../pages/Admin/Organization/User/Form"));
 const CustomersList = lazy(() => import("../pages/Admin/Customer/List"));
 const TasksList = lazy(() => import("../pages/Admin/Task/List"));
 const LoansList = lazy(() => import("../pages/Admin/LoanConfiguration/LoanList"));
@@ -28,7 +31,9 @@ const ProcessingFees = lazy(() => import("../pages/Admin/LoanConfiguration/Proce
 const RepledgeSources = lazy(() => import("../pages/Admin/Finance/RepledgeSources"));
 
 // Repledge Pages
+const Notices = lazy(() => import("../pages/Staff/Notices/Notices"));
 const RepledgeList = lazy(() => import("../pages/Repledge/List"));
+const ReceiptTemplateConfig = lazy(() => import("../pages/Admin/Configs/Templates/Receipt/ReceiptTemplate"));
 const RepledgeCreate = lazy(() => import("../pages/Repledge/Create"));
 const RepledgeEdit = lazy(() => import("../pages/Repledge/Edit"));
 const RepledgeView = lazy(() => import("../pages/Repledge/View"));
@@ -44,6 +49,11 @@ const JewelNameForm = lazy(() => import("../pages/Admin/JewelManagement/JewelNam
 const InterestRateForm = lazy(() => import("../pages/Admin/LoanConfiguration/InterestRateForm"));
 const ValidityPeriodForm = lazy(() => import("../pages/Admin/LoanConfiguration/LoanValidityForm"));
 const RolesIndex = lazy(() => import("../pages/Developer/index"));
+
+// Organization Configurations
+const PledgeClosingCalculations = lazy(() => import("../pages/Admin/LoanConfiguration/Calculations/PledgeClosingCalculations"));
+const RepledgeClosingCalculations = lazy(() => import("../pages/Admin/LoanConfiguration/Calculations/RepledgeClosingCalculations"));
+const RepledgeProcessingFees = lazy(() => import("../pages/Admin/LoanConfiguration/Calculations/RepledgeProcessingFees"));
 
 const TransactionCategories = lazy(() => import("../pages/Admin/Finance/TransactionCategories"));
 const TransactionCategoryForm = lazy(() => import("../pages/Admin/Finance/TransactionCategoryForm"));
@@ -80,6 +90,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/pledges/:id/edit" element={<Edit />} />
         <Route path="/pledges/:id/receipt" element={<Receipt />} />
         <Route path="/pledges/:id" element={<View />} />
+        <Route path="/pledges/:loanId/close" element={<ClosePledge />} />
 
         {/* Repledge Routes */}
         <Route path="/re-pledge" element={<RepledgeList />} />
@@ -88,7 +99,9 @@ const AppRoutes: React.FC = () => {
         <Route path="/re-pledge/:id" element={<RepledgeView />} />
 
         {/* Placeholder Routes for Staff Navigation */}
-        <Route path="/notices" element={<div className="p-8 text-center min-h-screen bg-background-light dark:bg-background-dark"><h1 className="text-2xl font-bold">Notice Printing Page</h1><p className="text-gray-500 mt-2">Coming Soon...</p></div>} />
+
+        {/* Placeholder Routes for Staff Navigation */}
+        <Route path="/notices" element={<Notices />} />
         <Route path="/privileges" element={
           <div className="p-8 flex flex-col items-center justify-center min-h-screen bg-background-light dark:bg-background-dark">
             <h1 className="text-2xl font-bold mb-6">User Privileges</h1>
@@ -126,14 +139,20 @@ const AppRoutes: React.FC = () => {
       >
         <Route path="/admin/dashboard" element={<Dashboard />} />
         <Route path="/admin/configs/branches" element={<BranchList />} />
+        <Route path="/admin/configs/branches/create" element={<BranchForm />} />
+        <Route path="/admin/configs/branches/edit/:id" element={<BranchForm />} />
         <Route path="/admin/configs/users" element={<UsersList />} />
+        <Route path="/admin/configs/users/create" element={<UserForm />} />
+        <Route path="/admin/configs/users/edit/:id" element={<UserForm />} />
         <Route path="/admin/loans" element={<LoansList />} />
         <Route path="/admin/customers" element={<CustomersList />} />
         <Route path="/admin/pledges/:id" element={<View />} />
+        <Route path="/admin/cashflow" element={<TransactionHistory />} />
 
         <Route path="/admin/configs" element={<AdminConfigs />} />
         <Route path="/admin/configs/money-sources" element={<MoneySources />} />
         <Route path="/admin/configs/metal-rates" element={<MetalRates />} />
+        <Route path="/admin/configs/templates/receipt" element={<ReceiptTemplateConfig />} />
 
         {/* Transaction Categories */}
         <Route path="/admin/configs/transaction-categories" element={<TransactionCategories />} />
@@ -165,6 +184,11 @@ const AppRoutes: React.FC = () => {
 
         {/* Developer - Privileges */}
         <Route path="/admin/configs/roles" element={<RolesIndex />} />
+
+        {/* Organization - Calculations */}
+        <Route path="/admin/configs/pledge-closing-calculations" element={<PledgeClosingCalculations />} />
+        <Route path="/admin/configs/repledge-closing-calculations" element={<RepledgeClosingCalculations />} />
+        <Route path="/admin/configs/repledge-processing-fees" element={<RepledgeProcessingFees />} />
 
         {/* FAB Action Routes (if they are pages) */}
         <Route path="/admin/analysis" element={<div>Advanced Analysis Page (Placeholder)</div>} />

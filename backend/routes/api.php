@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\InterestRateController;
 use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\LoanController;
 use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\LoanProcessingFeeController;
 use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\ValidityMonthController;
+use App\Http\Controllers\Api\V1\Admin\DashboardController;
 
 Route::get('/test', function () {
     return response()->json(['status' => 'API Working']);
@@ -45,12 +46,13 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::get('/roles', [RolePermissionController::class, 'index']);
     Route::get('/permissions', [RolePermissionController::class, 'getPermissions']);
     Route::put('/roles/{role}', [RolePermissionController::class, 'update']);
-    
+
     // User Permissions - select seperate user for give permissions
     Route::get('/users-by-role', [RolePermissionController::class, 'getUsersByRole']);
     Route::put('/users/{user}/permissions', [RolePermissionController::class, 'updateUserPermissions']);
 
     // Pledge Routes
+    Route::post('pledges/{pledge}/close', [PledgeController::class, 'close']);
     Route::apiResource('pledges', PledgeController::class);
 
     // Repledge Routes
@@ -64,6 +66,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
 
     // Admin-only routes
     Route::middleware('admin')->group(function () {
+        Route::get('/dashboard/stats', [DashboardController::class, 'getStats']);
         Route::apiResource('tasks', TaskController::class);
         Route::apiResource('jewel-types', JewelTypeController::class);
         Route::apiResource('jewel-qualities', JewelQualityController::class);
@@ -77,7 +80,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
 
     // Shared Routes (Admin + Staff)
     Route::get('/admin-all-loans', [LoanController::class, 'index']);
-    
+
     // Read-only access for shared resources often needed by staff
     Route::get('/jewel-types', [JewelTypeController::class, 'index']);
     Route::get('/jewel-qualities', [JewelQualityController::class, 'index']);
@@ -109,6 +112,10 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     // Transactions
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::post('/transactions', [TransactionController::class, 'store']);
+
+    // Template Routes
+    Route::get('/templates/receipt', [App\Http\Controllers\Api\V1\Admin\Configuration\TemplateController::class, 'getReceiptTemplate']);
+    Route::post('/templates/receipt', [App\Http\Controllers\Api\V1\Admin\Configuration\TemplateController::class, 'updateReceiptTemplate']);
 
     // Staff Task Routes
     Route::get('/my-tasks', [TaskController::class, 'myTasks']);

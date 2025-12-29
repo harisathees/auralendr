@@ -66,7 +66,7 @@ const BranchList: React.FC = () => {
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">Branches</h2>
                 {can('branch.create') ? (
                     <button
-                        onClick={() => navigate("/admin/branches/create")}
+                        onClick={() => navigate("/admin/configs/branches/create")}
                         className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg shadow-md transition-colors flex items-center gap-2"
                     >
                         <span className="material-symbols-outlined">add</span>
@@ -104,7 +104,7 @@ const BranchList: React.FC = () => {
                                     <div className="flex justify-end gap-2">
                                         {can('branch.update') ? (
                                             <button
-                                                onClick={() => navigate(`/admin/branches/edit/${branch.id}`)}
+                                                onClick={() => navigate(`/admin/configs/branches/edit/${branch.id}`)}
                                                 className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors"
                                                 title="Edit"
                                             >

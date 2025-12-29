@@ -34,10 +34,28 @@ class PledgeController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $query = Pledge::with(['customer', 'loan', 'jewels', 'media']);
+        $query = Pledge::with(['customer', 'loan', 'jewels', 'media', 'closure']);
 
         if (!$user->hasRole('admin')) {
             $query->where('branch_id', $user->branch_id);
+        }
+
+
+        // Report Filtering
+        if ($reportType = $request->query('report_type')) {
+            if ($reportType === 'overdue') {
+                $query->whereHas('loan', function ($q) {
+                    $q->where('status', 'active') // Assuming 'active' is the status for open loans
+                        ->where('due_date', '<', now());
+                });
+            } elseif ($reportType === 'annual') {
+                $query->whereHas('loan', function ($q) {
+                    // Annual due: active loans created more than 1 year ago
+                    $oneYearAgo = now()->subYear();
+                    $q->where('status', 'active')
+                        ->where('date', '<', $oneYearAgo);
+                });
+            }
         }
 
         if ($search = $request->query('search')) {
@@ -198,7 +216,7 @@ class PledgeController extends Controller
                         $moneySource->decrement('balance', $loan->amount_to_be_given);
 
                         // Create Transaction Record
-                        \App\Models\Transaction::create([
+                        \App\Models\Transaction\Transaction::create([
                             'branch_id' => $user->branch_id,
                             'money_source_id' => $moneySource->id,
                             'type' => 'debit',
@@ -206,7 +224,7 @@ class PledgeController extends Controller
                             'date' => now(), // or $loan->date if strictly following loan date
                             'description' => "Loan Disbursment for Pledge #{$pledge->id} (Cust: {$customer->name})",
                             'category' => 'loan',
-                            'transactionable_type' => \App\Models\pledge\Loan::class,
+                            'transactionable_type' => \App\Models\Pledge\Loan::class,
                             'transactionable_id' => $loan->id,
                             'created_by' => $user->id,
                         ]);
@@ -317,7 +335,7 @@ class PledgeController extends Controller
     public function show(Pledge $pledge, Request $request)
     {
         $this->authorize('view', $pledge);
-        return response()->json($pledge->load(['customer', 'loan', 'jewels', 'media']));
+        return response()->json($pledge->load(['customer', 'loan', 'jewels', 'media', 'closure']));
     }
 
     /**
@@ -376,7 +394,7 @@ class PledgeController extends Controller
                                         }
                                         $moneySource->decrement('balance', $diff);
 
-                                        \App\Models\Transaction::create([
+                                        \App\Models\Transaction\Transaction::create([
                                             'branch_id' => $pledge->branch_id,
                                             'money_source_id' => $moneySource->id,
                                             'type' => 'debit',
@@ -394,7 +412,7 @@ class PledgeController extends Controller
                                         Log::debug('Decreasing Loan Amount', ['refund_amount' => $refundAmount]);
                                         $moneySource->increment('balance', $refundAmount);
 
-                                        \App\Models\Transaction::create([
+                                        \App\Models\Transaction\Transaction::create([
                                             'branch_id' => $pledge->branch_id,
                                             'money_source_id' => $moneySource->id,
                                             'type' => 'credit',
@@ -578,5 +596,110 @@ class PledgeController extends Controller
         }
 
         return response()->json(['message' => 'Pledge, Customer, and all associated data deleted successfully']);
+    }
+    /**
+     * POST /api/pledges/{pledge}/close
+     */
+    public function close(Request $request, Pledge $pledge)
+    {
+        $this->authorize('update', $pledge);
+
+        $validated = $request->validate([
+            'closed_date' => 'required|date',
+            'calculation_method' => 'required|string',
+            'balance_amount' => 'nullable|numeric',
+            'reduction_amount' => 'required|numeric',
+            'totalInterest' => 'required|numeric',
+            'interestReduction' => 'nullable|numeric',
+            'additionalReduction' => 'nullable|numeric',
+            'totalAmount' => 'required|numeric',
+            'totalMonths' => 'nullable|string',
+            'finalInterestRate' => 'nullable|string',
+            'metal_rate' => 'nullable|numeric',
+            'payment_source_id' => 'required|exists:money_sources,id',
+            'amount_paid' => 'required|numeric|min:0',
+        ]);
+
+        try {
+            return DB::transaction(function () use ($validated, $pledge, $request) {
+                // 1. Create Closure Record
+                $closure = \App\Models\Pledge\PledgeClosure::create([
+                    'pledge_id' => $pledge->id,
+                    'created_by' => $request->user()->id,
+                    'closed_date' => $validated['closed_date'],
+                    'calculation_method' => $validated['calculation_method'],
+                    'balance_amount' => $validated['balance_amount'] ?? 0,
+                    'reduction_amount' => $validated['reduction_amount'],
+                    'calculated_interest' => $validated['totalInterest'],
+                    'interest_reduction' => $validated['interestReduction'] ?? 0,
+                    'additional_reduction' => $validated['additionalReduction'] ?? 0,
+                    'total_payable' => $validated['totalAmount'],
+                    'duration_str' => $validated['totalMonths'],
+                    'interest_rate_snapshot' => $validated['finalInterestRate'],
+                    'status' => $pledge->status, // Save current status (e.g. overdue/active)
+                    'metal_rate' => $validated['metal_rate'] ?? null,
+                ]);
+
+                // 2. Handle Payment Source & Transaction
+                $moneySource = MoneySource::lockForUpdate()->find($validated['payment_source_id']);
+                $amountPaid = $validated['amount_paid'];
+
+                if ($amountPaid > 0) {
+                    // Credit the amount to the money source (Income)
+                    $moneySource->increment('balance', $amountPaid);
+
+                    // Create Transaction Record
+                    \App\Models\Transaction\Transaction::create([
+                        'branch_id' => $request->user()->branch_id,
+                        'money_source_id' => $moneySource->id,
+                        'type' => 'credit', // Income
+                        'amount' => $amountPaid,
+                        'date' => $validated['closed_date'],
+                        'description' => "Pledge Closure Payment #{$pledge->id} (Cust: {$pledge->customer->name})",
+                        'category' => 'loan_repayment',
+                        'transactionable_type' => \App\Models\Pledge\PledgeClosure::class,
+                        'transactionable_id' => $closure->id,
+                        'created_by' => $request->user()->id,
+                    ]);
+                }
+
+                // 3. Handle Pending Balance Task
+                $balanceAmount = $validated['balance_amount'] ?? 0;
+                if ($balanceAmount > 0) {
+                    \App\Models\Admin\Task\Task::create([
+                        'title' => "Pending Balance: {$pledge->loan->loan_no}",
+                        'description' => "Collect pending balance of ₹{$balanceAmount} from customer {$pledge->customer->name} (Mobile: {$pledge->customer->mobile_no}).",
+                        'assigned_to' => null, // Branch Task
+                        'created_by' => $request->user()->id,
+                        'status' => 'pending',
+                        'branch_id' => $pledge->branch_id,
+                        'due_date' => now()->addDays(7), // Default due date
+                    ]);
+                }
+
+                // 4. Update Pledge Status
+                $pledge->update(['status' => 'closed']);
+
+                // 4. Update Loan Status
+                if ($pledge->loan) {
+                    $pledge->loan->update(['status' => 'closed']);
+                }
+
+                return response()->json([
+                    'message' => 'Pledge closed successfully',
+                    'data' => $closure
+                ]);
+            });
+        } catch (\Exception $e) {
+            Log::error('Error closing pledge: ' . $e->getMessage(), [
+                'pledge_id' => $pledge->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to close pledge',
+                'error' => config('app.debug') ? $e->getMessage() : 'server_error'
+            ], 500);
+        }
     }
 }

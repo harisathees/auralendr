@@ -151,6 +151,43 @@ const PledgeView: React.FC<Props> = ({ data }) => {
           </div>
         ) : (
           <>
+            {/* Closure Details Section - Only visible if closed */}
+            {data.closure && (
+              <section className="bg-rose-50 dark:bg-rose-900/10 rounded-xl p-5 shadow-sm border border-rose-200 dark:border-rose-800/30">
+                <div className="flex items-center gap-3 mb-5 border-b border-rose-200 dark:border-rose-800/30 pb-3">
+                  <span className="material-symbols-outlined text-rose-600 dark:text-rose-500">task_alt</span>
+                  <h3 className="text-rose-800 dark:text-rose-400 text-xl font-bold">Closure Details</h3>
+                  <div className="ml-auto px-3 py-1 bg-rose-100 dark:bg-rose-900/40 rounded-full text-rose-700 dark:text-rose-300 text-xs font-bold uppercase tracking-wider">
+                    Closed
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <ReadOnlyField label="Closed Date" value={data.closure.closed_date} />
+                  <ReadOnlyField label="Total Payable (₹)" value={data.closure.total_payable} />
+                  <div className="bg-rose-100/50 dark:bg-rose-900/20 rounded-lg">
+                    <ReadOnlyField label="Balance Amount (₹)" value={data.closure.balance_amount} />
+                  </div>
+
+                  <ReadOnlyField label="Calculated Interest (₹)" value={data.closure.calculated_interest} />
+                  <ReadOnlyField label="Reduction (₹)" value={data.closure.reduction_amount} />
+                  <ReadOnlyField label="Method" value={data.closure.calculation_method} />
+
+                  <ReadOnlyField label="Duration" value={data.closure.duration_str} />
+                  <ReadOnlyField label="Final Interest Rate" value={data.closure.interest_rate_snapshot} />
+                  {data.closure.metal_rate && <ReadOnlyField label="Metal Rate (at closure)" value={`₹${data.closure.metal_rate}/g`} />}
+
+                  {/* Detailed breakdown if needed */}
+                  {(Number(data.closure.interest_reduction) > 0 || Number(data.closure.additional_reduction) > 0) && (
+                    <>
+                      <ReadOnlyField label="Interest Taken (₹)" value={data.closure.interest_reduction} />
+                      <ReadOnlyField label="Addt. Reduction (₹)" value={data.closure.additional_reduction} />
+                    </>
+                  )}
+                </div>
+              </section>
+            )}
+
             {/* Customer Details Section */}
             <section className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-green-100 dark:border-gray-700">
               <div className="flex items-center gap-3 mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">

@@ -22,10 +22,11 @@ export interface Task {
     id: number;
     title: string;
     description: string | null;
-    assigned_to: number;
+    assigned_to: number | null;
     created_by: number;
     status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
     due_date: string | null;
+    branch_id?: number | null;
     created_at: string;
     updated_at: string;
     assignee?: User;
@@ -124,6 +125,7 @@ export interface Transaction {
         type: string;
     };
     created_at: string;
+    creator?: User;
 }
 
 export interface Permission {
@@ -185,6 +187,10 @@ export interface Pledge {
     jewels: Jewel[];
     loan: Loan;
     media: any[];
+    closure?: {
+        balance_amount?: string | number;
+        [key: string]: any;
+    };
     status?: string; // Inferred from usage in PledgeList
 }
 

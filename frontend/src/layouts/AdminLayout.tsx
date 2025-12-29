@@ -10,15 +10,11 @@ const AdminLayout: React.FC = () => {
     const { user } = useAuth();
 
     return (
-        <div className="min-h-screen bg-background-light dark:bg-background-dark">
-            <div className="w-full h-[100dvh] relative bg-background-light dark:bg-background-dark shadow-xl overflow-hidden flex flex-col font-display">
-                <div className="flex-1 overflow-y-auto relative no-scrollbar">
-                    <Suspense fallback={<GoldCoinSpinner text="Loading..." />}>
-                        <Outlet />
-                    </Suspense>
-                </div>
-                {user?.role === 'developer' ? <DeveloperBottomNavigation /> : <AdminBottomNavigation />}
-            </div>
+        <div className="min-h-screen bg-background-light dark:bg-background-dark relative flex flex-col font-display pb-24">
+            <Suspense fallback={<GoldCoinSpinner text="Loading..." />}>
+                <Outlet />
+            </Suspense>
+            {user?.role === 'developer' ? <DeveloperBottomNavigation /> : <AdminBottomNavigation />}
         </div>
     );
 };

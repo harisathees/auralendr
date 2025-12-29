@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, X, SlidersHorizontal, Lock } from "lucide-react";
+import { Search, X, SlidersHorizontal, Lock, Banknote, PlusCircle, CheckCircle } from "lucide-react";
 import api from "../../api/apiClient";
 import { useRepledge } from "../../hooks/useRepledge";
 import { useAuth } from "../../context/Auth/AuthContext";
@@ -18,6 +18,7 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
   const navigate = useNavigate();
   const { can } = useAuth();
   const [activeTab, setActiveTab] = useState<'loans' | 'repledges'>('loans');
+  const [expandedPledgeId, setExpandedPledgeId] = useState<number | string | null>(null);
   const { repledgeEntries, fetchRepledgeEntries, loading: repledgeLoading } = useRepledge();
 
   useEffect(() => {
@@ -81,8 +82,9 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
 
   // Helper for random color or logic based on status
   const getStatusColor = (status: string) => {
-    if (status === 'closed') return 'text-red-500 bg-red-100 dark:bg-red-500/20 border-red-200 dark:border-red-500/30';
-    return 'text-primary bg-green-50 dark:bg-primary/20 border-green-100 dark:border-primary/30';
+    if (status === 'closed') return 'text-rose-700 bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/30';
+    if (status === 'overdue') return 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/30';
+    return 'text-primary bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/30';
   };
 
   // Helper to fix localhost image URLs (missing port)
@@ -214,14 +216,15 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
                   {pledges.map((p, index) => (
                     <div
                       key={p.id}
-                      onClick={() => navigate(`/pledges/${p.id}`)}
+                      onClick={() => setExpandedPledgeId(expandedPledgeId === p.id ? null : p.id)}
                       className="group relative bg-white dark:bg-card-dark rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-none border border-gray-100 dark:border-gray-800/50 flex flex-col p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-300 animate-in fade-in"
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
                       <div className="flex items-start gap-3">
                         {/* Avatar / Image - Simplified */}
                         <img
-                          className="w-12 h-12 rounded-full object-cover border-2 border-gray-100 dark:border-gray-700"
+                          onClick={(e) => { e.stopPropagation(); navigate(`/pledges/${p.id}`); }}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-gray-100 dark:border-gray-700 cursor-pointer hover:opacity-80 transition-opacity"
                           src={fixImageUrl(p.media?.find((m: any) => m.category === 'customer_image')?.url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
                           alt=""
                         />
@@ -229,7 +232,10 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
                         <div className="flex-1 min-w-0">
                           {/* Header Row: Name & Status */}
                           <div className="flex items-center justify-between gap-2 mb-1">
-                            <h3 className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+                            <h3
+                              onClick={(e) => { e.stopPropagation(); navigate(`/pledges/${p.id}`); }}
+                              className="font-semibold text-sm text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary transition-colors"
+                            >
                               {p.customer?.name || 'Unknown'}
                             </h3>
                             <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${getStatusColor(p.status || '')}`}>
@@ -248,6 +254,48 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
                             <span className="text-sm font-bold text-primary dark:text-primary-light">
                               ₹{Number(p.loan?.amount || 0).toLocaleString()}
                             </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Expanded Accordion Content */}
+                      <div
+                        className={`grid transition-[grid-template-rows] duration-300 ease-out ${expandedPledgeId === p.id ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+                          }`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="overflow-hidden">
+                          <div className={`pt-4 mt-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-3 gap-2 ${expandedPledgeId === p.id ? "opacity-100" : "opacity-0 invisible"
+                            } transition-all duration-300 delay-75`}>
+                            {p.status === 'closed' ? (
+                              Number(p.closure?.balance_amount) > 0 && (
+                                <button
+                                  onClick={() => navigate(`/transactions/create?amount=${p.closure?.balance_amount}&description=Balance payment for Loan ${p.loan?.loan_no}&type=credit&pledgeId=${p.id}`)}
+                                  className="col-span-3 flex items-center justify-center gap-1.5 px-2 py-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors border border-emerald-100 dark:border-emerald-800 cursor-pointer"
+                                >
+                                  <Banknote size={14} />
+                                  Pay Balance (₹{p.closure?.balance_amount})
+                                </button>
+                              )
+                            ) : (
+                              <>
+                                <button className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-100 dark:border-blue-800 cursor-pointer">
+                                  <Banknote size={14} />
+                                  Partial Payment
+                                </button>
+                                <button className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-semibold rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors border border-amber-100 dark:border-amber-800 cursor-pointer">
+                                  <PlusCircle size={14} />
+                                  Add Amount
+                                </button>
+                                <button
+                                  onClick={() => navigate(`/pledges/${p.id}/close`)}
+                                  className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors border border-rose-100 dark:border-rose-800 cursor-pointer"
+                                >
+                                  <CheckCircle size={14} />
+                                  Close Loan
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>

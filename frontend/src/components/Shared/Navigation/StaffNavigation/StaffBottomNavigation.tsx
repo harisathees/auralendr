@@ -4,7 +4,7 @@ import { useAuth } from "../../../../context";
 
 
 const BottomNavigation: React.FC = () => {
-    const { logout } = useAuth();
+    // const { logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [fabOpen, setFabOpen] = useState(false);
@@ -18,7 +18,12 @@ const BottomNavigation: React.FC = () => {
     };
 
     // Helper to check active state
-    const isActive = (path: string) => location.pathname === path;
+    const isActive = (path: string) => {
+        if (path === '/privileges') {
+            return location.pathname === '/privileges' || location.pathname.startsWith('/notices');
+        }
+        return location.pathname.startsWith(path);
+    };
 
     return (
         <>

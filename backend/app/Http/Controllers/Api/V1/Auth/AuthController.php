@@ -20,7 +20,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['message'=>'Invalid input','errors'=>$validator->errors()], 422);
+            return response()->json(['message' => 'Invalid input', 'errors' => $validator->errors()], 422);
         }
 
         $user = User::where('email', $request->email)->first();
@@ -40,34 +40,34 @@ class AuthController extends Controller
             // Priority: Branch Settings > Global Settings
             // We fetch both and merge them in PHP to prefer Branch
             // Or simpler: Fetch specific keys for Branch, if missing fetch Global.
-            
+
             // Efficient Single Query:
             // WHERE key IN (start_time, end_time) AND (branch_id = X OR branch_id IS NULL)
             // Then sort by branch_id desc (Assuming ID > NULL) to get specific first
-            
+
             $settings = \App\Models\Admin\Organization\UserPrivileges\StaffTimeRestriction::whereIn('key', ['staff_login_start_time', 'staff_login_end_time'])
-                ->where(function($q) use ($branchId) {
+                ->where(function ($q) use ($branchId) {
                     $q->where('branch_id', $branchId)
-                      ->orWhereNull('branch_id');
+                        ->orWhereNull('branch_id');
                 })
                 ->get();
 
             // Extract values, preferring Branch Specific
             $startSetting = $settings->where('key', 'staff_login_start_time')->sortByDesc('branch_id')->first();
             $endSetting = $settings->where('key', 'staff_login_end_time')->sortByDesc('branch_id')->first();
-            
+
             $startTime = $startSetting ? $startSetting->value : null;
             $endTime = $endSetting ? $endSetting->value : null;
 
             if ($startTime && $endTime) {
                 // ... (existing time check logic)
                 try {
-                    $now = now(); 
+                    $now = now();
                     $start = \Carbon\Carbon::createFromFormat('H:i', $startTime);
-                    $end   = \Carbon\Carbon::createFromFormat('H:i', $endTime);
-                    
+                    $end = \Carbon\Carbon::createFromFormat('H:i', $endTime);
+
                     if (!$now->between($start, $end)) {
-                         return response()->json([
+                        return response()->json([
                             'message' => "Access denied: Staff login is only allowed between {$startTime} and {$endTime}"
                         ], 403);
                     }
@@ -88,6 +88,7 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'role' => $user->role,
                 'branch_id' => $user->branch_id,
+                'branch' => $user->branch,
                 'permissions' => $user->getAllPermissions()->pluck('name'),
             ]
         ]);
@@ -102,6 +103,7 @@ class AuthController extends Controller
             'email' => $request->user()->email,
             'role' => $request->user()->role,
             'branch_id' => $request->user()->branch_id,
+            'branch' => $request->user()->branch,
             'permissions' => $request->user()->getAllPermissions()->pluck('name'),
         ]);
     }

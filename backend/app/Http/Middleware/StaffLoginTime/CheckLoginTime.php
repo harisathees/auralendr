@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\Admin\Organization\UserPrivileges\StaffTimeRestriction;
+use App\Models\Settings;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -31,7 +32,7 @@ class CheckLoginTime
             $settings = StaffTimeRestriction::whereIn('key', $keys)
                 ->where(function($q) use ($branchId) {
                     $q->where('branch_id', $branchId)
-                      ->orWhereNull('branch_id');
+                        ->orWhereNull('branch_id');
                 })
                 ->get();
 
