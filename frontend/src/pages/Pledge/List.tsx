@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { usePledges } from "../../hooks/usePledges";
 import PledgeList from "../../components/Pledges/PledgeList";
 

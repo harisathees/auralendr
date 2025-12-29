@@ -9,9 +9,7 @@ const Repledge: React.FC = () => {
     const navigate = useNavigate();
     const {
         loading,
-        error, // global fetch error
         saveRepledgeEntry,
-        createSource, // if exposed from hook
     } = useRepledge();
 
     // Note: useRepledgeSource hook is used inside RepledgeForm for listing, 

@@ -71,7 +71,7 @@ const List: React.FC = () => {
                                     <span className="material-symbols-outlined">edit</span>
                                 </button>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); deleteRepledgeEntry(item.id); }}
+                                    onClick={(e) => { e.stopPropagation(); deleteRepledgeEntry(String(item.id)); }}
                                     className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-red-500"
                                 >
                                     <span className="material-symbols-outlined">delete</span>

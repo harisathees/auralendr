@@ -15,7 +15,7 @@ interface JewelType {
 
 const MetalRatesCard: React.FC = () => {
     const [rates, setRates] = useState<JewelType[]>([]);
-    const [loading, setLoading] = useState(true);
+
 
     useEffect(() => {
         fetchRates();
@@ -27,9 +27,8 @@ const MetalRatesCard: React.FC = () => {
             setRates(response.data);
         } catch (error) {
             console.error("Failed to fetch rates:", error);
-        } finally {
-            setLoading(false);
         }
+
     };
 
     const goldItem = rates.find(r => r.name.toLowerCase().includes('gold'));
