@@ -16,27 +16,27 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
-  
+
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [recordingInterval, setRecordingInterval] = useState<NodeJS.Timeout | null>(null);
+  const [recordingInterval, setRecordingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
 
   const startRecording = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
           sampleRate: 44100
-        } 
+        }
       });
-      
+
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm;codecs=opus'
       });
-      
+
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -47,12 +47,12 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { 
-          type: 'audio/webm;codecs=opus' 
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: 'audio/webm;codecs=opus'
         });
         const audioUrl = URL.createObjectURL(audioBlob);
         setRecordedAudio(audioUrl);
-        
+
         // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
       };
@@ -60,13 +60,13 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       mediaRecorder.start(100); // Collect data every 100ms
       setIsRecording(true);
       setRecordingTime(0);
-      
+
       // Start timer
       const interval = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
       setRecordingInterval(interval);
-      
+
     } catch (error) {
       console.error('Error accessing microphone:', error);
       alert('Unable to access microphone. Please check permissions.');
@@ -77,7 +77,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      
+
       if (recordingInterval) {
         clearInterval(recordingInterval);
         setRecordingInterval(null);
@@ -99,8 +99,8 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
   const confirmRecording = useCallback(() => {
     if (audioChunksRef.current.length > 0) {
-      const audioBlob = new Blob(audioChunksRef.current, { 
-        type: 'audio/webm;codecs=opus' 
+      const audioBlob = new Blob(audioChunksRef.current, {
+        type: 'audio/webm;codecs=opus'
       });
       const file = new File([audioBlob], `audio_${Date.now()}.webm`, {
         type: 'audio/webm;codecs=opus'
@@ -167,14 +167,13 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
           <div className="text-center">
             {/* Recording Animation */}
             <div className="relative mb-8">
-              <div className={`w-32 h-32 rounded-full mx-auto flex items-center justify-center ${
-                isRecording 
-                  ? 'bg-red-500 animate-pulse' 
+              <div className={`w-32 h-32 rounded-full mx-auto flex items-center justify-center ${isRecording
+                  ? 'bg-red-500 animate-pulse'
                   : 'bg-gray-200 hover:bg-gray-300 cursor-pointer'
-              }`}>
+                }`}>
                 <Mic className={`w-16 h-16 ${isRecording ? 'text-white' : 'text-gray-600'}`} />
               </div>
-              
+
               {isRecording && (
                 <div className="absolute inset-0 rounded-full border-4 border-red-300 animate-ping"></div>
               )}
@@ -223,9 +222,9 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
                   )}
                 </Button>
               </div>
-              
+
               <audio ref={audioRef} src={recordedAudio} className="hidden" />
-              
+
               <p className="text-gray-600">
                 Recording Duration: {formatTime(recordingTime)}
               </p>

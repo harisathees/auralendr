@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import api from "../../api/apiClient";
-import { AudioRecorder } from "../../components/audiocamera/AudioRecorder";
-import { CameraCapture } from "../../components/audiocamera/CameraCapture";
+import { AudioRecorder } from "../../components/AudioCamera/AudioRecorder";
+import { CameraCapture } from "../../components/AudioCamera/CameraCapture";
 
 import { useAuth } from "../../context/Auth/AuthContext";
 import { compressImage } from "../../utils/imageCompression";

@@ -37,7 +37,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSuccess, onCancel }) => {
         if (task) {
             setTitle(task.title);
             setDescription(task.description || '');
-            setAssignedTo(task.assigned_to);
+            setAssignedTo(task.assigned_to ?? '');
             setStatus(task.status);
             setDueDate(task.due_date || '');
         } else {

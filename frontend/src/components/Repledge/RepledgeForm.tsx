@@ -12,9 +12,10 @@ interface Props {
     onSubmit: (data: any) => Promise<void>;
     loading?: boolean;
     onCancel?: () => void;
+    onSettingsClick?: () => void;
 }
 
-const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false }) => {
+const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false, onSettingsClick }) => {
     const { sources, loading: sourcesLoading } = useRepledgeSource();
     const { fetchLoanDetails } = useRepledge();
     const { showToast } = useToast();
@@ -403,7 +404,14 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false 
                             <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 p-4">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex-1">
-                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Repledge Source</label>
+                                        <div className="flex justify-between items-center mb-1.5">
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Repledge Source</label>
+                                            {onSettingsClick && (
+                                                <button type="button" onClick={onSettingsClick} className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
+                                                    <span className="material-symbols-outlined text-[14px]">settings</span> Manage
+                                                </button>
+                                            )}
+                                        </div>
                                         <div className="relative">
                                             <CustomDropdown
                                                 value={item.repledgeSourceId.toString()}

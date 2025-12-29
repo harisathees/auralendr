@@ -34,10 +34,19 @@ api.interceptors.response.use(
   (error) => {
     const status = error.response?.status;
 
-    // 🔐 Unauthorized → logout
-    if (status === 401) {
+    // 🔐 Unauthorized (401) or Token Expired (419) → Global Logout
+    if (status === 401 || status === 419) {
+      // Clear all auth data
+      localStorage.removeItem("token");
       localStorage.removeItem("user");
-      window.location.href = "/login";
+
+      // Redirect if not already on login page to avoid loops
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login";
+      }
+
+      // Reject promise to prevent further processing in components
+      return Promise.reject(error);
     }
 
     // 🚫 Forbidden

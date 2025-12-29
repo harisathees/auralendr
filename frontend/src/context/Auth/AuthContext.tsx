@@ -128,6 +128,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, [token]);
 
+  // 💓 Heartbeat: Check session validity every 60s
+  // This ensures that if time restriction expires while user is active, they get logged out.
+  useEffect(() => {
+    if (!token) return;
+
+    const interval = setInterval(() => {
+      // We don't need to do anything with the data. 
+      // If the session is invalid/expired, the global axios interceptor will catch the 401 
+      // and force a logout.
+      api.get("/me").catch(() => {
+        // Errors handled by interceptor
+      });
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [token]);
+
   return (
     <AuthContext.Provider value={{ token, user, login, logout, can }}>
       {children}
