@@ -1,5 +1,5 @@
 import React, { lazy } from "react";
-import { Routes, Route, Navigate, Link } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "../pages/Auth/Guards/ProtectedRoute";
 import PublicRoute from "../pages/Auth/Guards/PublicRoute";
 import Login from "../pages/Auth/Login/Login";
@@ -38,8 +38,10 @@ const RepledgeCreate = lazy(() => import("../pages/Repledge/Create"));
 const RepledgeEdit = lazy(() => import("../pages/Repledge/Edit"));
 const RepledgeView = lazy(() => import("../pages/Repledge/View"));
 const CloseRepledge = lazy(() => import("../pages/Repledge/CloseRepledge"));
+const Privileges = lazy(() => import("../pages/Staff/Privileges/Privileges"));
 
 const MetalRates = lazy(() => import("../pages/Admin/Finance/MetalRates"));
+const StaffMetalRates = lazy(() => import("../pages/Staff/Privileges/MetalRates"));
 const JewelTypesIndex = lazy(() => import("../pages/Admin/JewelManagement/JewelTypes"));
 
 const JewelTypeForm = lazy(() => import("../pages/Admin/JewelManagement/JewelTypeForm"));
@@ -103,31 +105,8 @@ const AppRoutes: React.FC = () => {
 
         {/* Placeholder Routes for Staff Navigation */}
         <Route path="/notices" element={<Notices />} />
-        <Route path="/privileges" element={
-          <div className="p-8 flex flex-col items-center justify-center min-h-screen bg-background-light dark:bg-background-dark">
-            <h1 className="text-2xl font-bold mb-6">User Privileges</h1>
-            <div className="grid grid-cols-1 gap-4 w-full max-w-sm">
-              <Link to="/notices" className="flex items-center gap-4 p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-primary transition-colors">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                  <span className="material-symbols-outlined">print</span>
-                </div>
-                <div>
-                  <h3 className="font-bold">Notice Printing</h3>
-                  <p className="text-sm text-gray-500">Generate and print loan notices</p>
-                </div>
-              </Link>
-              <div className="flex items-center gap-4 p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 opacity-50">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                  <span className="material-symbols-outlined">person_pin</span>
-                </div>
-                <div>
-                  <h3 className="font-bold">Role Management</h3>
-                  <p className="text-sm text-gray-500">Manage user roles (Coming soon)</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        } />
+        <Route path="/privileges" element={<Privileges />} />
+        <Route path="/privileges/metal-rates" element={<StaffMetalRates />} />
       </Route>
 
       {/* Admin Routes */}
