@@ -63,8 +63,10 @@ const TransactionHistory = () => {
 
     useEffect(() => {
         fetchMoneySources(selectedBranchId);
-        fetchBranches();
-    }, [selectedBranchId]);
+        if (user?.role === 'admin') {
+            fetchBranches();
+        }
+    }, [selectedBranchId, user?.role]);
 
     useEffect(() => {
         fetchTransactions();

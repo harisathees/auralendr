@@ -81,6 +81,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
 
     // Shared Routes (Admin + Staff)
     Route::get('/admin-all-loans', [LoanController::class, 'index']);
+    Route::get('/loans/{loanNo}', [LoanController::class, 'showByLoanNo']);
 
     // Read-only access for shared resources often needed by staff
     Route::get('/jewel-types', [JewelTypeController::class, 'index']);
