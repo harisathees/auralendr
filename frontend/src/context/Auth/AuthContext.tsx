@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import api from "../../api/apiClient";
+import * as authService from "../../api/authService";
 
 import type { User } from "../../types/models";
 
@@ -59,7 +60,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (email: string, password: string): Promise<User> => {
     try {
-      const res = await api.post("/login", { email, password });
+      // Use authService to handle CSRF and correct endpoint
+      const res = await authService.login({ email, password });
 
       if (!res.data?.token || !res.data?.user) {
         throw new Error("Invalid response from server");
@@ -105,7 +107,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Fetch fresh user data on mount to ensure permissions are up to date
   useEffect(() => {
     if (token) {
-      api.get("/me")
+      authService.me()
         .then(res => {
           const userData: User = {
             id: res.data.id,
@@ -137,7 +139,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // We don't need to do anything with the data. 
       // If the session is invalid/expired, the global axios interceptor will catch the 401 
       // and force a logout.
-      api.get("/me").catch(() => {
+      authService.me().catch(() => {
         // Errors handled by interceptor
       });
     }, 60000);
