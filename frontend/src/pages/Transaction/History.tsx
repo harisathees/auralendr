@@ -32,7 +32,7 @@ const TransactionHistory = () => {
 
     const fetchMoneySources = async () => {
         try {
-            const res = await api.get('/money-sources');
+            const res = await api.get('/api/money-sources');
             setMoneySources(res.data);
         } catch (error) {
             console.error('Failed to fetch money sources');
@@ -41,7 +41,7 @@ const TransactionHistory = () => {
 
     const fetchBranches = async () => {
         try {
-            const res = await api.get('/branches');
+            const res = await api.get('/api/branches');
             setBranches(res.data);
         } catch (error) {
             console.error('Failed to fetch branches');
@@ -52,7 +52,7 @@ const TransactionHistory = () => {
         try {
             setLoading(true);
             // Append query param if source is selected
-            let url = '/transactions?';
+            let url = '/api/transactions?';
             if (selectedSourceId) url += `money_source_id=${selectedSourceId}&`;
             if (selectedBranchId) url += `branch_id=${selectedBranchId}&`;
 

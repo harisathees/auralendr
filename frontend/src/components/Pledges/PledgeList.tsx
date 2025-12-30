@@ -53,7 +53,7 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
   useEffect(() => {
     const timer = setTimeout(() => {
       if (inputValue.length > 1 && inputValue !== searchTerm) {
-        api.get('/pledges', { params: { search: inputValue, suggestions: true } })
+        api.get('/api/pledges', { params: { search: inputValue, suggestions: true } })
           .then(res => {
             setSuggestions(res.data.data || []);
             setShowDropdown(true);

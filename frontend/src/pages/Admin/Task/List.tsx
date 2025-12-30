@@ -31,7 +31,7 @@ const List: React.FC = () => {
     const fetchTasks = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/tasks');
+            const response = await api.get('/api/tasks');
             setTasks(response.data);
         } catch (error) {
             console.error("Error fetching tasks:", error);
@@ -62,7 +62,7 @@ const List: React.FC = () => {
     const confirmDelete = async () => {
         if (deleteModal.taskId) {
             try {
-                await api.delete(`/tasks/${deleteModal.taskId}`);
+                await api.delete(`/api/tasks/${deleteModal.taskId}`);
                 showToast('Task deleted successfully');
                 fetchTasks();
             } catch (error) {

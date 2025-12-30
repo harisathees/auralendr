@@ -3,7 +3,19 @@ import api from "../../api/apiClient";
 import GoldCoinSpinner from "../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../context/Auth/AuthContext";
-import { Lock } from "lucide-react";
+import {
+    Lock,
+    Clock,
+    Package,
+    ArrowRightLeft,
+    Stamp,
+    CreditCard,
+    Users,
+    BarChart3,
+    Store,
+    ShieldAlert,
+    Shield
+} from "lucide-react";
 
 import type { Role, Permission } from '../../types/models';
 
@@ -30,9 +42,9 @@ const RolesIndex: React.FC = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const rolesRes = await api.get("/roles");
-            const permsRes = await api.get("/permissions");
-            const branchesRes = await api.get("/branches");
+            const rolesRes = await api.get("/api/roles");
+            const permsRes = await api.get("/api/permissions");
+            const branchesRes = await api.get("/api/branches");
             setRoles(rolesRes.data);
             setAllPermissions(permsRes.data);
             setBranches(branchesRes.data);
@@ -46,7 +58,7 @@ const RolesIndex: React.FC = () => {
 
     const fetchRoleUsers = async () => {
         try {
-            let url = `/users-by-role?role=${selectedRoleName}`;
+            let url = `/api/users-by-role?role=${selectedRoleName}`;
             if (selectedBranchId) {
                 url += `&branch_id=${selectedBranchId}`;
             }
@@ -59,7 +71,7 @@ const RolesIndex: React.FC = () => {
 
     const fetchSettings = async () => {
         try {
-            let url = '/settings?group=auth';
+            let url = '/api/settings?group=auth';
             if (selectedBranchId) {
                 url += `&branch_id=${selectedBranchId}`;
             } else {
@@ -82,7 +94,7 @@ const RolesIndex: React.FC = () => {
         try {
             setLoadingSettings(true);
 
-            await api.post('/settings', {
+            await api.post('/api/settings', {
                 group: 'auth',
                 branch_id: selectedBranchId, // API handles null vs value
                 settings: {
@@ -152,7 +164,7 @@ const RolesIndex: React.FC = () => {
             }
 
             try {
-                const res = await api.put(`/users/${user.id}/permissions`, { permissions: newDirect });
+                const res = await api.put(`/api/users/${user.id}/permissions`, { permissions: newDirect });
                 // Update local state
                 // We rely on 'all_permission_names' from response if available, or calc locally?
                 // The backend response I wrote returns 'all_permission_names'.
@@ -194,7 +206,7 @@ const RolesIndex: React.FC = () => {
         }
 
         try {
-            await api.put(`/roles/${role.id}`, { permissions: newPermissions });
+            await api.put(`/api/roles/${role.id}`, { permissions: newPermissions });
 
             // Optimistic update or refetch
             const updatedRoles = roles.map(r => {
@@ -249,7 +261,7 @@ const RolesIndex: React.FC = () => {
         }
 
         try {
-            await api.put(`/roles/${role.id}`, { permissions: newPermissions });
+            await api.put(`/api/roles/${role.id}`, { permissions: newPermissions });
             fetchData(); // Simplest way to sync everything
             fetchRoleUsers();
             toast.success(`Group permissions ${allEnabled ? 'removed' : 'added'}`);
@@ -347,8 +359,8 @@ const RolesIndex: React.FC = () => {
                 {selectedRoleName === 'staff' && !selectedUserId && (
                     <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 md:col-span-2 lg:col-span-1">
                         <div className="flex items-center gap-2 mb-4">
-                            <span className="material-symbols-outlined text-orange-600 bg-orange-100 p-2 rounded-lg">
-                                schedule
+                            <span className="text-orange-600 bg-orange-100 p-2 rounded-lg">
+                                <Clock className="w-6 h-6" />
                             </span>
                             <h3 className="text-lg font-bold dark:text-white">
                                 Login Access Hours
@@ -422,8 +434,11 @@ const RolesIndex: React.FC = () => {
                             <div key={group} className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">
-                                            {getIconForGroup(group)}
+                                        <span className="text-primary bg-primary/10 p-2 rounded-lg">
+                                            {(() => {
+                                                const Icon = getIconForGroup(group);
+                                                return <Icon className="w-6 h-6" />;
+                                            })()}
                                         </span>
                                         <h3 className="text-lg font-bold capitalize dark:text-white">
                                             {group} Access
@@ -499,16 +514,16 @@ const RolesIndex: React.FC = () => {
 // Helper to get icons
 const getIconForGroup = (group: string) => {
     switch (group) {
-        case 'pledge': return 'inventory_2';
-        case 'repledge': return 'currency_exchange';
-        case 'brandkit': return 'branding_watermark';
-        case 'loan': return 'credit_score';
-        case 'customer': return 'groups';
-        case 'report': return 'bar_chart';
-        case 'branch': return 'store';
-        case 'user': return 'people';
-        case 'user_privilege': return 'admin_panel_settings';
-        default: return 'security';
+        case 'pledge': return Package;
+        case 'repledge': return ArrowRightLeft;
+        case 'brandkit': return Stamp;
+        case 'loan': return CreditCard;
+        case 'customer': return Users;
+        case 'report': return BarChart3;
+        case 'branch': return Store;
+        case 'user': return Users;
+        case 'user_privilege': return ShieldAlert;
+        default: return Shield;
     }
 };
 

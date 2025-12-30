@@ -17,7 +17,7 @@ const TransactionCategories = () => {
     const fetchCategories = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/transaction-categories');
+            const res = await api.get('/api/transaction-categories');
 
             setCategories(res.data);
         } catch (error) {
@@ -29,7 +29,7 @@ const TransactionCategories = () => {
 
     const handleDelete = async (id: number) => {
         if (!confirm('Are you sure?')) return;
-        await api.delete(`/transaction-categories/${id}`);
+        await api.delete(`/api/transaction-categories/${id}`);
         fetchCategories();
     };
 

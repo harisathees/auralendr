@@ -8,7 +8,7 @@ const View = () => {
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
-    api.get(`/pledges/${id}`).then(res => setData(res.data));
+    api.get(`/api/pledges/${id}`).then(res => setData(res.data));
   }, [id]);
 
   if (!data) return null;

@@ -16,7 +16,7 @@ const JewelQualityForm: React.FC = () => {
     useEffect(() => {
         if (isEdit) {
             setLoading(true);
-            api.get(`/jewel-qualities/${id}`)
+            api.get(`/api/jewel-qualities/${id}`)
                 .then((res) => {
                     setName(res.data.name);
                 })
@@ -35,9 +35,9 @@ const JewelQualityForm: React.FC = () => {
 
         try {
             if (isEdit) {
-                await api.put(`/jewel-qualities/${id}`, { name });
+                await api.put(`/api/jewel-qualities/${id}`, { name });
             } else {
-                await api.post("/jewel-qualities", { name });
+                await api.post("/api/jewel-qualities", { name });
             }
             navigate("/admin/configs/jewel-qualities");
         } catch (err: any) {

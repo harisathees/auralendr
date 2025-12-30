@@ -16,7 +16,7 @@ const View: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await api.get(`/repledges/${id}`);
+                const res = await api.get(`/api/repledges/${id}`);
                 setRepledge(res.data);
             } catch (err: any) {
                 console.error(err);
@@ -58,7 +58,7 @@ const View: React.FC = () => {
                             onClick={() => {
                                 // Assuming delete handled in list or here via hook, keeping simple for now
                                 if (confirm("Are you sure?")) {
-                                    api.delete(`/repledges/${id}`).then(() => {
+                                    api.delete(`/api/repledges/${id}`).then(() => {
                                         showToast("Deleted successfully", "success");
                                         navigate("/repledge");
                                     });

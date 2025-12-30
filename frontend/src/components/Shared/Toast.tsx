@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Check, AlertCircle, Info, X } from "lucide-react";
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -37,9 +38,7 @@ const Toast: React.FC<ToastProps> = ({ message, type = 'success', onClose, durat
 
                 {/* Icon Circle */}
                 <div className={`shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${type === 'success' ? 'bg-[#00E05E] text-black' : (type === 'error' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white')}`}>
-                    <span className="material-symbols-outlined text-[22px] font-bold">
-                        {type === 'success' ? 'check' : (type === 'error' ? 'priority_high' : 'info')}
-                    </span>
+                    {type === 'success' ? <Check className="w-5 h-5 font-bold" strokeWidth={3} /> : (type === 'error' ? <AlertCircle className="w-5 h-5 font-bold" strokeWidth={3} /> : <Info className="w-5 h-5 font-bold" strokeWidth={3} />)}
                 </div>
 
                 {/* Text */}
@@ -52,7 +51,7 @@ const Toast: React.FC<ToastProps> = ({ message, type = 'success', onClose, durat
                     onClick={handleClose}
                     className="shrink-0 text-gray-400 hover:text-white transition-colors -mr-1"
                 >
-                    <span className="material-symbols-outlined text-[20px]">close</span>
+                    <X className="w-5 h-5" />
                 </button>
             </div>
         </div>

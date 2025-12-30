@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { LayoutDashboard, Store, Users, LogOut } from "lucide-react";
 import { useAuth } from "../../../../context/Auth/AuthContext";
 
 const AdminNavigation: React.FC = () => {
@@ -17,9 +18,10 @@ const AdminNavigation: React.FC = () => {
                     }`}
                 to="/admin/dashboard"
             >
-                <span className="material-symbols-outlined" style={isActive("/admin/dashboard") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                    dashboard
-                </span>
+                <LayoutDashboard
+                    className="w-6 h-6"
+                    fill={isActive("/admin/dashboard") ? "currentColor" : "none"}
+                />
                 <span className="text-xs font-bold">Dashboard</span>
             </Link>
 
@@ -29,9 +31,10 @@ const AdminNavigation: React.FC = () => {
                     }`}
                 to="/admin/configs/branches"
             >
-                <span className="material-symbols-outlined" style={isActive("/admin/configs/branches") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                    store
-                </span>
+                <Store
+                    className="w-6 h-6"
+                    fill={isActive("/admin/configs/branches") ? "currentColor" : "none"}
+                />
                 <span className="text-xs font-medium">Branches</span>
             </Link>
 
@@ -41,7 +44,10 @@ const AdminNavigation: React.FC = () => {
                     }`}
                 to="/admin/configs/users"
             >
-                <span className="material-symbols-outlined" style={isActive("/admin/configs/users") ? { fontVariationSettings: "'FILL' 1" } : {}}>group</span>
+                <Users
+                    className="w-6 h-6"
+                    fill={isActive("/admin/configs/users") ? "currentColor" : "none"}
+                />
                 <span className="text-xs font-medium">Staff</span>
             </Link>
 
@@ -50,7 +56,7 @@ const AdminNavigation: React.FC = () => {
                 onClick={logout}
                 className="flex flex-col items-center gap-1 text-red-500 hover:text-red-700 transition-colors"
             >
-                <span className="material-symbols-outlined">logout</span>
+                <LogOut className="w-6 h-6" />
                 <span className="text-xs font-medium">Logout</span>
             </button>
         </div>

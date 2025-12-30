@@ -20,8 +20,8 @@ const ProcessingFees: React.FC = () => {
         const fetchInitialData = async () => {
             try {
                 const [branchesRes, typesRes] = await Promise.all([
-                    api.get("/branches"),
-                    api.get("/jewel-types")
+                    api.get("/api/branches"),
+                    api.get("/api/jewel-types")
                 ]);
                 setBranches(branchesRes.data);
                 setJewelTypes(typesRes.data);
@@ -49,7 +49,7 @@ const ProcessingFees: React.FC = () => {
             try {
                 // Handle "GLOBAL" or empty branch ID
                 const branchParam = selectedBranchId === "GLOBAL" ? "null" : selectedBranchId;
-                const res = await api.get(`/processing-fees?branch_id=${branchParam}`);
+                const res = await api.get(`/api/processing-fees?branch_id=${branchParam}`);
                 setProcessingFees(res.data);
             } catch (error) {
                 console.error("Failed to fetch processing fees", error);
@@ -81,7 +81,7 @@ const ProcessingFees: React.FC = () => {
                 max_amount: maxAmount ? parseFloat(maxAmount) : null
             };
 
-            const res = await api.post("/processing-fees", payload);
+            const res = await api.post("/api/processing-fees", payload);
 
             // Update local state
             setProcessingFees(prev => {

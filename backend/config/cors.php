@@ -24,17 +24,28 @@ return [
 
 
     //FOR PRODUCTION HOST
-    'paths' => ['api/*', 'login', 'logout', 'sanctum/csrf-cookie'],
+
+    'paths' => [
+        'api/*',
+        'sanctum/csrf-cookie',
+        'login',
+        'logout'
+    ],
+
     'allowed_methods' => ['*'],
-    'allowed_origins' => array_merge(
-        [
-            'https://demo.auralendr.com',
-        ],
-        array_filter(explode(',', env('FRONTEND_URL', '')))
-    ),
-    'allowed_origins_patterns' => ['.*netlify.app', '.*railway.app'],
+
+    'allowed_origins' => [
+        'https://demo.auralendr.com',
+    ],
+
+    'allowed_origins_patterns' => [],
+
     'allowed_headers' => ['*'],
+
     'exposed_headers' => [],
+
     'max_age' => 0,
+
     'supports_credentials' => true,
 ];
+

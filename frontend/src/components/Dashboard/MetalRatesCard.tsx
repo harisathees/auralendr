@@ -23,7 +23,7 @@ const MetalRatesCard: React.FC = () => {
 
     const fetchRates = async () => {
         try {
-            const response = await api.get("/metal-rates");
+            const response = await api.get("/api/metal-rates");
             setRates(response.data);
         } catch (error) {
             console.error("Failed to fetch rates:", error);

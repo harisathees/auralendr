@@ -23,7 +23,7 @@ const BranchForm: React.FC = () => {
         if (isEdit) {
             if (!can('branch.update')) return; // Dont fetch if no permission
             setLoading(true);
-            api.get(`/branches/${id}`)
+            api.get(`/api/branches/${id}`)
                 .then((res) => {
                     setFormData({
                         branch_name: res.data.branch_name,
@@ -45,9 +45,9 @@ const BranchForm: React.FC = () => {
 
         try {
             if (isEdit) {
-                await api.put(`/branches/${id}`, formData);
+                await api.put(`/api/branches/${id}`, formData);
             } else {
-                await api.post("/branches", formData);
+                await api.post("/api/branches", formData);
             }
             navigate("/admin/configs/branches");
         } catch (err: any) {

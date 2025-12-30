@@ -1,6 +1,7 @@
 import React, { useState, type FormEvent } from "react";
 import { useAuth } from "../../../context/Auth/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Landmark, IdCard, Eye, EyeOff, Lock } from "lucide-react";
 
 const Login: React.FC = () => {
   const { login } = useAuth();
@@ -28,8 +29,8 @@ const Login: React.FC = () => {
       }
     } catch (error: any) {
       setError(
-        error.response?.data?.message || 
-        error.message || 
+        error.response?.data?.message ||
+        error.message ||
         "Login failed. Please check your credentials."
       );
     }
@@ -50,7 +51,7 @@ const Login: React.FC = () => {
         <div className="absolute top-[172px] left-1/2 -translate-x-1/2 z-10">
           <div className="flex items-center justify-center w-24 h-24 bg-white dark:bg-background-dark rounded-full shadow-lg p-1">
             <div className="flex items-center justify-center w-full h-full bg-white dark:bg-zinc-800 rounded-full border border-gray-100 dark:border-zinc-700">
-              <span className="material-symbols-outlined text-primary text-[40px]">account_balance</span>
+              <Landmark className="text-primary w-10 h-10" />
             </div>
           </div>
         </div>
@@ -89,7 +90,7 @@ const Login: React.FC = () => {
                   required
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-400">
-                  <span className="material-symbols-outlined text-[20px]">badge</span>
+                  <IdCard className="w-5 h-5" />
                 </div>
               </div>
             </div>
@@ -114,9 +115,7 @@ const Login: React.FC = () => {
                   className="absolute inset-y-0 right-0 flex items-center pr-4 cursor-pointer text-gray-400 hover:text-primary transition-colors focus:outline-none"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  <span className="material-symbols-outlined">
-                    {showPassword ? "visibility_off" : "visibility"}
-                  </span>
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
@@ -136,7 +135,7 @@ const Login: React.FC = () => {
               type="submit"
             >
               Secure Login
-              <span className="material-symbols-outlined text-[20px]">lock</span>
+              <Lock className="w-5 h-5" />
             </button>
           </form>
 

@@ -10,7 +10,7 @@ export const useRepledgeSource = () => {
     const fetchSources = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await api.get('/repledge-sources');
+            const res = await api.get('/api/repledge-sources');
             setSources(res.data || []);
         } catch (err: any) {
             console.error("Failed to fetch sources", err);
@@ -23,7 +23,7 @@ export const useRepledgeSource = () => {
     const createSource = async (data: Partial<RepledgeSource>) => {
         setLoading(true);
         try {
-            const res = await api.post('/repledge-sources', data);
+            const res = await api.post('/api/repledge-sources', data);
             setSources(prev => [...prev, res.data]);
             return res.data;
         } catch (err: any) {

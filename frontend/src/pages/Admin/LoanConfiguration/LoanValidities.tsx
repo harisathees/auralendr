@@ -17,7 +17,7 @@ const ValidityPeriods: React.FC = () => {
 
     const fetchItems = async () => {
         try {
-            const res = await api.get("/loan-validities");
+            const res = await api.get("/api/loan-validities");
             // Map the data to have a 'name' property for display
             const mapped = res.data.map((v: any) => ({
                 ...v,
@@ -45,7 +45,7 @@ const ValidityPeriods: React.FC = () => {
     const handleConfirmDelete = async () => {
         if (!deletingId) return;
         try {
-            await api.delete(`/loan-validities/${deletingId}`);
+            await api.delete(`/api/loan-validities/${deletingId}`);
             setItems(items.filter(i => i.id !== deletingId));
             setIsDeleteOpen(false);
             setDeletingId(null);

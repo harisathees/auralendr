@@ -28,7 +28,7 @@ const MoneySources: React.FC = () => {
     const fetchSources = async () => {
         try {
             setLoading(true);
-            const res = await api.get("/money-sources");
+            const res = await api.get("/api/money-sources");
             setSources(res.data);
         } catch (err) {
             console.error("Failed to fetch sources", err);
@@ -43,7 +43,7 @@ const MoneySources: React.FC = () => {
     const handleConfirmDelete = async () => {
         if (!deletingId) return;
         try {
-            await api.delete(`/money-sources/${deletingId}`);
+            await api.delete(`/api/money-sources/${deletingId}`);
             setSources(sources.filter((s) => s.id !== deletingId));
             setIsDeleteOpen(false);
             setDeletingId(null);

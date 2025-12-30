@@ -15,7 +15,7 @@ const TransactionCategoryForm = () => {
 
     useEffect(() => {
         if (isEdit && id) {
-            api.get(`/transaction-categories/${id}`).then(res => {
+            api.get(`/api/transaction-categories/${id}`).then(res => {
                 setName(res.data.name);
                 setIsCredit(res.data.is_credit);
                 setIsDebit(res.data.is_debit);
@@ -36,9 +36,9 @@ const TransactionCategoryForm = () => {
         try {
             const payload = { name, is_credit: isCredit, is_debit: isDebit, is_active: isActive };
             if (isEdit) {
-                await api.put(`/transaction-categories/${id}`, payload);
+                await api.put(`/api/transaction-categories/${id}`, payload);
             } else {
-                await api.post('/transaction-categories', payload);
+                await api.post('/api/transaction-categories', payload);
             }
             navigate('/admin/configs/transaction-categories');
         } catch (error) {

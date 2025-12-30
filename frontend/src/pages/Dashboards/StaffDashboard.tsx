@@ -3,6 +3,20 @@ import { useAuth } from "../../context/Auth/AuthContext";
 import api from '../../api/apiClient';
 import type { Task } from '../../types/models';
 import TaskAccordion from '../../components/Staff/TaskAccordion';
+import {
+  LogOut,
+  Calendar,
+  Bell,
+  Sun,
+  Moon,
+  CheckCircle,
+  Zap,
+  Store,
+  RefreshCw,
+  Loader2,
+  ClipboardList,
+  CalendarX
+} from "lucide-react";
 
 const StaffDashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -15,7 +29,7 @@ const StaffDashboard: React.FC = () => {
 
   const fetchTasks = async () => {
     try {
-      const response = await api.get('/my-tasks');
+      const response = await api.get('/api/my-tasks');
       setTasks(response.data);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -107,7 +121,7 @@ const StaffDashboard: React.FC = () => {
                   className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2"
                   onClick={handleLogoutClick}
                 >
-                  <span className="material-symbols-outlined text-lg">logout</span>
+                  <LogOut className="w-5 h-5" />
                   Logout
                 </button>
               </div>
@@ -137,7 +151,7 @@ const StaffDashboard: React.FC = () => {
               onClick={handleDateIconClick}
               className={`flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full ${selectedDate ? 'bg-primary text-white' : 'bg-transparent text-primary-text dark:text-gray-100'} transition-colors`}
             >
-              <span className="material-symbols-outlined">calendar_today</span>
+              <Calendar className="w-5 h-5" />
             </button>
             {selectedDate && (
               <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -147,7 +161,7 @@ const StaffDashboard: React.FC = () => {
             )}
           </div>
           <button className="relative flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-transparent text-primary-text dark:text-gray-100">
-            <span className="material-symbols-outlined">notifications</span>
+            <Bell className="w-6 h-6" />
             <span className="absolute top-2 right-2 flex size-2.5 rounded-full bg-primary ring-2 ring-background-light dark:ring-background-dark" />
           </button>
         </div>
@@ -158,19 +172,17 @@ const StaffDashboard: React.FC = () => {
         {/* Task Progress Card */}
         <div className="flex flex-col gap-3 rounded-xl bg-gradient-to-br from-[#E8F5E9] to-[#F1F8E9] dark:from-gray-800 dark:to-gray-900 p-5 mb-6 relative overflow-hidden">
           {/* Decorative Background Icon */}
-          <span className="material-symbols-outlined absolute -bottom-4 -right-4 text-9xl text-[#166534]/5 dark:text-gray-700/5 rotate-12 pointer-events-none">
-            task_alt
-          </span>
+          <CheckCircle className="absolute -bottom-4 -right-4 w-32 h-32 text-[#166534]/5 dark:text-gray-700/5 rotate-12 pointer-events-none" />
 
           <div className="flex items-center justify-between relative z-10">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#166534] dark:text-primary">bolt</span>
+                <Zap className="w-5 h-5 text-[#166534] dark:text-primary" />
                 <p className="text-[#166534] dark:text-gray-200 text-base font-bold leading-normal">Daily Task Progress</p>
               </div>
               {user?.branch && (
                 <div className="flex items-center gap-1.5 ml-0.5">
-                  <span className="material-symbols-outlined text-[#166534]/70 dark:text-gray-400 text-sm">store</span>
+                  <Store className="w-4 h-4 text-[#166534]/70 dark:text-gray-400" />
                   <p className="text-[#166534]/80 dark:text-gray-400 text-sm font-medium">
                     {user.branch.branch_name}
                   </p>
@@ -210,23 +222,23 @@ const StaffDashboard: React.FC = () => {
               onClick={fetchTasks}
               className="p-2 -mr-2 text-gray-500 hover:text-primary transition-colors"
             >
-              <span className="material-symbols-outlined">refresh</span>
+              <RefreshCw className="w-5 h-5" />
             </button>
           </div>
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-60">
-              <span className="material-symbols-outlined animate-spin text-3xl text-primary">progress_activity</span>
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
               <p className="text-sm font-medium text-gray-500">Loading tasks...</p>
             </div>
           ) : tasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-60 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
-              <span className="material-symbols-outlined text-4xl text-gray-300">checklist</span>
+              <ClipboardList className="w-10 h-10 text-gray-300" />
               <p className="text-sm font-medium text-gray-500">No tasks assigned</p>
             </div>
           ) : filteredTasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-60 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
-              <span className="material-symbols-outlined text-4xl text-gray-300">event_busy</span>
+              <CalendarX className="w-10 h-10 text-gray-300" />
               <p className="text-sm font-medium text-gray-500">No tasks found for this date</p>
               {selectedDate && (
                 <button
@@ -255,7 +267,7 @@ const StaffDashboard: React.FC = () => {
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowConfirm(false)} />
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 relative z-10 animate-in zoom-in-95 duration-200">
             <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center mb-4 mx-auto">
-              <span className="material-symbols-outlined text-3xl">logout</span>
+              <LogOut className="w-8 h-8" />
             </div>
             <h3 className="text-xl font-bold text-center text-gray-900 dark:text-white mb-2">Log Out?</h3>
             <p className="text-center text-gray-500 dark:text-gray-400 mb-6">
@@ -292,9 +304,7 @@ const ThemeToggle = () => {
       onClick={toggleTheme}
       className="flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-transparent text-primary-text dark:text-gray-100"
     >
-      <span className="material-symbols-outlined">
-        {theme === "dark" ? "light_mode" : "dark_mode"}
-      </span>
+      {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
     </button>
   )
 }

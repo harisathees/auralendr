@@ -137,7 +137,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
       return;
     }
     try {
-      const res = await api.get(`/customers/search?query=${query}`);
+      const res = await api.get(`/api/customers/search?query=${query}`);
       setCustomerSuggestions(res.data || []);
       setActiveSearchField(field);
     } catch (err) {
@@ -242,12 +242,11 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
   // Fetch processing fees when branch ID is available
   useEffect(() => {
     if (user?.branch_id) {
-      api.get(`/processing-fees?branch_id=${user.branch_id}`)
+      api.get(`/api/processing-fees?branch_id=${user.branch_id}`)
         .then(res => setProcessingFeesConfigs(res.data))
         .catch(console.error);
     }
   }, [user?.branch_id]);
-
   useEffect(() => {
     // Determine due date (loan date + validity months)
     if (loan.date) {
@@ -434,20 +433,19 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
       }
     }
   }, [paymentMethods, loan.payment_method]);
-
   useEffect(() => {
     // Load metadata
-    api.get("/jewel-types").then(res => Array.isArray(res.data) && setJewelTypes(res.data)).catch(console.error);
-    api.get("/jewel-qualities").then(res => Array.isArray(res.data) && setJewelQualities(res.data)).catch(console.error);
-    api.get("/jewel-names").then(res => Array.isArray(res.data) && setJewelNames(res.data)).catch(console.error);
-    api.get("/interest-rates").then(res => Array.isArray(res.data) && setInterestRates(res.data)).catch(console.error);
-    api.get("/loan-validities").then(res => Array.isArray(res.data) && setLoanValidities(res.data)).catch(console.error);
-    api.get("/money-sources").then(res => {
+    api.get("/api/jewel-types").then(res => Array.isArray(res.data) && setJewelTypes(res.data)).catch(console.error);
+    api.get("/api/jewel-qualities").then(res => Array.isArray(res.data) && setJewelQualities(res.data)).catch(console.error);
+    api.get("/api/jewel-names").then(res => Array.isArray(res.data) && setJewelNames(res.data)).catch(console.error);
+    api.get("/api/interest-rates").then(res => Array.isArray(res.data) && setInterestRates(res.data)).catch(console.error);
+    api.get("/api/loan-validities").then(res => Array.isArray(res.data) && setLoanValidities(res.data)).catch(console.error);
+    api.get("/api/money-sources").then(res => {
       if (Array.isArray(res.data)) {
         setPaymentMethods(res.data.filter((m: any) => m.is_outbound));
       }
     }).catch(console.error);
-    api.get("/metal-rates").then(res => Array.isArray(res.data) && setMetalRates(res.data)).catch(console.error); // Added this line
+    api.get("/api/metal-rates").then(res => Array.isArray(res.data) && setMetalRates(res.data)).catch(console.error); // Added this line
   }, []);
 
   useEffect(() => {
