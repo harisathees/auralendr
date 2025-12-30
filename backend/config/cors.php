@@ -26,11 +26,14 @@ return [
     //FOR PRODUCTION HOST
     'paths' => ['api/*', 'login', 'logout', 'sanctum/csrf-cookie'],
     'allowed_methods' => ['*'],
-    'allowed_origins' => [
-        'https://demo.auralendr.com',
-        // env('FRONTEND_URL', 'http://localhost:5173'),
-    ],
-    'allowed_origins_patterns' => [],
+    'allowed_origins' => array_merge(
+        [
+            'https://demo.auralendr.com',
+            'http://localhost:5173',
+        ],
+        explode(',', env('FRONTEND_URL', 'http://localhost:5173'))
+    ),
+    'allowed_origins_patterns' => ['.*netlify.app', '.*railway.app'],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
     'max_age' => 0,
