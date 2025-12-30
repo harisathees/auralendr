@@ -29,9 +29,8 @@ return [
     'allowed_origins' => array_merge(
         [
             'https://demo.auralendr.com',
-            'http://localhost:5173',
         ],
-        explode(',', env('FRONTEND_URL', 'http://localhost:5173'))
+        array_filter(explode(',', env('FRONTEND_URL', '')))
     ),
     'allowed_origins_patterns' => ['.*netlify.app', '.*railway.app'],
     'allowed_headers' => ['*'],
