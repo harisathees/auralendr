@@ -5,7 +5,7 @@ const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 const api = axios.create({
   baseURL, // e.g. "http://localhost:8000" - No /api appended automatically
-  withCredentials: true, // ✅ REQUIRED for Sanctum Cookies
+  // withCredentials: true, // REMOVED: No longer using cookies
   headers: {
     Accept: "application/json", // Force JSON response
     "Content-Type": "application/json",
@@ -15,11 +15,16 @@ const api = axios.create({
 
 /**
  * Request Interceptor
- * - NO Bearer Token header needed (Sanctum uses cookies)
- * - We do NOT modify headers here anymore
+ * - Attaches Bearer Token from localStorage
  */
 api.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
   (error) => Promise.reject(error)
 );
 

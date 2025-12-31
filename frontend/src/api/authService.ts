@@ -1,12 +1,10 @@
 import api from "./apiClient";
 
-export const csrf = () => api.get("/sanctum/csrf-cookie");
-
 export const login = async (data: {
   email: string;
   password: string;
 }) => {
-  await csrf(); // 🔐 IMPORTANT
+  // await csrf(); // 🔐 NOT NEEDED for PAT
   return api.post("/api/login", data);
 };
 

@@ -22,7 +22,7 @@ return [
     //     // Sanctum::currentRequestHost(),
     // ))),
 
-    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', 'localhost,localhost:5173,demo.auralendr.com')),
+    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', '')),
 
 
 
