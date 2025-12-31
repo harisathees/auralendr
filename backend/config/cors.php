@@ -36,6 +36,7 @@ return [
 
     'allowed_origins' => [
         'https://demo.auralendr.com',
+        'http://localhost:5174',
     ],
 
     'allowed_origins_patterns' => [],
