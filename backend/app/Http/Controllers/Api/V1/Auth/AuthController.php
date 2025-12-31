@@ -25,17 +25,11 @@ class AuthController extends Controller
         }
 
         try {
-            $credentials = $request->only('email', 'password');
+            $user = User::where('email', $request->email)->first();
 
-            // 1. Correct Session Logic: Use Auth::attempt
-            // This sets the Laravel session cookies properly for SPA auth
-            if (Auth::attempt($credentials, $request->boolean('remember'))) {
-                $request->session()->regenerate();
+            if ($user && Hash::check($request->password, $user->password)) {
                 
-                /** @var \App\Models\Admin\Organization\User\User $user */
-                $user = Auth::user();
-
-                // Staff Time Restriction Logic (Preserved)
+                // Staff Time Restriction Logic
                 if ($user->hasRole('staff')) {
                     $branchId = $user->branch_id;
                     $settings = \App\Models\Admin\Organization\UserPrivileges\StaffTimeRestriction::whereIn('key', ['staff_login_start_time', 'staff_login_end_time'])
@@ -57,7 +51,6 @@ class AuthController extends Controller
                             $end = \Carbon\Carbon::createFromFormat('H:i', $endTime);
 
                             if (!$now->between($start, $end)) {
-                                Auth::logout(); // Log them out immediately
                                 return response()->json([
                                     'message' => "Access denied: Staff login is only allowed between {$startTime} and {$endTime}"
                                 ], 403);
@@ -66,11 +59,10 @@ class AuthController extends Controller
                     }
                 }
 
-                // Create a token for compatibility if frontend needs it, but session is main driver
-                // note: 'api_token' is arbitary name
-                $token = $user->createToken('api_token')->plainTextToken;
+                // Create a token (Stateless)
+                $token = $user->createToken('auth_token')->plainTextToken;
 
-                // Cache session marker
+                // Cache session marker (optional, used for legacy logic if needed)
                 Cache::put("user_session_{$user->id}", $token, now()->addDays(7));
 
                 return response()->json([
@@ -90,7 +82,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Invalid credentials'], 401);
 
         } catch (\Throwable $e) {
-            return response()->json(['message' => 'Login Critical Error: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Login Error: ' . $e->getMessage()], 500);
         }
     }
 
@@ -111,16 +103,13 @@ class AuthController extends Controller
     // POST /api/logout
     public function logout(Request $request)
     {
-        // 1. Invalidate Session
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        // 2. Also cleanup legacy token if present
+        // Revoke the token that was used to authenticate the current request
+        $request->user()->currentAccessToken()->delete();
+        
+        // Also cleanup legacy token if present
         $user = $request->user();
         if ($user) {
             Cache::forget("user_session_{$user->id}");
-            $user->currentAccessToken()?->delete();
         }
         
         return response()->json(['message' => 'Logged out']);

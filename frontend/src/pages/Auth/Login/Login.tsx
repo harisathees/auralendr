@@ -1,7 +1,7 @@
 import React, { useState, type FormEvent } from "react";
 import { useAuth } from "../../../context/Auth/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { Landmark, IdCard, Eye, EyeOff, Lock } from "lucide-react";
+import { IdCard, Eye, EyeOff, Lock } from "lucide-react";
 
 const Login: React.FC = () => {
   const { login } = useAuth();
@@ -41,17 +41,16 @@ const Login: React.FC = () => {
       {/* Main Container */}
       <div className="relative w-full flex-1 flex flex-col group/design-root overflow-x-hidden">
 
-        {/* Top Header Section (Green) */}
-        <div className="relative w-full bg-primary h-[220px] pt-safe-top flex flex-col items-center rounded-b-[2rem] shadow-sm z-0">
-          {/* Status Bar Simulation Spacer */}
-          <div className="w-full h-6"></div>
+        {/* Top Header Section (Image) */}
+        <div className="relative w-full h-[220px] pt-safe-top flex flex-col items-center rounded-b-[2rem] shadow-sm z-0 overflow-hidden sm:bg-primary">
+          <img src="/assets/auralendr.png" alt="Header Background" className="absolute inset-0 w-full h-full object-cover sm:hidden" />
         </div>
 
         {/* Floating Brand Icon */}
         <div className="absolute top-[172px] left-1/2 -translate-x-1/2 z-10">
           <div className="flex items-center justify-center w-24 h-24 bg-white dark:bg-background-dark rounded-full shadow-lg p-1">
-            <div className="flex items-center justify-center w-full h-full bg-white dark:bg-zinc-800 rounded-full border border-gray-100 dark:border-zinc-700">
-              <Landmark className="text-primary w-10 h-10" />
+            <div className="flex items-center justify-center w-full h-full bg-white dark:bg-zinc-800 rounded-full border border-gray-100 dark:border-zinc-700 overflow-hidden">
+              <img src="/assets/login-nsh.png" alt="NSH Logo" className="w-full h-full object-cover" />
             </div>
           </div>
         </div>
