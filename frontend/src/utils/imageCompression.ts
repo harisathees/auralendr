@@ -13,65 +13,70 @@ export const compressImage = async (file: File, maxWidth = 800, quality = 0.5): 
     }
 
     return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target?.result as string;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
+        // Use createObjectURL instead of FileReader to avoid large base64 strings in memory
+        const objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+        img.src = objectUrl;
 
-                // Scale down if exceeds maxWidth
-                if (width > maxWidth) {
-                    height = (maxWidth / width) * height;
-                    width = maxWidth;
+        img.onload = () => {
+            // Revoke immediately after load to free memory
+            URL.revokeObjectURL(objectUrl);
+
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            // Scale down if exceeds maxWidth
+            if (width > maxWidth) {
+                height = (maxWidth / width) * height;
+                width = maxWidth;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                resolve(file); // Fallback to original
+                return;
+            }
+
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Always use image/jpeg for best compression
+            const outputType = 'image/jpeg';
+            // Replace extension in name if it's not already .jpg or .jpeg
+            let fileName = file.name;
+            if (!fileName.toLowerCase().endsWith('.jpg') && !fileName.toLowerCase().endsWith('.jpeg')) {
+                const lastDot = fileName.lastIndexOf('.');
+                if (lastDot !== -1) {
+                    fileName = fileName.substring(0, lastDot) + '.jpg';
+                } else {
+                    fileName += '.jpg';
                 }
+            }
 
-                canvas.width = width;
-                canvas.height = height;
-
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    resolve(file); // Fallback to original
-                    return;
-                }
-
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // Always use image/jpeg for best compression
-                const outputType = 'image/jpeg';
-                // Replace extension in name if it's not already .jpg or .jpeg
-                let fileName = file.name;
-                if (!fileName.toLowerCase().endsWith('.jpg') && !fileName.toLowerCase().endsWith('.jpeg')) {
-                    const lastDot = fileName.lastIndexOf('.');
-                    if (lastDot !== -1) {
-                        fileName = fileName.substring(0, lastDot) + '.jpg';
-                    } else {
-                        fileName += '.jpg';
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob) {
+                        resolve(file);
+                        return;
                     }
-                }
-
-                canvas.toBlob(
-                    (blob) => {
-                        if (!blob) {
-                            resolve(file);
-                            return;
-                        }
-                        // Create a new file from the blob
-                        const compressedFile = new File([blob], fileName, {
-                            type: outputType,
-                            lastModified: Date.now(),
-                        });
-                        resolve(compressedFile);
-                    },
-                    outputType,
-                    quality
-                );
-            };
-            img.onerror = (err) => reject(err);
+                    // Create a new file from the blob
+                    const compressedFile = new File([blob], fileName, {
+                        type: outputType,
+                        lastModified: Date.now(),
+                    });
+                    resolve(compressedFile);
+                },
+                outputType,
+                quality
+            );
         };
-        reader.onerror = (err) => reject(err);
+
+        img.onerror = (err) => {
+            URL.revokeObjectURL(objectUrl);
+            reject(err);
+        };
     });
 };

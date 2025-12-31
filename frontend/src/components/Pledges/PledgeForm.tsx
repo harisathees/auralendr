@@ -8,6 +8,31 @@ import { compressImage } from "../../utils/imageCompression";
 
 // --- UI Components from Create.tsx ---
 
+const FilePreview: React.FC<{ file: File; className?: string }> = ({ file, className }) => {
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  if (!preview) return null;
+  return <img src={preview} alt="preview" className={className} />;
+};
+
+const AudioPreview: React.FC<{ file: File; className?: string }> = ({ file, className }) => {
+  const [preview, setPreview] = useState<string | null>(null);
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  if (!preview) return null;
+  return <audio controls src={preview} className={className} />;
+}
+
 interface MediaUploadBlockProps {
   label: string;
   icon: string;
@@ -31,10 +56,10 @@ const MediaUploadBlock: React.FC<MediaUploadBlockProps> = ({
           <div className="flex flex-col items-center justify-center w-full h-full">
             {isAudio ? (
               <div className="w-full flex flex-col items-center justify-center p-2">
-                <audio controls src={URL.createObjectURL(file)} className="w-full h-8" />
+                <AudioPreview file={file} className="w-full h-8" />
               </div>
             ) : (
-              <img src={URL.createObjectURL(file)} alt="preview" className="w-full h-full object-cover rounded-lg" />
+              <FilePreview file={file} className="w-full h-full object-cover rounded-lg" />
             )}
             <button onClick={onRemove} type="button" className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 z-10 hover:bg-red-600">
               <span className="material-symbols-outlined text-sm">close</span>
