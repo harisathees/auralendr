@@ -56,6 +56,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::apiResource('pledges', PledgeController::class);
 
     // Repledge Routes
+    Route::post('repledges/{repledge}/close', [RepledgeController::class, 'close']);
     Route::get('repledge-loans/search', [RepledgeController::class, 'searchLoan']);
     Route::apiResource('repledges', RepledgeController::class);
 
@@ -80,6 +81,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
 
     // Shared Routes (Admin + Staff)
     Route::get('/admin-all-loans', [LoanController::class, 'index']);
+    Route::get('/loans/{loanNo}', [LoanController::class, 'showByLoanNo']);
 
     // Read-only access for shared resources often needed by staff
     Route::get('/jewel-types', [JewelTypeController::class, 'index']);
@@ -90,6 +92,11 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
     Route::get('/processing-fees', [LoanProcessingFeeController::class, 'index']);
     Route::get('transaction-categories', [TransactionCategoryController::class, 'index']);
+
+    // Loan Schemes
+    Route::apiResource('loan-schemes', \App\Http\Controllers\Api\V1\Admin\LoanConfiguration\LoanSchemeController::class);
+    // Loan Calculator
+    Route::post('loan-calculator/calculate', [\App\Http\Controllers\Api\V1\LoanCalculatorController::class, 'calculate']);
 
     // Repledge Sources (Shared for read/write as configured in controller)
     Route::apiResource('repledge-sources', RepledgeSourceController::class);
@@ -110,6 +117,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
 
 
     // Transactions
+    Route::get('/transactions/report', [TransactionController::class, 'report']);
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::post('/transactions', [TransactionController::class, 'store']);
 

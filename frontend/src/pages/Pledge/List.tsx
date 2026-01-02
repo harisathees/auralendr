@@ -1,21 +1,15 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { usePledges } from "../../hooks/usePledges";
 import PledgeList from "../../components/Pledges/PledgeList";
 
 const List = () => {
+  const location = useLocation();
+  const initialTab = (location.state as any)?.tab || 'loans';
   const [searchTerm, setSearchTerm] = useState("");
-  // Simple debounce logic or direct pass? Let's assume direct for now and optimize later if needed,
-  // or implement a simple useEffect debounce here.
+  const [activeTab, setActiveTab] = useState<'loans' | 'repledges'>(initialTab);
 
-  /* 
-  // No need for debounce here anymore as PledgeList handles interaction 
-  // and only triggers search on explicit selection/enter
-  */
-
-  const { pledges, loading } = usePledges(searchTerm);
-
-  // Loading state handling can be smarter (e.g. keep showing list while searching)
-  // For now simple:
+  const { pledges, loading } = usePledges(searchTerm, activeTab === 'loans');
 
   return (
     <PledgeList
@@ -23,6 +17,8 @@ const List = () => {
       searchTerm={searchTerm}
       onSearchChange={setSearchTerm}
       loading={loading}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
     />
   );
 };

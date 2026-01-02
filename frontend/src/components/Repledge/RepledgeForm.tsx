@@ -500,7 +500,7 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
 
                                 {/* Suggestions Dropdown */}
                                 {activeSuggestionIndex === index && suggestions.length > 0 && (
-                                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#2E2842] rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto z-50">
+                                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#2E2842] rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 max-h-60 overflow-y-auto z-50 no-scrollbar">
                                         {suggestions.map((s) => (
                                             <div
                                                 key={s.id}

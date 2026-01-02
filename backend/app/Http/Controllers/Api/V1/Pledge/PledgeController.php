@@ -363,7 +363,8 @@ class PledgeController extends Controller
 
                         $loan->update($data['loan']);
 
-                        // Smart Balance Update
+                        /* 
+                        // Smart Balance Update - Disabled as per requirement to not affect balance on edit
                         if (isset($data['loan']['amount_to_be_given'])) {
                             $newAmount = (float) $data['loan']['amount_to_be_given'];
                             $diff = $newAmount - $oldAmount;
@@ -423,9 +424,10 @@ class PledgeController extends Controller
                                     Log::warning('Money Source not found for update', ['name' => $paymentMethodName]);
                                 }
                             } else {
-                                Log::debug('No difference or no payment method', ['diff' => $diff, 'method' => $paymentMethodName]);
+                                Log::debug('No difference or no payment method', ['diff' => $diff, 'desc' => $paymentMethodName]);
                             }
                         }
+                        */
 
                     } else {
                         $data['loan']['pledge_id'] = $pledge->id;

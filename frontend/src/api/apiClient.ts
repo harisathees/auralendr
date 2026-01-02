@@ -13,6 +13,16 @@ const api = axios.create({
   timeout: 15000,
 });
 
+// For Sanctum routes that are NOT under /api
+export const baseApi = axios.create({
+  baseURL: "/", // Vite proxy will handle /sanctum
+  withCredentials: true,
+  headers: {
+    Accept: "application/json",
+  },
+});
+
+
 /**
  * Request Interceptor
  * - Attaches Bearer Token from localStorage

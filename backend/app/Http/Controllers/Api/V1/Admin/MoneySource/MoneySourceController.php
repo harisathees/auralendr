@@ -15,6 +15,14 @@ class MoneySourceController extends Controller
     {
         $user = $request->user();
 
+        // 0. If branch_id is provided in request (and user is admin or belongs to that branch)
+        $branchId = $request->query('branch_id');
+        if ($branchId && ($user->role === 'admin' || $user->branch_id == $branchId)) {
+            return MoneySource::whereHas('branches', function ($q) use ($branchId) {
+                $q->where('branches.id', $branchId);
+            })->orderBy('name')->get();
+        }
+
         // 1. If user has a branch assigned (Staff OR Admin with branch), filter by that branch
         if ($user->branch_id) {
             return MoneySource::whereHas('branches', function ($q) use ($user) {

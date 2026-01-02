@@ -943,7 +943,12 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
               <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Amount <span className="text-red-500">*</span></span>
               <input
                 value={loan.amount} onChange={e => setLoan({ ...loan, amount: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="₹0" type="number" required
+                readOnly={!!initial}
+                className={`w-full rounded-lg border h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400 ${!!initial
+                  ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary'
+                  }`}
+                placeholder="₹0" type="number" required
               />
             </label>
 

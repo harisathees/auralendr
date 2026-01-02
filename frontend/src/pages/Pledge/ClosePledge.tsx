@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import { calculateInterest, type CalculationMethod } from '../../lib/calculateInterest';
 import { useLoanCalculation } from "../../hooks/useLoanCalculation";
 import GoldCoinSpinner from '../../components/GoldCoinSpinner';
 
@@ -67,28 +66,47 @@ const ClosePledge: React.FC = () => {
     const navigate = useNavigate();
     const { loanData, metalRates, loading, error, saving, saveCalculationAndCloseLoan } = useLoanCalculation(loanId || null);
 
-    const [selectedMethod, setSelectedMethod] = useState<CalculationMethod>('method1');
+    const [selectedMethod, setSelectedMethod] = useState<string>(''); // Slug or ID
+    const [loanSchemes, setLoanSchemes] = useState<any[]>([]);
+
     const [toDate, setToDate] = useState('');
     const [reductionAmount, setReductionAmount] = useState<string>('');
     const [balanceAmount, setBalanceAmount] = useState<string>('');
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     const [currentMetalRate, setCurrentMetalRate] = useState<string | null>(null);
-
-    // Payment Source State
     const [moneySources, setMoneySources] = useState<any[]>([]);
     const [paymentSourceId, setPaymentSourceId] = useState<string>('');
     const [amountPaid, setAmountPaid] = useState<string>('');
 
+    // Calculation Result State (since it's async now)
+    const [calculationResult, setCalculationResult] = useState<any>(null);
+    const [calculating, setCalculating] = useState(false);
+
+    // Fetch Schemes & Money Sources
     useEffect(() => {
         const today = new Date().toISOString().split('T')[0];
         setToDate(today);
 
-        // Fetch Money Sources
         import('../../api/apiClient').then(module => {
-            module.default.get('/money-sources').then(res => {
+            const api = module.default;
+
+            // Fetch Schemes
+            api.get('/loan-schemes?status=active').then(res => {
+                if (Array.isArray(res.data)) {
+                    setLoanSchemes(res.data);
+                    // Default to Scheme 1 (slug: scheme-1)
+                    if (res.data.find((s: any) => s.slug === 'scheme-1')) {
+                        setSelectedMethod('scheme-1');
+                    } else if (res.data.length > 0) {
+                        setSelectedMethod(res.data[0].slug);
+                    }
+                }
+            });
+
+            // Fetch Money Sources
+            api.get('/money-sources').then(res => {
                 if (Array.isArray(res.data)) {
                     setMoneySources(res.data);
-                    // Auto-select first source if available
                     if (res.data.length > 0) {
                         setPaymentSourceId(String(res.data[0].id));
                     }
@@ -97,60 +115,59 @@ const ClosePledge: React.FC = () => {
         });
     }, []);
 
-    // Determine current metal rate
+    // ... (metal rate effect)
+
+    // Calculate Interest via API
     useEffect(() => {
-        if (!loanData || !metalRates.length) return;
+        if (!loanData || !toDate || !selectedMethod) return;
 
-        // Strategy from PledgeForm: Look at first jewel's type
-        const firstJewelTypeName = loanData?.jewels?.[0]?.jewel_type || "";
-        const isSilver = firstJewelTypeName.toLowerCase().includes("silver");
+        const performCalculation = async () => {
+            setCalculating(true);
+            try {
+                const api = (await import('../../api/apiClient')).default;
+                const res = await api.post('/loan-calculator/calculate', {
+                    amount: loanData.amount,
+                    start_date: loanData.date,
+                    end_date: toDate,
+                    scheme_slug: selectedMethod,
+                    interest_rate: loanData.interest_rate, // Override with loan's rate
+                    validity_months: loanData.validity_months,
+                    reduction_amount: Number(reductionAmount) || 0,
+                    interest_status: loanData.interest_taken ? 'taken' : 'notTaken'
+                });
+                setCalculationResult(res.data);
 
-        const rateObj = metalRates.find((r: any) => r.name.toLowerCase().includes(isSilver ? "silver" : "gold"));
-        if (rateObj?.metal_rate?.rate) {
-            setCurrentMetalRate(rateObj.metal_rate.rate);
-        }
-    }, [loanData, metalRates]);
+                // Update Balance logic (auto-fill paid amount)
+                const total = res.data.totalAmount;
+                const bal = Number(balanceAmount) || 0;
+                const payNow = Math.max(0, total - bal);
+                setAmountPaid(String(payNow));
 
-    // Calculate result at top level (safe from early returns)
-    // using useMemo to ensure stable reference and derived from current state
-    const redAmount = Number(reductionAmount) || 0;
+            } catch (err) {
+                console.error("Calculation failed", err);
+                // Optionally set error state for calc
+            } finally {
+                setCalculating(false);
+            }
+        };
 
-    // Memoize the result based on loanData and inputs. 
-    // Handle the null loanData case gracefully inside useMemo.
-    const result = useMemo(() => {
-        if (!loanData) return null;
-        return calculateInterest(
-            selectedMethod,
-            loanData.date,
-            toDate,
-            loanData.amount,
-            loanData.interest_rate,
-            loanData.validity_months,
-            loanData.interest_taken ? 'taken' : 'notTaken',
-            redAmount
-        );
-    }, [loanData, selectedMethod, toDate, redAmount]);
+        const timer = setTimeout(performCalculation, 500); // Debounce
+        return () => clearTimeout(timer);
 
-    // Auto-calculate Amount Paid based on Balance Amount
-    useEffect(() => {
-        if (!result) return;
-        const total = result.totalAmount;
-        const bal = Number(balanceAmount) || 0;
-        const payNow = Math.max(0, total - bal);
-        setAmountPaid(String(payNow));
-    }, [result?.totalAmount, balanceAmount]);
+    }, [loanData, selectedMethod, toDate, reductionAmount, balanceAmount]);
 
     const handleClosePledge = async () => {
-        if (!loanData || !toDate || !paymentSourceId || !amountPaid || !result) return;
+        if (!loanData || !toDate || !paymentSourceId || !amountPaid || !calculationResult) return;
         const balAmount = Number(balanceAmount) || 0;
         const paidAmt = Number(amountPaid) || 0;
+        const redAmount = Number(reductionAmount) || 0;
 
         const success = await saveCalculationAndCloseLoan(
             toDate,
             redAmount,
             selectedMethod,
             {
-                ...result,
+                ...calculationResult,
                 balance_amount: balAmount,
                 metal_rate: currentMetalRate ? Number(currentMetalRate) : null
             },
@@ -166,17 +183,22 @@ const ClosePledge: React.FC = () => {
     // Helper boolean to style differently based on Gold/Silver if needed
     const isSilverRatio = loanData?.jewels?.[0]?.jewel_type?.toLowerCase().includes("silver");
 
-    const methodOptions = [
-        { value: 'method1', label: 'Scheme 1 (Maximum Interest)' },
-        { value: 'method2', label: 'Scheme 2 (Minimum Interest)' },
-        { value: 'method3', label: 'Scheme 3 (Medium Interest)' },
-        { value: 'method4', label: 'Scheme 4 (Day Basis)' },
-    ];
+
 
     // EARLY RETURN CHECKS (Must be AFTER all Hooks)
     if (loading) return <LoadingState text="Fetching Loan Details..." />;
     if (showSuccessMessage) return <SuccessState />;
-    if (error || !loanData || !result) return <ErrorState error={error || 'Loan data not found.'} onBack={() => navigate('/pledges')} />;
+    if (error || !loanData) return <ErrorState error={error || 'Loan data not found.'} onBack={() => navigate('/pledges')} />;
+
+    // Use calculationResult for display
+    const displayResult = calculationResult || {
+        totalMonths: '--',
+        finalInterestRate: '--',
+        totalInterest: 0,
+        interestReduction: 0,
+        additionalReduction: 0,
+        totalAmount: 0 // Will show 0 until calc is done
+    };
 
     return (
         <div className="flex flex-col h-full bg-background-light dark:bg-background-dark font-display overflow-y-auto no-scrollbar">
@@ -271,12 +293,14 @@ const ClosePledge: React.FC = () => {
                             <div className="relative">
                                 <select
                                     value={selectedMethod}
-                                    onChange={(e) => setSelectedMethod(e.target.value as CalculationMethod)}
+                                    onChange={(e) => setSelectedMethod(e.target.value)}
                                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-gray-900 dark:text-white appearance-none cursor-pointer"
+                                    disabled={loanSchemes.length === 0}
                                 >
-                                    {methodOptions.map(option => (
-                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    {loanSchemes.map(scheme => (
+                                        <option key={scheme.slug} value={scheme.slug}>{scheme.name}</option>
                                     ))}
+                                    {loanSchemes.length === 0 && <option value="">Loading Schemes...</option>}
                                 </select>
                                 <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">expand_more</span>
                             </div>
@@ -286,26 +310,31 @@ const ClosePledge: React.FC = () => {
 
                 {/* Results Card */}
                 <Section title="Final Calculation" icon="receipt_long">
-                    <div className="space-y-4">
+                    <div className="relative space-y-4">
+                        {calculating && (
+                            <div className="absolute inset-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
+                                <GoldCoinSpinner svgClassName="w-8 h-8" />
+                            </div>
+                        )}
                         <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 space-y-3">
-                            <InfoRow label="Duration" value={result.totalMonths} />
-                            <InfoRow label="Applied Interest Rate" value={result.finalInterestRate} />
+                            <InfoRow label="Duration" value={displayResult.totalMonths} />
+                            <InfoRow label="Applied Interest Rate" value={displayResult.finalInterestRate} />
                         </div>
 
                         <div className="space-y-2 pt-2">
-                            <InfoRow label="Calculated Interest" value={`₹${result.totalInterest.toLocaleString('en-IN')}`} />
+                            <InfoRow label="Calculated Interest" value={`₹${displayResult.totalInterest.toLocaleString('en-IN')}`} />
 
-                            {result.interestReduction > 0 && (
+                            {displayResult.interestReduction > 0 && (
                                 <InfoRow
                                     label="Interest Taken"
-                                    value={`- ₹${result.interestReduction.toLocaleString('en-IN')}`}
+                                    value={`- ₹${displayResult.interestReduction.toLocaleString('en-IN')}`}
                                     valueClass="text-red-500 font-medium"
                                 />
                             )}
-                            {result.additionalReduction > 0 && (
+                            {displayResult.additionalReduction > 0 && (
                                 <InfoRow
                                     label="Additional Reduction"
-                                    value={`- ₹${result.additionalReduction.toLocaleString('en-IN')}`}
+                                    value={`- ₹${displayResult.additionalReduction.toLocaleString('en-IN')}`}
                                     valueClass="text-red-500 font-medium"
                                 />
                             )}
@@ -315,7 +344,9 @@ const ClosePledge: React.FC = () => {
 
                         <div className="flex justify-between items-center p-4 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30 rounded-xl">
                             <span className="text-green-800 dark:text-green-300 font-medium">Total Payable Amount</span>
-                            <span className="text-2xl font-bold text-green-700 dark:text-green-400">₹{result.totalAmount.toLocaleString('en-IN')}</span>
+                            <span className="text-2xl font-bold text-green-700 dark:text-green-400">
+                                {calculating ? '...' : `₹${displayResult.totalAmount.toLocaleString('en-IN')}`}
+                            </span>
                         </div>
                     </div>
                 </Section>
