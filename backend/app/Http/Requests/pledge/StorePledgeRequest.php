@@ -80,7 +80,7 @@ class StorePledgeRequest extends FormRequest
 
             // Files
             'files' => 'nullable|array',
-            'files.*' => 'required|file|image|max:2048|mimes:jpeg,png,jpg,webp', // Max 2MB, strict image types
+            'files.*' => 'nullable|file|max:51200|mimes:jpeg,png,jpg,webp,mp3,wav,m4a,ogg,webm,aac,flac,3gp,ts,mkv,mov,avi,wmv', // Max 50MB
             'categories' => 'nullable|array',
             'categories.*' => 'nullable|string|max:100',
         ];

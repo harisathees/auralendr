@@ -23,6 +23,25 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const [recordingTime, setRecordingTime] = useState(0);
   const [recordingInterval, setRecordingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
 
+  const [mimeType, setMimeType] = useState<string>("");
+  const [extension, setExtension] = useState<string>("");
+
+  const getSupportedMimeType = () => {
+    const types = [
+      { mime: 'audio/webm;codecs=opus', ext: 'webm' },
+      { mime: 'audio/webm', ext: 'webm' },
+      { mime: 'audio/mp4', ext: 'mp4' },
+      { mime: 'audio/aac', ext: 'aac' },
+      { mime: 'audio/ogg', ext: 'ogg' },
+    ];
+    for (const type of types) {
+      if (MediaRecorder.isTypeSupported(type.mime)) {
+        return type;
+      }
+    }
+    return { mime: '', ext: 'webm' }; // Fallback
+  };
+
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -33,9 +52,12 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         }
       });
 
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
+      const supported = getSupportedMimeType();
+      setMimeType(supported.mime);
+      setExtension(supported.ext);
+
+      const options = supported.mime ? { mimeType: supported.mime } : undefined;
+      const mediaRecorder = new MediaRecorder(stream, options);
 
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -48,7 +70,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, {
-          type: 'audio/webm;codecs=opus'
+          type: supported.mime || 'audio/webm'
         });
         const audioUrl = URL.createObjectURL(audioBlob);
         setRecordedAudio(audioUrl);
@@ -99,18 +121,19 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
   const confirmRecording = useCallback(() => {
     if (audioChunksRef.current.length > 0) {
+      const finalMime = mimeType || 'audio/webm';
       const audioBlob = new Blob(audioChunksRef.current, {
-        type: 'audio/webm;codecs=opus'
+        type: finalMime
       });
-      const file = new File([audioBlob], `audio_${Date.now()}.webm`, {
-        type: 'audio/webm;codecs=opus'
+      const file = new File([audioBlob], `audio_${Date.now()}.${extension}`, {
+        type: finalMime
       });
       onCapture(file);
       setRecordedAudio(null);
       setRecordingTime(0);
       onClose();
     }
-  }, [onCapture, onClose]);
+  }, [onCapture, onClose, mimeType, extension]);
 
   const retakeRecording = useCallback(() => {
     setRecordedAudio(null);
@@ -153,6 +176,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
             {recordedAudio ? 'Audio Preview' : 'Record Audio'}
           </h2>
           <Button
+            type="button"
             onClick={onClose}
             variant="ghost"
             size="sm"
@@ -168,8 +192,8 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
             {/* Recording Animation */}
             <div className="relative mb-8">
               <div className={`w-32 h-32 rounded-full mx-auto flex items-center justify-center ${isRecording
-                  ? 'bg-red-500 animate-pulse'
-                  : 'bg-gray-200 hover:bg-gray-300 cursor-pointer'
+                ? 'bg-red-500 animate-pulse'
+                : 'bg-gray-200 hover:bg-gray-300 cursor-pointer'
                 }`}>
                 <Mic className={`w-16 h-16 ${isRecording ? 'text-white' : 'text-gray-600'}`} />
               </div>
@@ -188,6 +212,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
             <div className="flex justify-center gap-4">
               {!isRecording ? (
                 <Button
+                  type="button"
                   onClick={startRecording}
                   className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full"
                 >
@@ -196,6 +221,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
                 </Button>
               ) : (
                 <Button
+                  type="button"
                   onClick={stopRecording}
                   className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-8 py-3 rounded-full"
                 >
@@ -212,6 +238,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
             <div className="mb-8">
               <div className="w-32 h-32 rounded-full bg-green-100 mx-auto flex items-center justify-center mb-4">
                 <Button
+                  type="button"
                   onClick={playRecording}
                   className="w-16 h-16 rounded-full bg-green-500 hover:bg-green-600 text-white"
                 >
@@ -233,6 +260,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
             {/* Action Buttons */}
             <div className="flex justify-center gap-4">
               <Button
+                type="button"
                 onClick={retakeRecording}
                 variant="outline"
                 className="flex items-center gap-2 px-6 py-3 rounded-full"
@@ -241,6 +269,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
                 Retake
               </Button>
               <Button
+                type="button"
                 onClick={confirmRecording}
                 className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full"
               >

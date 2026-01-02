@@ -98,6 +98,14 @@ class PledgeController extends Controller
      */
     public function store(StorePledgeRequest $request)
     {
+        // Guard against empty POST (usually file size limit exceeded)
+        if (empty($request->all()) && empty($request->allFiles())) {
+             return response()->json([
+                'message' => 'The request payload is empty. This often happens if the uploaded files exceed the server limit (post_max_size).',
+                'error' => 'payload_too_large'
+            ], 413);
+        }
+        
         $user = $request->user();
 
         // Check permission
@@ -212,6 +220,9 @@ class PledgeController extends Controller
                     if ($moneySource) {
                         if (!$moneySource->is_outbound) {
                             throw new \Exception("The selected payment method '{$moneySource->name}' is not allowed for outbound transactions.");
+                        }
+                        if ($moneySource->balance < $loan->amount_to_be_given) {
+                            throw new \Illuminate\Validation\ValidationException(\Illuminate\Support\Facades\Validator::make([], []), new \Illuminate\Support\MessageBag(['loan.payment_method' => ["Insufficient balance in {$moneySource->name}. Available: {$moneySource->balance}"]]));
                         }
                         $moneySource->decrement('balance', $loan->amount_to_be_given);
 

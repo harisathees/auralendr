@@ -10,7 +10,11 @@ const Create: React.FC = () => {
   const { can, user } = useAuth();
   const toast = useToast();
 
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
   const handleSubmit = async (fd: FormData) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       await api.post("/api/pledges", fd, {
         headers: {
@@ -24,11 +28,13 @@ const Create: React.FC = () => {
       if (err.response && err.response.data) {
         console.error("Validation Errors:", err.response.data);
         const errorMessage = err.response.data.message || 'Validation Error';
-        // const details = err.response.data.errors ? JSON.stringify(err.response.data.errors, null, 2) : '';
-        toast.error(`Failed: ${errorMessage}`);
+        const errorDetails = err.response.data.error || '';
+        toast.error(`Failed: ${errorMessage} ${errorDetails ? `(${errorDetails})` : ''}`);
       } else {
-        toast.error("Failed to create pledge. See console for details.");
+        toast.error("Failed to create pledge. Network or Server Error.");
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -107,7 +113,7 @@ const Create: React.FC = () => {
           </div>
         ) : (
           <>
-            <PledgeForm onSubmit={handleSubmit} />
+            <PledgeForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
             <div className="fixed bottom-0 right-0 p-2 bg-black/50 text-white text-[10px] pointer-events-none z-50">
               Debug: Role: {user?.role} | Perms: {user?.permissions?.includes('pledge.create') ? 'Yes' : 'No'} | Allow: Yes
             </div>

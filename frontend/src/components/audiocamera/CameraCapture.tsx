@@ -38,7 +38,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
@@ -86,45 +86,45 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
 
 
   const capturePhoto = useCallback(() => {
-  if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current) return;
 
-  const video = videoRef.current;
-  const canvas = canvasRef.current;
-  const context = canvas.getContext('2d');
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
 
-  if (!context) return;
+    if (!context) return;
 
-  const videoWidth = video.videoWidth;
-  const videoHeight = video.videoHeight;
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
 
-  // Define 4:5 frame
-  const targetWidth = videoWidth;
-  const targetHeight = Math.floor(videoWidth * 5 / 4);
+    // Define 4:5 frame
+    const targetWidth = videoWidth;
+    const targetHeight = Math.floor(videoWidth * 5 / 4);
 
-  const offsetY = Math.floor((videoHeight - targetHeight) / 2);
+    const offsetY = Math.floor((videoHeight - targetHeight) / 2);
 
-  // Set canvas size to 600x750 pixels
-  const finalWidth = 600;
-  const finalHeight = 750;
-  canvas.width = finalWidth;
-  canvas.height = finalHeight;
+    // Set canvas size to 600x750 pixels
+    const finalWidth = 600;
+    const finalHeight = 750;
+    canvas.width = finalWidth;
+    canvas.height = finalHeight;
 
-  // Draw cropped area scaled to final size
-  context.drawImage(
-    video,
-    0, offsetY, targetWidth, targetHeight,
-    0, 0, finalWidth, finalHeight
-  );
+    // Draw cropped area scaled to final size
+    context.drawImage(
+      video,
+      0, offsetY, targetWidth, targetHeight,
+      0, 0, finalWidth, finalHeight
+    );
 
-  // Create data URL
-  canvas.toBlob((blob) => {
-    if (blob) {
-      const imageUrl = canvas.toDataURL('image/jpeg', 0.9);
-      setCapturedImage(imageUrl);
-      stopCamera();
-    }
-  }, 'image/jpeg', 0.9);
-}, [stopCamera]);
+    // Create data URL
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const imageUrl = canvas.toDataURL('image/jpeg', 0.9);
+        setCapturedImage(imageUrl);
+        stopCamera();
+      }
+    }, 'image/jpeg', 0.9);
+  }, [stopCamera]);
 
 
   const confirmCapture = useCallback(() => {
@@ -155,7 +155,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     if (isOpen && !capturedImage) {
       startCamera();
     }
-    
+
     return () => {
       stopCamera();
     };
@@ -164,7 +164,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   if (!isOpen) return null;
 
 
-  
+
 
   return (
     <div className="fixed inset-0 z-50 bg-black">
@@ -172,6 +172,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         {/* Header */}
         <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-4 bg-black/50">
           <Button
+            type="button"
             onClick={onClose}
             variant="ghost"
             size="sm"
@@ -179,9 +180,10 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
           >
             <X className="w-6 h-6" />
           </Button>
-          
+
           {isStreaming && (
             <Button
+              type="button"
               onClick={switchCamera}
               variant="ghost"
               size="sm"
@@ -193,7 +195,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         </div>
 
         {/* Camera View */}
-        {/* {!capturedImage ? (
+        {!capturedImage ? (
           <>
             <video
               ref={videoRef}
@@ -201,11 +203,17 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               playsInline
               muted
             />
-             */}
+
+            {/* Passport Photo Frame Overlay */}
+            <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
+              <div className="w-40 h-52 border-4 border-white rounded-md"></div>
+            </div>
+
             {/* Capture Button */}
-            {/* {isStreaming && (
-              <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+            {isStreaming && (
+              <div className="absolute bottom-25 left-1/2 transform -translate-x-1/2">
                 <Button
+                  type="button"
                   onClick={capturePhoto}
                   className="w-16 h-16 rounded-full bg-white border-4 border-gray-300 hover:bg-gray-100"
                 >
@@ -213,36 +221,6 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
                 </Button>
               </div>
             )}
-          </>
-        ) : ( */}
-
-
-        {/* Camera View */}
-{!capturedImage ? (
-  <>
-    <video
-      ref={videoRef}
-      className="w-full h-full object-cover"
-      playsInline
-      muted
-    />
-
-    {/* Passport Photo Frame Overlay */}
-    <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
-      <div className="w-40 h-52 border-4 border-white rounded-md"></div>
-    </div>
-
-    {/* Capture Button */}
-       {isStreaming && (
-          <div className="absolute bottom-25 left-1/2 transform -translate-x-1/2">
-            <Button
-             onClick={capturePhoto}
-             className="w-16 h-16 rounded-full bg-white border-4 border-gray-300 hover:bg-gray-100"
-              >
-            <Camera className="w-8 h-8 text-gray-800" />
-            </Button>
-            </div>
-             )}
           </>
         ) : (
           <>
@@ -252,16 +230,18 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               alt="Captured"
               className="w-full h-full object-cover"
             />
-            
+
             {/* Action Buttons */}
             <div className="absolute bottom-25 left-1/2 transform -translate-x-1/2 flex gap-4">
               <Button
+                type="button"
                 onClick={retakePhoto}
                 className="w-12 h-12 rounded-full bg-gray-600 hover:bg-gray-700 text-white"
               >
                 <X className="w-6 h-6" />
               </Button>
               <Button
+                type="button"
                 onClick={confirmCapture}
                 className="w-12 h-12 rounded-full bg-green-600 hover:bg-green-700 text-white"
               >

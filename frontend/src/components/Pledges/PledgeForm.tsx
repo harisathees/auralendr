@@ -112,9 +112,10 @@ const MediaUploadBlock: React.FC<MediaUploadBlockProps> = ({
 interface Props {
   initial?: any;
   onSubmit: (fd: FormData) => Promise<any>;
+  isSubmitting?: boolean;
 }
 
-const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
+const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }) => {
   const { user } = useAuth(); // Get current user (and branch_id)
 
   // --- State ---
@@ -1098,9 +1099,13 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
       </section>
 
       <div className="mt-2 mb-8 flex justify-center">
-        <button type="submit" className="flex w-full max-w-sm px-8 items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark transition-all h-14 text-white font-bold text-lg shadow-lg shadow-primary/30 active:scale-[0.98]">
-          <span className="material-symbols-outlined">save</span>
-          Save Pledge
+        <button type="submit" disabled={isSubmitting} className="flex w-full max-w-sm px-8 items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary-dark transition-all h-14 text-white font-bold text-lg shadow-lg shadow-primary/30 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed">
+          {isSubmitting ? (
+            <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+          ) : (
+            <span className="material-symbols-outlined">save</span>
+          )}
+          {isSubmitting ? 'Saving...' : 'Save Pledge'}
         </button>
       </div>
 
