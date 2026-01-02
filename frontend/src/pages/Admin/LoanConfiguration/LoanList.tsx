@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import GoldCoinSpinner from "../../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
+import { Search, X, SlidersHorizontal, Store, User as UserIcon } from "lucide-react";
 import { useRepledge } from "../../../hooks/useRepledge";
 
 interface Loan {
@@ -22,6 +22,10 @@ interface Loan {
         user: {
             name: string;
         };
+        media?: Array<{
+            url: string;
+            category: string;
+        }>;
     };
 }
 
@@ -31,8 +35,8 @@ const LoanAccordionCard: React.FC<{ loan: Loan }> = ({ loan }) => {
 
     // Helpers to match app theme
     const getStatusColor = (status: string) => {
-        if (status === 'closed') return 'text-red-500 bg-red-100 dark:bg-red-500/20 border-red-200 dark:border-red-500/30';
-        return 'text-primary bg-green-50 dark:bg-primary/20 border-green-100 dark:border-primary/30';
+        if (status === 'closed') return 'text-rose-700 bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/30';
+        return 'text-primary bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/30';
     };
 
     const handleProfileClick = (e: React.MouseEvent) => {
@@ -40,96 +44,78 @@ const LoanAccordionCard: React.FC<{ loan: Loan }> = ({ loan }) => {
         navigate(`/admin/pledges/${loan.pledge_id}`);
     };
 
+    // Helper to fix localhost image URLs (missing port)
+    const fixImageUrl = (url: string | undefined | null) => {
+        if (!url) return null;
+        if (url.startsWith('http://localhost/') && !url.includes(':8000')) {
+            return url.replace('http://localhost/', 'http://localhost:8000/');
+        }
+        return url;
+    };
+
+    const customerImage = loan.pledge?.media?.find(m => m.category === 'customer_image')?.url;
+
     return (
-        <div className="border-b border-gray-100 dark:border-[#1f3d2e] bg-white dark:bg-[#162b20] first:rounded-t-xl last:rounded-b-xl overflow-hidden transition-colors duration-300">
-            {/* Header (Always Visible) */}
-            <div
-                onClick={() => setIsOpen(!isOpen)}
-                className="p-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-            >
-                {/* Avatar Placeholder */}
-                <div
-                    onClick={handleProfileClick}
-                    className="flex-shrink-0 relative cursor-pointer hover:opacity-80 transition-opacity"
-                    title="View Pledge Details"
-                >
+        <div
+            onClick={() => setIsOpen(!isOpen)}
+            className="group relative bg-white dark:bg-[#1A1D1F] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col p-4 cursor-pointer hover:shadow-md transition-all duration-300"
+        >
+            {/* Header portion of the card */}
+            <div className="flex items-start gap-4">
+                <div className="relative">
                     <img
-                        alt={loan.pledge?.customer?.name}
-                        className="h-12 w-12 rounded-full object-cover ring-2 ring-white dark:ring-[#1f3d2e] shadow-sm dark:shadow-none bg-gray-200"
-                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(loan.pledge?.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
+                        onClick={handleProfileClick}
+                        className="w-14 h-14 rounded-2xl object-cover border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer hover:opacity-80 transition-opacity bg-gray-50"
+                        src={fixImageUrl(customerImage) || `https://ui-avatars.com/api/?name=${encodeURIComponent(loan.pledge?.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
+                        alt=""
                     />
+                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-[#1A1D1F] ${loan.status === 'closed' ? 'bg-rose-500' : 'bg-primary'}`} />
                 </div>
 
-                {/* Main Summary */}
-                <div className="flex-1 min-w-0 flex flex-col justify-between gap-1">
-                    <div className="flex justify-between items-start">
-                        <h3 className="text-base font-medium text-primary-text dark:text-white truncate">
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                        <h3
+                            onClick={handleProfileClick}
+                            className="font-black text-sm text-gray-900 dark:text-white truncate cursor-pointer hover:text-primary transition-colors uppercase tracking-tight"
+                        >
                             {loan.pledge?.customer?.name || 'Unknown'}
                         </h3>
-                        {/* Status Icon */}
-                        <div className={`h-6 w-6 rounded-full flex items-center justify-center border ${getStatusColor(loan.status)}`}>
-                            <span className={`text-[10px] font-bold ${loan.status === 'closed' ? 'text-red-500' : 'text-primary'}`}>
-                                {loan.status ? loan.status.charAt(0).toUpperCase() : 'A'}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="flex justify-between items-end mt-1">
-                        <p className="text-xs text-secondary-text dark:text-text-muted">
-                            Loan No. <span className="text-primary-text dark:text-gray-400 font-medium">{loan.loan_no}</span>
-                        </p>
-                        <p className="text-sm font-semibold text-primary">
+                        <span className={`text-sm font-black px-2 py-0.5 rounded-lg border ${getStatusColor(loan.status)}`}>
                             ₹{Number(loan.amount).toLocaleString()}
-                        </p>
+                        </span>
                     </div>
-                </div>
 
-                {/* Chevron Icon */}
-                <span className={`material-symbols-outlined text-gray-400 dark:text-gray-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-                    expand_more
-                </span>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-0.5 flex items-center gap-1.5">
+                        <span className="text-primary">{loan.loan_no}</span>
+                        <span className="opacity-30">•</span>
+                        <span>{new Date(loan.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    </p>
+                </div>
             </div>
 
             {/* Expanded Content (Accordion Body) */}
             <div
-                className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+                className={`grid transition-[grid-template-rows] duration-300 ease-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
             >
                 <div className="overflow-hidden">
-                    <div className="px-4 pb-4 pt-0 border-t border-gray-100 dark:border-[#1f3d2e] mt-2">
-                        <div className="grid grid-cols-2 gap-y-4 gap-x-2 pt-4">
-                            {/* Mobile */}
-                            <div>
-                                <span className="text-[10px] font-medium text-secondary-text uppercase tracking-wider block mb-1">Mobile</span>
-                                <p className="text-sm text-primary-text dark:text-gray-300 font-medium">{loan.pledge?.customer?.mobile_no}</p>
+                    <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Mobile</span>
+                                <p className="text-xs font-bold text-gray-900 dark:text-white">{loan.pledge?.customer?.mobile_no}</p>
                             </div>
-
-                            {/* Date */}
-                            <div>
-                                <span className="text-[10px] font-medium text-secondary-text uppercase tracking-wider block mb-1">Date</span>
-                                <p className="text-sm text-primary-text dark:text-gray-300 font-medium">
-                                    {new Date(loan.created_at).toLocaleDateString()}
-                                </p>
-                            </div>
-
-                            {/* Branch */}
-                            <div>
-                                <span className="text-[10px] font-medium text-secondary-text uppercase tracking-wider block mb-1">Branch</span>
-                                <div className="flex items-center gap-1.5">
-                                    <span className="material-symbols-outlined text-secondary-text text-[14px]">store</span>
-                                    <p className="text-sm text-primary-text dark:text-gray-300 font-medium">
-                                        {loan.pledge?.branch?.branch_name || 'Main'}
-                                    </p>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Created By</span>
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-900 dark:text-white">
+                                    <UserIcon size={12} className="text-gray-400" />
+                                    <span>{loan.pledge?.user?.name || 'Admin'}</span>
                                 </div>
                             </div>
-
-                            {/* Staff */}
-                            <div>
-                                <span className="text-[10px] font-medium text-secondary-text uppercase tracking-wider block mb-1">Created By</span>
-                                <div className="flex items-center gap-1.5">
-                                    <span className="material-symbols-outlined text-secondary-text text-[14px]">person</span>
-                                    <p className="text-sm text-primary-text dark:text-gray-300 font-medium">
-                                        {loan.pledge?.user?.name || 'Admin'}
-                                    </p>
+                            <div className="flex flex-col col-span-2">
+                                <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Branch</span>
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-900 dark:text-white">
+                                    <Store size={12} className="text-gray-400" />
+                                    <span>{loan.pledge?.branch?.branch_name || 'Main'}</span>
                                 </div>
                             </div>
                         </div>
@@ -152,43 +138,29 @@ const LoansList: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState("");
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const isFirstSearch = React.useRef(true);
 
     // Repledge State (from hook)
     const { repledgeEntries, fetchRepledgeEntries, loading: repledgeLoading } = useRepledge();
 
-    // 1. Fetch Loans on Mount (if tab is loans), Page Change, or Status Change
+    // 1. Fetch Data when tab, page, statusFilter, or searchTerm changes
     useEffect(() => {
-        if (activeTab === 'loans') {
-            fetchLoans();
-        }
-    }, [page, statusFilter, activeTab]);
-
-    // 2. Fetch Repledges when tab changes
-    useEffect(() => {
-        if (activeTab === 'repledges') {
-            fetchRepledgeEntries();
-        }
-    }, [activeTab, fetchRepledgeEntries]);
-
-    // 3. Fetch on Search Change (Debounced) for Loans
-    useEffect(() => {
-        if (activeTab !== 'loans') return;
-
-        // Skip the initial run because the first useEffect above already handles the initial fetch (with empty search term)
-        if (isFirstSearch.current) {
-            isFirstSearch.current = false;
-            return;
-        }
-
         const delayDebounceFn = setTimeout(() => {
-            fetchLoans();
+            if (activeTab === 'loans') {
+                fetchLoans();
+            } else {
+                fetchRepledgeEntries(page, searchTerm);
+            }
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm]);
+    }, [page, statusFilter, searchTerm, activeTab]);
 
-    // Ref to store the latest abort controller
+    // 2. Reset page when tab changes
+    useEffect(() => {
+        setPage(1);
+    }, [activeTab]);
+
+    // Ref to store the latest abort controller for Loans
     const abortControllerRef = React.useRef<AbortController | null>(null);
 
     const fetchLoans = async () => {
@@ -229,61 +201,67 @@ const LoansList: React.FC = () => {
     };
 
     return (
-        <div className="bg-background-light dark:bg-background-dark min-h-screen text-primary-text dark:text-text-main font-display flex flex-col pb-safe">
-            {/* Header */}
-            <header className="flex-none pt-12 pb-4 px-5 bg-background-light dark:bg-background-dark z-10 sticky top-0">
-                <div className="flex items-center justify-between mb-2">
-                    <h1 className="text-2xl font-bold tracking-tight text-primary-text dark:text-white">
-                        {activeTab === 'loans' ? 'All Loans' : 'Repledges'}
-                    </h1>
-                    <div className="bg-white dark:bg-dark-surface border border-gray-200 dark:border-[#1f3d2e] px-3 py-1.5 rounded-full flex items-center shadow-sm dark:shadow-none">
-                        <span className="text-primary text-xs font-bold uppercase tracking-wider">
+        <div className="fixed inset-0 bottom-0 md:bottom-0 flex flex-col bg-background-light dark:bg-background-dark overflow-hidden font-display">
+            {/* Header Section */}
+            <div className="flex-none bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 px-4 pt-6 pb-4 z-40">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col">
+                        <h1 className="text-xl font-black text-gray-900 dark:text-white leading-tight uppercase tracking-tight">
+                            {activeTab === 'loans' ? 'All Loans' : 'Repledges'}
+                        </h1>
+                        <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                             {activeTab === 'loans' ? loans.length : repledgeEntries.length} Visible
-                        </span>
+                        </p>
                     </div>
                 </div>
 
                 {/* Tab Switcher */}
-                <div className="flex gap-2 mb-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+                <div className="flex gap-2 mb-4 bg-gray-50 dark:bg-[#1A1D1F] p-1.5 rounded-2xl border border-gray-100 dark:border-gray-800">
                     <button
                         onClick={() => setActiveTab('loans')}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'loans'
-                            ? 'bg-white dark:bg-gray-700 text-primary shadow-sm'
-                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                        className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${activeTab === 'loans'
+                            ? 'bg-white dark:bg-gray-800 text-primary shadow-sm ring-1 ring-black/5'
+                            : 'text-gray-400 dark:text-gray-500 hover:text-gray-600'
                             }`}
                     >
                         Loans
                     </button>
                     <button
                         onClick={() => setActiveTab('repledges')}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'repledges'
-                            ? 'bg-white dark:bg-gray-700 text-purple-600 shadow-sm'
-                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                        className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${activeTab === 'repledges'
+                            ? 'bg-white dark:bg-gray-800 text-purple-600 shadow-sm ring-1 ring-black/5'
+                            : 'text-gray-400 dark:text-gray-500 hover:text-gray-600'
                             }`}
                     >
                         Repledges
                     </button>
                 </div>
 
+                {/* Search & Filter */}
+                <div className="flex gap-3 items-center">
+                    <div className="relative flex-1 group">
+                        <Search className="absolute left-4 text-gray-400 group-focus-within:text-primary transition-colors w-5 h-5" />
+                        <input
+                            type="text"
+                            placeholder={activeTab === 'loans' ? "Search loans, customers..." : "Search re-no, sources..."}
+                            className="w-full h-12 pl-12 pr-12 text-sm bg-gray-50 dark:bg-[#1A1D1F] border border-gray-100 dark:border-gray-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-gray-900 dark:text-white placeholder-gray-400 font-bold"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        {searchTerm && (
+                            <button
+                                className="absolute right-4 text-gray-400 hover:text-red-500 transition-colors"
+                                onClick={() => setSearchTerm('')}
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        )}
+                    </div>
 
-                {/* Search & Filter - Only for Loans for now */}
-                {activeTab === 'loans' && (
-                    <div className="flex gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="relative flex-1 group">
-                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <span className="material-symbols-outlined text-secondary-text dark:text-text-muted">search</span>
-                            </div>
-                            <input
-                                className="block w-full p-3 pl-11 text-sm text-primary-text dark:text-white bg-white dark:bg-dark-surface border border-gray-200 dark:border-transparent rounded-xl placeholder-secondary-text dark:placeholder-text-muted focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-sm outline-none"
-                                placeholder="Search..."
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
+                    {activeTab === 'loans' && (
                         <div className="relative w-1/3">
                             <select
-                                className="block w-full p-3 text-sm text-primary-text dark:text-white bg-white dark:bg-dark-surface border border-gray-200 dark:border-transparent rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-sm outline-none appearance-none"
+                                className="w-full h-12 px-4 text-sm bg-gray-50 dark:bg-[#1A1D1F] border border-gray-100 dark:border-gray-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-gray-900 dark:text-white font-bold appearance-none"
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
                             >
@@ -292,114 +270,133 @@ const LoansList: React.FC = () => {
                                 <option value="closed">Closed</option>
                                 <option value="auctioned">Auctioned</option>
                             </select>
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                <span className="material-symbols-outlined text-secondary-text text-sm">filter_list</span>
+                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                                <SlidersHorizontal className="w-4 h-4 text-gray-400" />
                             </div>
                         </div>
-                    </div>
-                )}
-            </header>
+                    )}
+                </div>
+            </div>
 
-            {/* List Content */}
-            <main className="flex-1 px-5 pb-24 overflow-y-auto no-scrollbar">
+            {/* Main Content Area */}
+            <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth p-4">
                 {activeTab === 'loans' ? (
                     <>
                         {loadingLoans ? (
-                            <div className="flex justify-center p-12">
-                                <GoldCoinSpinner />
-                            </div>
-                        ) : loans.length > 0 ? (
-                            <div className="space-y-0 divide-y divide-gray-100 dark:divide-[#1f3d2e] rounded-xl shadow-sm dark:shadow-none animate-in fade-in duration-500">
-                                {loans.map((loan) => (
-                                    <LoanAccordionCard key={loan.id} loan={loan} />
-                                ))}
+                            <div className="flex flex-col items-center justify-center py-20 gap-3 opacity-60">
+                                <span className="material-symbols-outlined animate-spin text-3xl text-primary">progress_activity</span>
+                                <p className="text-sm font-medium text-gray-500">Loading loans...</p>
                             </div>
                         ) : (
-                            <div className="text-center text-secondary-text dark:text-text-muted py-10 flex flex-col items-center">
-                                <span className="material-symbols-outlined text-4xl mb-2 opacity-50">inbox</span>
-                                <p>No loans found matching your criteria</p>
-                            </div>
-                        )}
-
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className="flex justify-center mt-8 gap-2 pb-8">
-                                <button
-                                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                                    disabled={page === 1}
-                                    className="px-4 py-2 bg-white dark:bg-dark-surface border border-gray-200 dark:border-[#1f3d2e] rounded-lg disabled:opacity-50 text-sm font-medium hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-                                >
-                                    Previous
-                                </button>
-                                <span className="px-4 py-2 bg-gray-100 dark:bg-[#1f3d2e] rounded-lg text-sm flex items-center font-medium">
-                                    {page} / {totalPages}
-                                </span >
-                                <button
-                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={page === totalPages}
-                                    className="px-4 py-2 bg-white dark:bg-dark-surface border border-gray-200 dark:border-[#1f3d2e] rounded-lg disabled:opacity-50 text-sm font-medium hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-                                >
-                                    Next
-                                </button >
-                            </div >
-                        )}
-                    </>
-                ) : ( // Repledges Tab
-                    <>
-                        {repledgeLoading ? (
-                            <div className="flex justify-center p-12">
-                                <GoldCoinSpinner />
-                            </div>
-                        ) : (
-                            <div className="space-y-4 animate-in fade-in duration-500">
-                                {repledgeEntries.length === 0 ? (
-                                    <div className="text-center text-secondary-text dark:text-text-muted py-10 flex flex-col items-center">
-                                        <span className="material-symbols-outlined text-4xl mb-2 opacity-50">move_item</span>
-                                        <p>No repledges found.</p>
+                            <div className="space-y-4 pb-12">
+                                {loans.length === 0 ? (
+                                    <div className="text-center text-gray-500 py-16 animate-in fade-in duration-500">
+                                        <span className="material-symbols-outlined text-6xl opacity-10 mb-2">search_off</span>
+                                        <p className="font-bold">No results found</p>
                                     </div>
                                 ) : (
-                                    repledgeEntries.map((item) => (
+                                    loans.map((loan, index) => (
                                         <div
-                                            key={item.id}
-                                            className="bg-white dark:bg-[#162b20] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-[#1f3d2e] flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-purple-200 dark:hover:border-purple-900 transition-colors group relative cursor-pointer"
-                                            onClick={() => navigate(`/re-pledge/${item.id}`)}
+                                            key={loan.id}
+                                            className="animate-in fade-in slide-in-from-bottom-2"
+                                            style={{ animationDelay: `${index * 40}ms` }}
                                         >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400 font-bold text-lg border border-purple-100 dark:border-purple-800">
-                                                    {item.loan_no.slice(-2)}
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-base text-primary-text dark:text-white">{item.loan_no}</h3>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">
-                                                        Re-No: <span className="text-gray-700 dark:text-gray-300">{item.re_no}</span>
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex flex-wrap gap-4 items-center flex-1 md:justify-end w-full md:w-auto">
-                                                <div className="flex flex-col min-w-[80px]">
-                                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Bank</span>
-                                                    <span className="font-semibold text-sm text-gray-700 dark:text-gray-300 truncate max-w-[120px]">{item.source?.name || 'Unknown'}</span>
-                                                </div>
-                                                <div className="flex flex-col min-w-[80px]">
-                                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Amount</span>
-                                                    <span className="font-bold text-sm text-primary-text dark:text-white">₹{Number(item.amount).toLocaleString()}</span>
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Status</span>
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase w-fit ${item.status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>
-                                                        {item.status}
-                                                    </span>
-                                                </div>
-                                            </div>
+                                            <LoanAccordionCard loan={loan} />
                                         </div>
                                     ))
                                 )}
                             </div>
                         )}
+
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                            <div className="flex justify-center mt-4 gap-2 pb-12">
+                                <button
+                                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                                    disabled={page === 1}
+                                    className="px-4 h-10 bg-white dark:bg-[#1A1D1F] border border-gray-100 dark:border-gray-800 rounded-xl disabled:opacity-50 text-xs font-black uppercase tracking-wider shadow-sm transition-all active:scale-95"
+                                >
+                                    Prev
+                                </button>
+                                <div className="px-4 h-10 bg-gray-50 dark:bg-gray-800 rounded-xl text-xs font-black flex items-center">
+                                    {page} / {totalPages}
+                                </div>
+                                <button
+                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={page === totalPages}
+                                    className="px-4 h-10 bg-white dark:bg-[#1A1D1F] border border-gray-100 dark:border-gray-800 rounded-xl disabled:opacity-50 text-xs font-black uppercase tracking-wider shadow-sm transition-all active:scale-95"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        )}
                     </>
+                ) : (
+                    <div className="space-y-4 pb-12">
+                        {repledgeLoading ? (
+                            <div className="flex flex-col items-center justify-center py-20 gap-3 opacity-60">
+                                <span className="material-symbols-outlined animate-spin text-3xl text-purple-600">progress_activity</span>
+                                <p className="text-sm font-medium text-gray-500">Loading repledges...</p>
+                            </div>
+                        ) : repledgeEntries.length === 0 ? (
+                            <div className="text-center text-gray-500 py-16">
+                                <span className="material-symbols-outlined text-6xl opacity-10 mb-2">autorenew</span>
+                                <p className="font-bold">No repledges recorded</p>
+                            </div>
+                        ) : (
+                            repledgeEntries.map((item, index) => {
+                                const customerName = (item as any).loan?.pledge?.customer?.name || 'Unknown';
+                                const displayDate = item.start_date ? new Date(item.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No Date';
+
+                                return (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => navigate(`/re-pledge/${item.id}`)}
+                                        className="group relative bg-white dark:bg-[#1A1D1F] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col p-4 cursor-pointer hover:shadow-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
+                                        style={{ animationDelay: `${index * 40}ms` }}
+                                    >
+                                        <div className="flex items-start gap-4">
+                                            <div className="relative">
+                                                <img
+                                                    className="w-14 h-14 rounded-2xl object-cover border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
+                                                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(customerName)}&background=random&color=fff&bold=true`}
+                                                    alt=""
+                                                />
+                                                <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-[#1A1D1F] ${item.status === 'closed' ? 'bg-rose-500' : 'bg-purple-600'}`} />
+                                            </div>
+
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between gap-2 mb-1">
+                                                    <h3 className="font-black text-sm text-gray-900 dark:text-white truncate transition-colors uppercase tracking-tight">
+                                                        {customerName}
+                                                    </h3>
+                                                    <span className={`text-sm font-black px-2 py-0.5 rounded-lg border ${item.status === 'closed' ? 'text-rose-700 bg-rose-50 border-rose-200' : 'text-purple-600 bg-purple-50 border-purple-100'}`}>
+                                                        ₹{Number(item.amount).toLocaleString()}
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex flex-wrap items-center gap-y-1 gap-x-1.5">
+                                                    <span className="text-xs font-bold text-purple-600">{item.loan_no}</span>
+                                                    <span className="opacity-30 text-xs">•</span>
+                                                    <span className="text-xs font-bold text-gray-400">RE: {item.re_no}</span>
+                                                    <span className="opacity-30 text-xs">•</span>
+                                                    <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-tight truncate max-w-[80px]">
+                                                        {item.source?.name || 'Unknown'}
+                                                    </span>
+                                                    <span className="opacity-30 text-xs">•</span>
+                                                    <span className="text-[10px] font-bold text-gray-400">
+                                                        {displayDate}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
                 )}
-            </main>
+            </div>
         </div>
     );
 };

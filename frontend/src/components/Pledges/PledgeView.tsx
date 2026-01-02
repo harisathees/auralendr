@@ -88,6 +88,14 @@ const PledgeView: React.FC<Props> = ({ data }) => {
     return map;
   }, [media]);
 
+  // Profit calculation for summary
+  const loanProfit = useMemo(() => {
+    if (!data.closure) return 0;
+    const netInterest = Number(data.closure.calculated_interest || 0) - Number(data.closure.reduction_amount || 0);
+    const fees = Number(loan.processing_fee || 0);
+    return netInterest + fees;
+  }, [data.closure, loan.processing_fee]);
+
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-black overflow-y-auto no-scrollbar">
       {/* Header */}
@@ -163,6 +171,11 @@ const PledgeView: React.FC<Props> = ({ data }) => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="col-span-1 lg:col-span-3 bg-amber-100/50 dark:bg-amber-900/20 rounded-xl p-0.5 border border-amber-200 dark:border-amber-800/30">
+                    <div className="bg-amber-50 dark:bg-amber-900/10 rounded-lg">
+                      <ReadOnlyField label="Total Loan Profit (₹)" value={loanProfit.toLocaleString('en-IN')} />
+                    </div>
+                  </div>
                   <ReadOnlyField label="Closed Date" value={data.closure.closed_date} />
                   <ReadOnlyField label="Total Payable (₹)" value={data.closure.total_payable} />
                   <div className="bg-rose-100/50 dark:bg-rose-900/20 rounded-lg">

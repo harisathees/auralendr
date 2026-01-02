@@ -195,7 +195,7 @@ class RepledgeController extends Controller
     public function show(Repledge $repledge)
     {
         $this->authorize('view', $repledge);
-        return response()->json($repledge->load(['source', 'loan.pledge.customer']));
+        return response()->json($repledge->load(['source', 'loan.pledge.customer.media', 'loan.pledge.jewels']));
     }
 
     public function update(UpdateRepledgeRequest $request, Repledge $repledge)

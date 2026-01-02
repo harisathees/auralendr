@@ -1,6 +1,6 @@
-import api from "./apiClient";
+import api, { baseApi } from "./apiClient";
 
-export const csrf = () => api.get("/sanctum/csrf-cookie");
+export const csrf = () => baseApi.get("/sanctum/csrf-cookie");
 
 export const login = async (data: {
   email: string;
