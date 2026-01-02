@@ -17,7 +17,7 @@ const Edit: React.FC = () => {
     useEffect(() => {
         const fetchRepledge = async () => {
             try {
-                const res = await api.get(`/repledges/${id}`);
+                const res = await api.get(`/api/repledges/${id}`);
                 setInitialData(res.data);
             } catch (error) {
                 console.error(error);
@@ -32,7 +32,7 @@ const Edit: React.FC = () => {
 
     const handleSubmit = async (data: any) => {
         try {
-            await api.put(`/repledges/${id}`, data);
+            await api.put(`/api/repledges/${id}`, data);
             showToast("Repledge updated successfully", "success");
             navigate("/repledge");
         } catch (error) {

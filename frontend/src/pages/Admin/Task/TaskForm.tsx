@@ -22,7 +22,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSuccess, onCancel }) => {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await api.get('/staff');
+                const response = await api.get('/api/staff');
                 setUsers(response.data);
             } catch (error) {
                 console.error("Error fetching users:", error);
@@ -65,9 +65,9 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSuccess, onCancel }) => {
 
         try {
             if (task) {
-                await api.put(`/tasks/${task.id}`, payload);
+                await api.put(`/api/tasks/${task.id}`, payload);
             } else {
-                await api.post('/tasks', payload);
+                await api.post('/api/tasks', payload);
             }
             onSuccess();
         } catch (error: any) {

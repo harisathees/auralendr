@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ChevronDown, Calendar } from "lucide-react";
 import type { Task } from '../../types/models';
 import api from '../../api/apiClient';
 
@@ -21,7 +22,7 @@ const TaskAccordion: React.FC<TaskAccordionProps> = ({ task, onUpdate }) => {
         if (updating) return;
         setUpdating(true);
         try {
-            await api.patch(`/tasks/${task.id}/status`, { status: newStatus });
+            await api.patch(`/api/tasks/${task.id}/status`, { status: newStatus });
             onUpdate(); // Refund list
         } catch (error) {
             console.error("Failed to update status", error);
@@ -53,9 +54,7 @@ const TaskAccordion: React.FC<TaskAccordionProps> = ({ task, onUpdate }) => {
                     <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${currentStatus.color} whitespace-nowrap`}>
                         {currentStatus.label}
                     </span>
-                    <span className={`material-symbols-outlined text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}>
-                        expand_more
-                    </span>
+                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </div>
             </div>
 
@@ -69,7 +68,7 @@ const TaskAccordion: React.FC<TaskAccordionProps> = ({ task, onUpdate }) => {
 
                         {task.due_date && (
                             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                <span className="material-symbols-outlined text-[16px]">event</span>
+                                <Calendar className="w-4 h-4" />
                                 Due: {new Date(task.due_date).toLocaleDateString()}
                             </div>
                         )}

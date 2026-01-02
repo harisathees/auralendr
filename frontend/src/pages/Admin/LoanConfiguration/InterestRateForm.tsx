@@ -22,11 +22,11 @@ const InterestRateForm: React.FC = () => {
             setLoading(true);
             try {
                 // Fetch jewel types
-                const typesRes = await api.get("/jewel-types");
+                const typesRes = await api.get("/api/jewel-types");
                 setJewelTypes(typesRes.data);
 
                 if (isEdit) {
-                    const res = await api.get(`/interest-rates/${id}`);
+                    const res = await api.get(`/api/interest-rates/${id}`);
                     setRate(res.data.rate);
                     setEstimationPercentage(res.data.estimation_percentage);
                     setJewelTypeId(res.data.jewel_type_id ? String(res.data.jewel_type_id) : "");
@@ -54,9 +54,9 @@ const InterestRateForm: React.FC = () => {
             };
 
             if (isEdit) {
-                await api.put(`/interest-rates/${id}`, payload);
+                await api.put(`/api/interest-rates/${id}`, payload);
             } else {
-                await api.post("/interest-rates", payload);
+                await api.post("/api/interest-rates", payload);
             }
             navigate("/admin/configs/interest-settings");
         } catch (err: any) {

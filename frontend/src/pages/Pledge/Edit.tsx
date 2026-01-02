@@ -11,12 +11,12 @@ const Edit: React.FC = () => {
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
-    api.get(`/pledges/${id}`).then(res => setData(res.data)).catch(console.error);
+    api.get(`/api/pledges/${id}`).then(res => setData(res.data)).catch(console.error);
   }, [id]);
 
   const handleSubmit = async (fd: FormData) => {
     try {
-      await api.post(`/pledges/${id}?_method=PUT`, fd);
+      await api.post(`/api/pledges/${id}?_method=PUT`, fd);
       navigate("/pledges");
     } catch (err) {
       console.error("Failed to update pledge", err);

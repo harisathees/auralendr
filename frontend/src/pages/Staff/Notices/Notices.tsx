@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../../api/apiClient';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as htmlToImage from 'html-to-image';
@@ -34,9 +34,7 @@ export default function Notices() {
     const fetchPledges = async (type: 'overdue' | 'annual') => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get(`http://localhost:8000/api/pledges`, {
-                headers: { Authorization: `Bearer ${token}` },
+            const response = await api.get(`/api/pledges`, {
                 params: {
                     report_type: type,
                     per_page: 1000,

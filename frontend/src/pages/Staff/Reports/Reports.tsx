@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../../api/apiClient';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas'; // Ensure this is installed
 import * as htmlToImage from 'html-to-image';
@@ -34,10 +34,8 @@ export default function Reports() {
     const fetchPledges = async (type: 'overdue' | 'annual') => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
             // Using existing /api/pledges endpoint with a new filter param
-            const response = await axios.get(`http://localhost:8000/api/pledges`, {
-                headers: { Authorization: `Bearer ${token}` },
+            const response = await api.get(`/api/pledges`, {
                 params: {
                     report_type: type, // Backend needs to handle this
                     per_page: 1000, // Fetch all for clientside filtering/pagination for now, or handle pagination server side

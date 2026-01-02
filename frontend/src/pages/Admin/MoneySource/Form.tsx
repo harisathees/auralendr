@@ -37,7 +37,7 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
 
     const fetchBranches = async () => {
         try {
-            const res = await api.get("/branches");
+            const res = await api.get("/api/branches");
             setAvailableBranches(res.data);
         } catch (err) {
             console.error("Failed to fetch branches");
@@ -46,7 +46,7 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
 
     const fetchMoneySourceTypes = async () => {
         try {
-            const res = await api.get("/money-source-types");
+            const res = await api.get("/api/money-source-types");
             setMoneySourceTypes(res.data);
         } catch (err) {
             console.error("Failed to fetch money source types");
@@ -116,9 +116,9 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
 
         try {
             if (initialData) {
-                await api.put(`/money-sources/${initialData.id}`, payload);
+                await api.put(`/api/money-sources/${initialData.id}`, payload);
             } else {
-                await api.post("/money-sources", payload);
+                await api.post("/api/money-sources", payload);
             }
             onSuccess();
         } catch (err) {

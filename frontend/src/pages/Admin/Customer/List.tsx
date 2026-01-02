@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../../api/apiClient";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Search, Phone, MapPin, UserX } from "lucide-react";
 import GoldCoinSpinner from "../../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
 
 import type { Customer } from "../../../types/models";
@@ -41,11 +42,9 @@ const CustomersList: React.FC = () => {
 
         setLoading(true);
         try {
-            const token = localStorage.getItem("token");
-            const response = await axios.get(
-                `http://localhost:8000/api/customers`,
+            const response = await api.get(
+                `/api/customers`,
                 {
-                    headers: { Authorization: `Bearer ${token}` },
                     params: { page, search: searchTerm },
                     signal: newController.signal
                 }
@@ -53,8 +52,9 @@ const CustomersList: React.FC = () => {
             setCustomers(response.data.data);
             setTotalPages(response.data.last_page);
         } catch (error: any) {
-            if (axios.isCancel(error)) return;
-            console.error("Error fetching customers:", error);
+            if (error.name !== 'CanceledError') {
+                console.error("Error fetching customers:", error);
+            }
         } finally {
             if (!newController.signal.aborted) {
                 setLoading(false);
@@ -62,13 +62,14 @@ const CustomersList: React.FC = () => {
         }
     };
 
+
     return (
         <div className="flex flex-col h-full bg-background-light dark:bg-background-dark font-display text-text-main">
             {/* Header */}
             <header className="flex-none pt-12 pb-4 px-5 bg-background-light dark:bg-background-dark z-10 sticky top-0">
                 <div className="flex items-center gap-3 mb-6">
                     <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                        <span className="material-symbols-outlined text-gray-500 dark:text-gray-400">arrow_back</span>
+                        <ArrowLeft className="w-6 h-6 text-gray-500 dark:text-gray-400" />
                     </button>
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-primary-text dark:text-white">Customers</h1>
@@ -78,7 +79,7 @@ const CustomersList: React.FC = () => {
                 {/* Search */}
                 <div className="relative group">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <span className="material-symbols-outlined text-secondary-text dark:text-text-muted">search</span>
+                        <Search className="w-5 h-5 text-secondary-text dark:text-text-muted" />
                     </div>
                     <input
                         className="block w-full p-3 pl-11 text-sm text-primary-text dark:text-white bg-white dark:bg-dark-surface border border-gray-200 dark:border-transparent rounded-xl placeholder-secondary-text dark:placeholder-text-muted focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-sm outline-none"
@@ -111,12 +112,12 @@ const CustomersList: React.FC = () => {
                                             </h3>
                                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-secondary-text dark:text-gray-400">
                                                 <div className="flex items-center gap-1.5">
-                                                    <span className="material-symbols-outlined text-[16px]">call</span>
+                                                    <Phone className="w-4 h-4" />
                                                     {customer.mobile_no || 'N/A'}
                                                 </div>
                                                 {customer.city && (
                                                     <div className="flex items-center gap-1.5">
-                                                        <span className="material-symbols-outlined text-[16px]">location_on</span>
+                                                        <MapPin className="w-4 h-4" />
                                                         {customer.city}
                                                     </div>
                                                 )}
@@ -152,7 +153,7 @@ const CustomersList: React.FC = () => {
                     </>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-20 text-gray-400 opacity-60">
-                        <span className="material-symbols-outlined text-5xl mb-2">group_off</span>
+                        <UserX className="w-12 h-12 mb-2" />
                         <p>No customers found</p>
                     </div>
                 )}

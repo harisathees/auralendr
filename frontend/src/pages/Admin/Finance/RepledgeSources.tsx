@@ -25,7 +25,7 @@ const RepledgeSources: React.FC = () => {
 
     const fetchSources = async () => {
         try {
-            const res = await api.get("/repledge-sources");
+            const res = await api.get("/api/repledge-sources");
             setSources(res.data);
         } catch (err) {
             console.error("Failed to fetch repledge sources", err);
@@ -35,7 +35,7 @@ const RepledgeSources: React.FC = () => {
     const handleConfirmDelete = async () => {
         if (!deletingId) return;
         try {
-            await api.delete(`/repledge-sources/${deletingId}`);
+            await api.delete(`/api/repledge-sources/${deletingId}`);
             setSources(sources.filter((b) => b.id !== deletingId));
             setIsDeleteOpen(false);
             setDeletingId(null);

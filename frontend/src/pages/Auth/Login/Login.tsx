@@ -1,6 +1,7 @@
 import React, { useState, type FormEvent } from "react";
 import { useAuth } from "../../../context/Auth/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { IdCard, Eye, EyeOff, Lock } from "lucide-react";
 
 const Login: React.FC = () => {
   const { login } = useAuth();
@@ -28,8 +29,8 @@ const Login: React.FC = () => {
       }
     } catch (error: any) {
       setError(
-        error.response?.data?.message || 
-        error.message || 
+        error.response?.data?.message ||
+        error.message ||
         "Login failed. Please check your credentials."
       );
     }
@@ -40,17 +41,16 @@ const Login: React.FC = () => {
       {/* Main Container */}
       <div className="relative w-full flex-1 flex flex-col group/design-root overflow-x-hidden">
 
-        {/* Top Header Section (Green) */}
-        <div className="relative w-full bg-primary h-[220px] pt-safe-top flex flex-col items-center rounded-b-[2rem] shadow-sm z-0">
-          {/* Status Bar Simulation Spacer */}
-          <div className="w-full h-6"></div>
+        {/* Top Header Section (Image) */}
+        <div className="relative w-full h-[220px] pt-safe-top flex flex-col items-center rounded-b-[2rem] shadow-sm z-0 overflow-hidden sm:bg-primary">
+          <img src="/assets/auralendr.png" alt="Header Background" className="absolute inset-0 w-full h-full object-cover sm:hidden" />
         </div>
 
         {/* Floating Brand Icon */}
         <div className="absolute top-[172px] left-1/2 -translate-x-1/2 z-10">
           <div className="flex items-center justify-center w-24 h-24 bg-white dark:bg-background-dark rounded-full shadow-lg p-1">
-            <div className="flex items-center justify-center w-full h-full bg-white dark:bg-zinc-800 rounded-full border border-gray-100 dark:border-zinc-700">
-              <span className="material-symbols-outlined text-primary text-[40px]">account_balance</span>
+            <div className="flex items-center justify-center w-full h-full bg-white dark:bg-zinc-800 rounded-full border border-gray-100 dark:border-zinc-700 overflow-hidden">
+              <img src="/assets/login-nsh.png" alt="NSH Logo" className="w-full h-full object-cover" />
             </div>
           </div>
         </div>
@@ -89,7 +89,7 @@ const Login: React.FC = () => {
                   required
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-400">
-                  <span className="material-symbols-outlined text-[20px]">badge</span>
+                  <IdCard className="w-5 h-5" />
                 </div>
               </div>
             </div>
@@ -114,9 +114,7 @@ const Login: React.FC = () => {
                   className="absolute inset-y-0 right-0 flex items-center pr-4 cursor-pointer text-gray-400 hover:text-primary transition-colors focus:outline-none"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  <span className="material-symbols-outlined">
-                    {showPassword ? "visibility_off" : "visibility"}
-                  </span>
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
@@ -136,7 +134,7 @@ const Login: React.FC = () => {
               type="submit"
             >
               Secure Login
-              <span className="material-symbols-outlined text-[20px]">lock</span>
+              <Lock className="w-5 h-5" />
             </button>
           </form>
 

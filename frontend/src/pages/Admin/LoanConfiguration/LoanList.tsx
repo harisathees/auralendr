@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../../api/apiClient";
 import { useNavigate } from "react-router-dom";
 import { Search, X, SlidersHorizontal, Store, User as UserIcon } from "lucide-react";
 import { useRepledge } from "../../../hooks/useRepledge";
@@ -175,11 +175,9 @@ const LoansList: React.FC = () => {
 
         setLoadingLoans(true);
         try {
-            const token = localStorage.getItem("token");
-            const response = await axios.get(
-                `http://localhost:8000/api/admin-all-loans`,
+            const response = await api.get(
+                `/api/admin-all-loans`,
                 {
-                    headers: { Authorization: `Bearer ${token}` },
                     params: { page, search: searchTerm, status: statusFilter },
                     signal: newController.signal // Attach signal
                 }
@@ -188,7 +186,7 @@ const LoansList: React.FC = () => {
             setTotalPages(response.data.last_page);
         } catch (error: any) {
             // Ignore abort errors
-            if (axios.isCancel(error)) {
+            if (error.name === 'CanceledError') {
                 return;
             }
             console.error("Error fetching loans:", error);

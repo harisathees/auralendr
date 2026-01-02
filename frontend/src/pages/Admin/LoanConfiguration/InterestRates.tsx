@@ -17,7 +17,7 @@ const InterestSettings: React.FC = () => {
 
     const fetchItems = async () => {
         try {
-            const res = await api.get("/interest-rates");
+            const res = await api.get("/api/interest-rates");
             // Map the data to have a 'name' property for display if needed, or pass custom logic
             setItems(res.data);
         } catch (error) {
@@ -40,7 +40,7 @@ const InterestSettings: React.FC = () => {
     const handleConfirmDelete = async () => {
         if (!deletingId) return;
         try {
-            await api.delete(`/interest-rates/${deletingId}`);
+            await api.delete(`/api/interest-rates/${deletingId}`);
             setItems(items.filter(i => i.id !== deletingId));
             setIsDeleteOpen(false);
             setDeletingId(null);

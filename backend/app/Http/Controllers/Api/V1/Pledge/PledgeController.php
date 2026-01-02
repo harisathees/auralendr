@@ -240,42 +240,25 @@ class PledgeController extends Controller
                 }
 
                 // Files - Handle 'files[]' array notation from frontend
-                // When files are sent as files[], Laravel stores them as files.0, files.1, etc.
-                $uploadedFiles = [];
-
-                // Check for indexed files (files.0, files.1, etc.) - handles files[] array notation
-                $index = 0;
-                while ($request->hasFile("files.{$index}")) {
-                    $uploadedFiles[] = $request->file("files.{$index}");
-                    $index++;
-                }
-
-                // Fallback: Check for single 'files' key (in case it's sent differently)
-                if (empty($uploadedFiles) && $request->hasFile('files')) {
-                    $file = $request->file('files');
-                    // Handle both single file and array of files
-                    if (is_array($file)) {
-                        $uploadedFiles = $file;
-                    } else {
-                        $uploadedFiles = [$file];
-                    }
-                }
-
-                // Manual Validation of Files because Request validation swallows upload errors
-                foreach ($uploadedFiles as $index => $file) {
-                    if (!$file->isValid()) {
-                        return response()->json([
-                            'message' => 'File upload error',
-                            'error' => "File at index {$index} failed: " . $file->getErrorMessage()
-                        ], 422);
-                    }
+                // When files are sent as files[], Laravel stores them as files.0, files.1, etc. inside the 'files' array in Request
+                
+                // Retrieve validated files directly from request which respects 'files.*' rules
+                $uploadedFiles = $request->file('files') ?? [];
+                
+                // If it's a single file (not array), wrap it
+                if (!is_array($uploadedFiles) && $uploadedFiles instanceof \Illuminate\Http\UploadedFile) {
+                    $uploadedFiles = [$uploadedFiles];
                 }
 
                 // Get categories array
                 $categories = $request->input('categories', []);
 
                 // Process uploaded files
+                // Note: Index might be discontinuous if keys are files.0, files.2 etc, so we iterate keys
                 foreach ($uploadedFiles as $index => $file) {
+                    // Strict type check just in case
+                    if(!($file instanceof \Illuminate\Http\UploadedFile)) continue;
+                    
                     $timestamp = now()->format('Ymd_His');
                     $loanNoSafe = preg_replace('/[^A-Za-z0-9\-]/', '', $loan->loan_no ?? 'NoLoan');
 

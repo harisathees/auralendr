@@ -8,6 +8,31 @@ import { compressImage } from "../../utils/imageCompression";
 
 // --- UI Components from Create.tsx ---
 
+const FilePreview: React.FC<{ file: File; className?: string }> = ({ file, className }) => {
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  if (!preview) return null;
+  return <img src={preview} alt="preview" className={className} />;
+};
+
+const AudioPreview: React.FC<{ file: File; className?: string }> = ({ file, className }) => {
+  const [preview, setPreview] = useState<string | null>(null);
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  if (!preview) return null;
+  return <audio controls src={preview} className={className} />;
+}
+
 interface MediaUploadBlockProps {
   label: string;
   icon: string;
@@ -31,10 +56,10 @@ const MediaUploadBlock: React.FC<MediaUploadBlockProps> = ({
           <div className="flex flex-col items-center justify-center w-full h-full">
             {isAudio ? (
               <div className="w-full flex flex-col items-center justify-center p-2">
-                <audio controls src={URL.createObjectURL(file)} className="w-full h-8" />
+                <AudioPreview file={file} className="w-full h-8" />
               </div>
             ) : (
-              <img src={URL.createObjectURL(file)} alt="preview" className="w-full h-full object-cover rounded-lg" />
+              <FilePreview file={file} className="w-full h-full object-cover rounded-lg" />
             )}
             <button onClick={onRemove} type="button" className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 z-10 hover:bg-red-600">
               <span className="material-symbols-outlined text-sm">close</span>
@@ -137,7 +162,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
       return;
     }
     try {
-      const res = await api.get(`/customers/search?query=${query}`);
+      const res = await api.get(`/api/customers/search?query=${query}`);
       setCustomerSuggestions(res.data || []);
       setActiveSearchField(field);
     } catch (err) {
@@ -242,12 +267,11 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
   // Fetch processing fees when branch ID is available
   useEffect(() => {
     if (user?.branch_id) {
-      api.get(`/processing-fees?branch_id=${user.branch_id}`)
+      api.get(`/api/processing-fees?branch_id=${user.branch_id}`)
         .then(res => setProcessingFeesConfigs(res.data))
         .catch(console.error);
     }
   }, [user?.branch_id]);
-
   useEffect(() => {
     // Determine due date (loan date + validity months)
     if (loan.date) {
@@ -434,20 +458,19 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit }) => {
       }
     }
   }, [paymentMethods, loan.payment_method]);
-
   useEffect(() => {
     // Load metadata
-    api.get("/jewel-types").then(res => Array.isArray(res.data) && setJewelTypes(res.data)).catch(console.error);
-    api.get("/jewel-qualities").then(res => Array.isArray(res.data) && setJewelQualities(res.data)).catch(console.error);
-    api.get("/jewel-names").then(res => Array.isArray(res.data) && setJewelNames(res.data)).catch(console.error);
-    api.get("/interest-rates").then(res => Array.isArray(res.data) && setInterestRates(res.data)).catch(console.error);
-    api.get("/loan-validities").then(res => Array.isArray(res.data) && setLoanValidities(res.data)).catch(console.error);
-    api.get("/money-sources").then(res => {
+    api.get("/api/jewel-types").then(res => Array.isArray(res.data) && setJewelTypes(res.data)).catch(console.error);
+    api.get("/api/jewel-qualities").then(res => Array.isArray(res.data) && setJewelQualities(res.data)).catch(console.error);
+    api.get("/api/jewel-names").then(res => Array.isArray(res.data) && setJewelNames(res.data)).catch(console.error);
+    api.get("/api/interest-rates").then(res => Array.isArray(res.data) && setInterestRates(res.data)).catch(console.error);
+    api.get("/api/loan-validities").then(res => Array.isArray(res.data) && setLoanValidities(res.data)).catch(console.error);
+    api.get("/api/money-sources").then(res => {
       if (Array.isArray(res.data)) {
         setPaymentMethods(res.data.filter((m: any) => m.is_outbound));
       }
     }).catch(console.error);
-    api.get("/metal-rates").then(res => Array.isArray(res.data) && setMetalRates(res.data)).catch(console.error); // Added this line
+    api.get("/api/metal-rates").then(res => Array.isArray(res.data) && setMetalRates(res.data)).catch(console.error); // Added this line
   }, []);
 
   useEffect(() => {

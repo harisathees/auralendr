@@ -1,14 +1,16 @@
-import axios from "axios";
-import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
+import axios, { type AxiosResponse } from "axios";
+
+// 1. Single Source of Truth for Base URL
+const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
-  withCredentials: true, // ✅ REQUIRED for Sanctum
+  baseURL, // e.g. "http://localhost:8000" - No /api appended automatically
+  // withCredentials: true, // REMOVED: No longer using cookies
   headers: {
-    Accept: "application/json",
+    Accept: "application/json", // Force JSON response
     "Content-Type": "application/json",
   },
-  timeout: 15000, // prevent hanging requests
+  timeout: 15000,
 });
 
 // For Sanctum routes that are NOT under /api
@@ -23,10 +25,10 @@ export const baseApi = axios.create({
 
 /**
  * Request Interceptor
- * - No Bearer token (Sanctum uses cookies)
+ * - Attaches Bearer Token from localStorage
  */
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  (config) => {
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -46,16 +48,19 @@ api.interceptors.response.use(
 
     // 🔐 Unauthorized (401) or Token Expired (419) → Global Logout
     if (status === 401 || status === 419) {
-      // Clear all auth data
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      // Prevent loop: Only logout if we actually have a user/token locally
+      // AND we are not already on the login page
+      const hasSession = localStorage.getItem("token") || localStorage.getItem("user");
 
-      // Redirect if not already on login page to avoid loops
-      if (!window.location.pathname.startsWith("/login")) {
+      if (hasSession && !window.location.pathname.startsWith("/login")) {
+        // Clear local storage
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        // Redirect
         window.location.href = "/login";
       }
 
-      // Reject promise to prevent further processing in components
       return Promise.reject(error);
     }
 

@@ -4,6 +4,7 @@ import StatsCard from "../../components/Dashboard/StatsCard";
 import DashboardFilters from "../../components/Dashboard/DashboardFilters";
 import ReportCard from "../../components/Dashboard/ReportCard";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { LogOut, Sun, Moon } from "lucide-react";
 import { useState, useEffect } from "react";
 import api from "../../api/apiClient";
 import { toast } from "react-hot-toast";
@@ -60,7 +61,7 @@ const AdminDashboard: React.FC = () => {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const response = await api.get("/dashboard/stats", { params: filters });
+      const response = await api.get("/api/dashboard/stats", { params: filters });
       setStats(response.data);
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -117,7 +118,7 @@ const AdminDashboard: React.FC = () => {
                     className="text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2 mx-2 rounded-lg transition-colors w-[calc(100%-1rem)]"
                     onClick={handleLogoutClick}
                   >
-                    <span className="material-symbols-outlined text-lg">logout</span>
+                    <LogOut className="w-5 h-5" />
                     Logout
                   </button>
                 </div>
@@ -145,9 +146,7 @@ const AdminDashboard: React.FC = () => {
               onClick={toggleTheme}
               className="w-10 h-10 rounded-full bg-white dark:bg-[#1A1D1F] flex items-center justify-center border border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white shadow-sm transition-all duration-300"
             >
-              <span className="material-symbols-outlined">
-                {theme === 'dark' ? 'light_mode' : 'dark_mode'}
-              </span>
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
             <DashboardFilters onFilterChange={setFilters} isLoading={loading} />
           </div>
@@ -276,7 +275,7 @@ const AdminDashboard: React.FC = () => {
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowConfirm(false)} />
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 relative z-10 animate-in zoom-in-95 duration-200">
             <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center mb-4 mx-auto">
-              <span className="material-symbols-outlined text-3xl">logout</span>
+              <LogOut className="w-8 h-8" />
             </div>
             <h3 className="text-xl font-bold text-center text-gray-900 dark:text-white mb-2">Log Out?</h3>
             <p className="text-center text-gray-500 dark:text-gray-400 mb-6">

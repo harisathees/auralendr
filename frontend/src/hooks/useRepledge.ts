@@ -14,7 +14,7 @@ export const useRepledge = () => {
     const fetchRepledgeEntries = useCallback(async (page = 1, search = "") => {
         setLoading(true);
         try {
-            const res = await api.get(`/repledges`, { params: { page, search } });
+            const res = await api.get(`/api/repledges`, { params: { page, search } });
             setRepledgeEntries(res.data.data);
             setTotalPages(res.data.last_page);
             setCurrentPage(res.data.current_page);
@@ -30,7 +30,7 @@ export const useRepledge = () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await api.get(`/loans/${loanNo}`);
+            const res = await api.get(`/api/loans/${loanNo}`);
             // Assuming existing backend structure, might need adjustment
             // Based on typical Laravel response for detail
             return res.data;
@@ -46,7 +46,7 @@ export const useRepledge = () => {
     // Save Repledge Entry
     const saveRepledgeEntry = async (data: Partial<RepledgeEntry>) => {
         try {
-            const res = await api.post('/repledges', data);
+            const res = await api.post('/api/repledges', data);
             setRepledgeEntries(prev => [res.data, ...prev]);
             return res.data;
         } catch (err: any) {
@@ -58,7 +58,7 @@ export const useRepledge = () => {
     // Delete Repledge Entry
     const deleteRepledgeEntry = async (id: string) => {
         try {
-            await api.delete(`/repledges/${id}`);
+            await api.delete(`/api/repledges/${id}`);
             setRepledgeEntries(prev => prev.filter(e => e.id !== id));
         } catch (err: any) {
             console.error("Failed to delete entry", err);
@@ -69,7 +69,7 @@ export const useRepledge = () => {
     // Search Loan for Repledge (Auto-fetch)
     const searchLoanSuggestions = async (loanNo: string): Promise<LoanSuggestion[] | null> => {
         try {
-            const res = await api.get(`/repledge-loans/search?query=${loanNo}`);
+            const res = await api.get(`/api/repledge-loans/search?query=${loanNo}`);
             return res.data;
         } catch (err: any) {
             console.error("Search failed", err);

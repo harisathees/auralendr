@@ -76,7 +76,7 @@ const View: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await api.get(`/repledges/${id}`);
+                const res = await api.get(`/api/repledges/${id}`);
                 setRepledge(res.data);
             } catch (err: any) {
                 console.error(err);
@@ -124,7 +124,7 @@ const View: React.FC = () => {
                         <button
                             onClick={() => {
                                 if (confirm("Delete this repledge?")) {
-                                    api.delete(`/repledges/${id}`).then(() => {
+                                    api.delete(`/api/repledges/${id}`).then(() => {
                                         showToast("Deleted successfully", "success");
                                         navigate("/pledges", { state: { tab: 'repledges' } });
                                     });

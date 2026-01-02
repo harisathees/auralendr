@@ -1,0 +1,17 @@
+[phases.setup]
+aptPkgs = []
+
+[phases.install]
+cmds = [
+  "composer install --no-dev --optimize-autoloader"
+]
+
+[phases.build]
+cmds = [
+  "php artisan optimize:clear",
+  "php artisan config:cache",
+  "php artisan route:cache"
+]
+
+[start]
+cmd = "php artisan serve --host=0.0.0.0 --port=$PORT"

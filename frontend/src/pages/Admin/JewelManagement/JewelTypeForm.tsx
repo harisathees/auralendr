@@ -16,7 +16,7 @@ const JewelTypeForm: React.FC = () => {
     useEffect(() => {
         if (isEdit) {
             setLoading(true);
-            api.get(`/jewel-types/${id}`)
+            api.get(`/api/jewel-types/${id}`)
                 .then((res) => {
                     setName(res.data.name);
                 })
@@ -35,9 +35,9 @@ const JewelTypeForm: React.FC = () => {
 
         try {
             if (isEdit) {
-                await api.put(`/jewel-types/${id}`, { name });
+                await api.put(`/api/jewel-types/${id}`, { name });
             } else {
-                await api.post("/jewel-types", { name });
+                await api.post("/api/jewel-types", { name });
             }
             navigate("/admin/configs/jewel-types");
         } catch (err: any) {

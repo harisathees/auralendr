@@ -1,5 +1,13 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import {
+    LayoutDashboard,
+    CreditCard,
+    Users,
+    TrendingUp,
+    ClipboardList,
+    Settings2
+} from "lucide-react";
 // import { useAuth } from "../../context/AuthContext";
 
 const AdminBottomNavigation: React.FC = () => {
@@ -18,9 +26,11 @@ const AdminBottomNavigation: React.FC = () => {
                         }`}
                     to="/admin/dashboard"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/dashboard") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        dashboard
-                    </span>
+                    <LayoutDashboard
+                        className="w-7 h-7"
+                        fill={isActive("/admin/dashboard") ? "currentColor" : "none"}
+                        strokeWidth={isActive("/admin/dashboard") ? 2.5 : 2}
+                    />
                     <span className="text-xs font-bold">Home</span>
                 </Link>
 
@@ -32,9 +42,11 @@ const AdminBottomNavigation: React.FC = () => {
                         }`}
                     to="/admin/loans"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/loans") || isActive("/admin/pledges") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        credit_score
-                    </span>
+                    <CreditCard
+                        className="w-7 h-7"
+                        fill={isActive("/admin/loans") || isActive("/admin/pledges") ? "currentColor" : "none"}
+                        strokeWidth={isActive("/admin/loans") || isActive("/admin/pledges") ? 2.5 : 2}
+                    />
                     <span className="text-xs font-bold">Loans</span>
                 </Link>
 
@@ -44,9 +56,11 @@ const AdminBottomNavigation: React.FC = () => {
                         }`}
                     to="/admin/customers"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/customers") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        groups
-                    </span>
+                    <Users
+                        className="w-7 h-7"
+                        fill={isActive("/admin/customers") ? "currentColor" : "none"}
+                        strokeWidth={isActive("/admin/customers") ? 2.5 : 2}
+                    />
                     <span className="text-xs font-bold">Customers</span>
                 </Link>
 
@@ -56,9 +70,11 @@ const AdminBottomNavigation: React.FC = () => {
                         }`}
                     to="/admin/cashflow"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/cashflow") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        timeline
-                    </span>
+                    <TrendingUp
+                        className="w-7 h-7"
+                        // fill={isActive("/admin/cashflow") ? "currentColor" : "none"} // TrendingUp doesn't fill nicely usually
+                        strokeWidth={isActive("/admin/cashflow") ? 2.5 : 2}
+                    />
                     <span className="text-xs font-bold">Cashflow</span>
                 </Link>
 
@@ -70,9 +86,11 @@ const AdminBottomNavigation: React.FC = () => {
                         }`}
                     to="/admin/tasks"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/tasks") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        assignment
-                    </span>
+                    <ClipboardList
+                        className="w-7 h-7"
+                        fill={isActive("/admin/tasks") ? "currentColor" : "none"}
+                        strokeWidth={isActive("/admin/tasks") ? 2.5 : 2}
+                    />
                     <span className="text-xs font-bold text-center leading-none">Tasks</span>
                 </Link>
 
@@ -82,9 +100,11 @@ const AdminBottomNavigation: React.FC = () => {
                         }`}
                     to="/admin/configs"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/configs") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        tune
-                    </span>
+                    <Settings2
+                        className="w-7 h-7"
+                        // Settings2 doesn't fill nicely
+                        strokeWidth={isActive("/admin/configs") ? 2.5 : 2}
+                    />
                     <span className="text-xs font-medium">Config</span>
                 </Link>
 

@@ -27,7 +27,7 @@ const UserForm: React.FC = () => {
 
     // Fetch branches for dropdown
     useEffect(() => {
-        api.get("/branches").then(res => setBranches(res.data)).catch(console.error);
+        api.get("/api/branches").then(res => setBranches(res.data)).catch(console.error);
     }, []);
 
     // Fetch user details if editing
@@ -35,7 +35,7 @@ const UserForm: React.FC = () => {
         if (isEdit) {
             if (!can('user.update')) return;
             setLoading(true);
-            api.get(`/staff/${id}`)
+            api.get(`/api/staff/${id}`)
                 .then((res) => {
                     const user = res.data;
                     setFormData({
@@ -71,9 +71,9 @@ const UserForm: React.FC = () => {
 
         try {
             if (isEdit) {
-                await api.put(`/staff/${id}`, payload);
+                await api.put(`/api/staff/${id}`, payload);
             } else {
-                await api.post("/staff", payload);
+                await api.post("/api/staff", payload);
             }
             navigate("/admin/configs/users");
         } catch (err: any) {

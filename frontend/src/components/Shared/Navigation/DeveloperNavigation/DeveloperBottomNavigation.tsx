@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { LayoutDashboard, UserCog, Store, Lock } from "lucide-react";
 
 const DeveloperBottomNavigation: React.FC = () => {
     const location = useLocation();
@@ -17,9 +18,11 @@ const DeveloperBottomNavigation: React.FC = () => {
                         }`}
                     to="/admin/dashboard"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/dashboard") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        dashboard
-                    </span>
+                    <LayoutDashboard
+                        className="w-7 h-7"
+                        fill={isActive("/admin/dashboard") ? "currentColor" : "none"}
+                        strokeWidth={isActive("/admin/dashboard") ? 2.5 : 2}
+                    />
                     <span className="text-xs font-bold">Home</span>
                 </Link>
 
@@ -29,9 +32,11 @@ const DeveloperBottomNavigation: React.FC = () => {
                         }`}
                     to="/admin/configs/users"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/configs/users") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        manage_accounts
-                    </span>
+                    <UserCog
+                        className="w-7 h-7"
+                        // fill={isActive("/admin/configs/users") ? "currentColor" : "none"}
+                        strokeWidth={isActive("/admin/configs/users") ? 2.5 : 2}
+                    />
                     <span className="text-xs font-bold">Users</span>
                 </Link>
 
@@ -41,9 +46,11 @@ const DeveloperBottomNavigation: React.FC = () => {
                         }`}
                     to="/admin/configs/branches"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/configs/branches") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        store
-                    </span>
+                    <Store
+                        className="w-7 h-7"
+                        fill={isActive("/admin/configs/branches") ? "currentColor" : "none"}
+                        strokeWidth={isActive("/admin/configs/branches") ? 2.5 : 2}
+                    />
                     <span className="text-xs font-bold">Branches</span>
                 </Link>
 
@@ -53,9 +60,11 @@ const DeveloperBottomNavigation: React.FC = () => {
                         }`}
                     to="/admin/configs/roles"
                 >
-                    <span className="material-symbols-outlined text-3xl" style={isActive("/admin/configs/roles") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                        admin_panel_settings
-                    </span>
+                    <Lock
+                        className="w-7 h-7"
+                        fill={isActive("/admin/configs/roles") ? "currentColor" : "none"}
+                        strokeWidth={isActive("/admin/configs/roles") ? 2.5 : 2}
+                    />
                     <span className="text-xs font-bold text-center leading-none">Privileges</span>
                 </Link>
 

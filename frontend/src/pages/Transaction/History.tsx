@@ -74,7 +74,7 @@ const TransactionHistory = () => {
 
     const fetchMoneySources = async (branchId?: string) => {
         try {
-            const url = branchId ? `/money-sources?branch_id=${branchId}` : '/money-sources';
+            const url = branchId ? `/api/money-sources?branch_id=${branchId}` : '/api/money-sources';
             const res = await api.get(url);
             setMoneySources(res.data);
         } catch (error) {
@@ -84,7 +84,7 @@ const TransactionHistory = () => {
 
     const fetchBranches = async () => {
         try {
-            const res = await api.get('/branches');
+            const res = await api.get('/api/branches');
             setBranches(res.data);
         } catch (error) {
             console.error('Failed to fetch branches');
@@ -94,7 +94,7 @@ const TransactionHistory = () => {
     const fetchTransactions = async () => {
         try {
             setLoading(true);
-            let url = '/transactions?';
+            let url = '/api/transactions?';
             if (selectedSourceId) url += `money_source_id=${selectedSourceId}&`;
             if (selectedBranchId) url += `branch_id=${selectedBranchId}&`;
             if (startDate) url += `start_date=${startDate}&`;

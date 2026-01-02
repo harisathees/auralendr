@@ -1,5 +1,14 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+    LayoutDashboard,
+    CreditCard,
+    Tag,
+    RotateCw,
+    Plus,
+    Receipt,
+    Shield
+} from "lucide-react";
 
 
 
@@ -66,9 +75,10 @@ const BottomNavigation: React.FC = () => {
                                 }`}
                             to="/dashboard"
                         >
-                            <span className="material-symbols-outlined" style={isActive("/dashboard") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                                dashboard
-                            </span>
+                            <LayoutDashboard
+                                className="w-6 h-6"
+                                fill={isActive("/dashboard") ? "currentColor" : "none"}
+                            />
                             <span className="text-xs font-bold">Home</span>
                         </Link>
 
@@ -78,9 +88,10 @@ const BottomNavigation: React.FC = () => {
                                 }`}
                             to="/pledges"
                         >
-                            <span className="material-symbols-outlined" style={isActive("/pledges") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                                credit_score
-                            </span>
+                            <CreditCard
+                                className="w-6 h-6"
+                                fill={isActive("/pledges") ? "currentColor" : "none"}
+                            />
                             <span className="text-xs font-bold">Loans</span>
                         </Link>
 
@@ -99,7 +110,7 @@ const BottomNavigation: React.FC = () => {
                                     className="flex flex-col items-center gap-2 group/btn"
                                 >
                                     <div className="h-14 w-14 rounded-full bg-white dark:bg-gray-800 text-primary border border-gray-100 dark:border-gray-700 flex items-center justify-center shadow-lg group-hover/btn:bg-primary group-hover/btn:text-white transition-colors">
-                                        <span className="material-symbols-outlined">local_offer</span>
+                                        <Tag className="w-6 h-6" />
                                     </div>
                                     <span className="text-xs font-bold text-primary-text dark:text-white bg-card-light dark:bg-gray-800 px-2 py-1 rounded-md shadow-sm whitespace-nowrap">
                                         Create Pledge
@@ -114,7 +125,7 @@ const BottomNavigation: React.FC = () => {
                                     }}
                                     className="flex flex-col items-center gap-2 group/btn">
                                     <div className="h-14 w-14 rounded-full bg-white dark:bg-gray-800 text-purple-600 border border-gray-100 dark:border-gray-700 flex items-center justify-center shadow-lg group-hover/btn:bg-purple-600 group-hover/btn:text-white transition-colors">
-                                        <span className="material-symbols-outlined">autorenew</span>
+                                        <RotateCw className="w-6 h-6" />
                                     </div>
                                     <span className="text-xs font-bold text-primary-text dark:text-white bg-card-light dark:bg-gray-800 px-2 py-1 rounded-md shadow-sm whitespace-nowrap">
                                         Create Repledge
@@ -127,12 +138,10 @@ const BottomNavigation: React.FC = () => {
                                 onClick={toggleFab}
                                 className="h-14 w-14 rounded-full bg-primary text-white flex items-center justify-center transition-transform hover:scale-105 active:scale-95 shadow-[0_8px_20px_rgba(0,200,83,0.4)]"
                             >
-                                <span
-                                    className="material-symbols-outlined text-3xl transition-transform duration-300"
+                                <Plus
+                                    className="w-8 h-8 transition-transform duration-300"
                                     style={{ transform: fabOpen ? "rotate(45deg)" : "rotate(0deg)" }}
-                                >
-                                    add
-                                </span>
+                                />
                             </button>
                         </div>
 
@@ -142,9 +151,10 @@ const BottomNavigation: React.FC = () => {
                                 }`}
                             to="/transactions"
                         >
-                            <span className="material-symbols-outlined" style={isActive("/transactions") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                                receipt_long
-                            </span>
+                            <Receipt
+                                className="w-6 h-6"
+                            // fill={isActive("/transactions") ? "currentColor" : "none"}
+                            />
                             <span className="text-xs font-bold">Transactions</span>
                         </Link>
 
@@ -154,9 +164,10 @@ const BottomNavigation: React.FC = () => {
                                 }`}
                             to="/privileges"
                         >
-                            <span className="material-symbols-outlined" style={isActive("/privileges") ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                                security
-                            </span>
+                            <Shield
+                                className="w-6 h-6"
+                                fill={isActive("/privileges") ? "currentColor" : "none"}
+                            />
                             <span className="text-xs font-bold">Privileges</span>
                         </Link>
 

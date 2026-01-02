@@ -10,7 +10,7 @@ export const useRepledgeSources = () => {
     const fetchBanks = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await api.get('/repledge-sources');
+            const response = await api.get('/api/repledge-sources');
             setSources(response.data.data || response.data);
         } catch (err: any) {
             console.error("Failed to fetch repledge banks", err);

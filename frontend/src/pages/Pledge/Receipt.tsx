@@ -39,7 +39,7 @@ const Receipt = () => {
     useEffect(() => {
         const fetchLatestRates = async () => {
             try {
-                const { data } = await api.get('/metal-rates');
+                const { data } = await api.get('/api/metal-rates');
                 const rates = Array.isArray(data) ? data : (data.data || []);
                 const goldRate = rates.find((r: any) => r.metal_type === "Gold")?.rate || 0;
                 const silverRate = rates.find((r: any) => r.metal_type === "Silver")?.rate || 0;
@@ -52,7 +52,7 @@ const Receipt = () => {
 
         const fetchConfig = async () => {
             try {
-                const { data } = await api.get('/templates/receipt');
+                const { data } = await api.get('/api/templates/receipt');
                 return data;
             } catch (error) {
                 console.error("Failed to load receipt config", error);

@@ -17,7 +17,7 @@ const JewelTypesIndex: React.FC = () => {
 
     const fetchItems = async () => {
         try {
-            const res = await api.get("/jewel-types");
+            const res = await api.get("/api/jewel-types");
             setItems(res.data);
         } catch (error) {
             console.error("Failed to fetch jewel types", error);
@@ -39,7 +39,7 @@ const JewelTypesIndex: React.FC = () => {
     const handleConfirmDelete = async () => {
         if (!deletingId) return;
         try {
-            await api.delete(`/jewel-types/${deletingId}`);
+            await api.delete(`/api/jewel-types/${deletingId}`);
             setItems(items.filter(i => i.id !== deletingId));
             setIsDeleteOpen(false);
             setDeletingId(null);
