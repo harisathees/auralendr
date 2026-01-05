@@ -1,9 +1,8 @@
 #!/bin/sh
 set -e
 
-
+echo "Clearing config & cache..."
 php artisan config:clear
-php artisan cache:clear
 
 
 echo "Running migrations..."
