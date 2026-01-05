@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect } from 'react';
+import React, { useRef, useCallback } from 'react';
 
 interface WheelPickerProps {
     onActiveIndexChange: (index: number) => void;

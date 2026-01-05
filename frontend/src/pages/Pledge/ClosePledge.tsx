@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from "react-router-dom";
 import { useLoanCalculation } from "../../hooks/useLoanCalculation";
 import GoldCoinSpinner from '../../components/GoldCoinSpinner';
@@ -64,7 +64,7 @@ const ErrorState: React.FC<{ error: string, onBack: () => void }> = ({ error, on
 const ClosePledge: React.FC = () => {
     const { loanId } = useParams<{ loanId: string }>();
     const navigate = useNavigate();
-    const { loanData, metalRates, loading, error, saving, saveCalculationAndCloseLoan } = useLoanCalculation(loanId || null);
+    const { loanData, loading, error, saving, saveCalculationAndCloseLoan } = useLoanCalculation(loanId || null);
 
     const [selectedMethod, setSelectedMethod] = useState<string>(''); // Slug or ID
     const [loanSchemes, setLoanSchemes] = useState<any[]>([]);
@@ -73,7 +73,7 @@ const ClosePledge: React.FC = () => {
     const [reductionAmount, setReductionAmount] = useState<string>('');
     const [balanceAmount, setBalanceAmount] = useState<string>('');
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-    const [currentMetalRate, setCurrentMetalRate] = useState<string | null>(null);
+    const [currentMetalRate] = useState<string | null>(null);
     const [moneySources, setMoneySources] = useState<any[]>([]);
     const [paymentSourceId, setPaymentSourceId] = useState<string>('');
     const [amountPaid, setAmountPaid] = useState<string>('');

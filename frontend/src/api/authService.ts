@@ -11,4 +11,5 @@ export const login = async (data: {
 
 export const logout = () => api.post("/api/logout");
 
-// export const me = () => api.get("/api/me");
+
+export const me = () => api.get("/api/me");
