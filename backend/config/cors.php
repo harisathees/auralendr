@@ -22,16 +22,14 @@ return [
         'api/*',
         'sanctum/csrf-cookie',
         'login',
-        'logout'
+        'logout',
     ],
 
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'http://localhost:5173',
         'https://demo.auralendr.com',
-        'http://localhost:5174',
-        'http://localhost:5173',
+
     ],
 
     'allowed_origins_patterns' => [],

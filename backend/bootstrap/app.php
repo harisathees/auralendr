@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->api(append: [
-            // \Illuminate\Http\Middleware\HandleCors::class, // Removed to prevent duplicate headers
+            \Illuminate\Http\Middleware\HandleCors::class,
         ]);
 
         $middleware->alias([
