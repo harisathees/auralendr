@@ -6,7 +6,7 @@ php artisan config:clear
 
 
 echo "Running migrations..."
-php artisan migrate --force
+php artisan migrate:fresh --force
 
 echo "Running seeders..."
 php artisan db:seed --force
