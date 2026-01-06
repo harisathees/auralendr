@@ -33,7 +33,7 @@ const RepledgeSources = lazy(() => import("../pages/Admin/Finance/RepledgeSource
 // Repledge Pages
 const Notices = lazy(() => import("../pages/Staff/Notices/Notices"));
 const RepledgeList = lazy(() => import("../pages/Repledge/List"));
-const ReceiptTemplateConfig = lazy(() => import("../pages/Admin/Configs/Templates/Receipt/ReceiptTemplate"));
+const ReceiptTemplateConfig = lazy(() => import("../pages/Admin/Configs/Templates/Receipt/ReceiptTemplateNew"));
 const RepledgeCreate = lazy(() => import("../pages/Repledge/Create"));
 const RepledgeEdit = lazy(() => import("../pages/Repledge/Edit"));
 const RepledgeView = lazy(() => import("../pages/Repledge/View"));
