@@ -28,12 +28,14 @@ const MoneySources = lazy(() => import("../pages/Admin/MoneySource/Index"));
 const InterestSettings = lazy(() => import("../pages/Admin/LoanConfiguration/InterestRates"));
 const ValidityPeriods = lazy(() => import("../pages/Admin/LoanConfiguration/LoanValidities"));
 const ProcessingFees = lazy(() => import("../pages/Admin/LoanConfiguration/ProcessingFees"));
+const BrandKit = lazy(() => import("../pages/Admin/Configs/BrandKit"));
 const RepledgeSources = lazy(() => import("../pages/Admin/Finance/RepledgeSources"));
 
 // Repledge Pages
 const Notices = lazy(() => import("../pages/Staff/Notices/Notices"));
 const RepledgeList = lazy(() => import("../pages/Repledge/List"));
-const ReceiptTemplateConfig = lazy(() => import("../pages/Admin/Configs/Templates/Receipt/ReceiptTemplateNew"));
+const ReceiptTemplateConfig = lazy(() => import("../pages/Admin/Configs/Templates/Receipt/ReceiptLayoutSelector"));
+const ReceiptDesigner = lazy(() => import("../pages/Admin/Configs/Templates/Receipt/ReceiptTemplateNew"));
 const RepledgeCreate = lazy(() => import("../pages/Repledge/Create"));
 const RepledgeEdit = lazy(() => import("../pages/Repledge/Edit"));
 const RepledgeView = lazy(() => import("../pages/Repledge/View"));
@@ -130,9 +132,11 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/cashflow" element={<TransactionHistory />} />
 
         <Route path="/admin/configs" element={<AdminConfigs />} />
+        <Route path="/admin/configs/brand-kit" element={<BrandKit />} />
         <Route path="/admin/configs/money-sources" element={<MoneySources />} />
         <Route path="/admin/configs/metal-rates" element={<MetalRates />} />
         <Route path="/admin/configs/templates/receipt" element={<ReceiptTemplateConfig />} />
+        <Route path="/admin/configs/templates/receipt/designer" element={<ReceiptDesigner />} />
 
         {/* Transaction Categories */}
         <Route path="/admin/configs/transaction-categories" element={<TransactionCategories />} />

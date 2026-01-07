@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\LoanController;
 use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\LoanProcessingFeeController;
 use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\ValidityMonthController;
 use App\Http\Controllers\Api\V1\Admin\DashboardController;
+use App\Http\Controllers\Api\V1\Admin\Configuration\BrandSettingsController;
 
 Route::get('/test', function () {
     return response()->json(['status' => 'API Working']);
@@ -108,6 +109,10 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     // Metal Rates (Admin write, Staff read - Controller handles specific logic if needed, or route middleware)
     Route::post('/metal-rates', [MetalRateController::class, 'store']);
 
+    // Brand Settings
+    Route::get('/brand-settings', [BrandSettingsController::class, 'index']);
+    Route::post('/brand-settings', [BrandSettingsController::class, 'update']);
+
     // Money Sources
     Route::get('/money-sources', [MoneySourceController::class, 'index']);
     Route::post('/money-sources', [MoneySourceController::class, 'store']);
@@ -124,6 +129,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     // Template Routes
     Route::get('/templates/receipt', [App\Http\Controllers\Api\V1\Admin\Configuration\TemplateController::class, 'getReceiptTemplate']);
     Route::post('/templates/receipt', [App\Http\Controllers\Api\V1\Admin\Configuration\TemplateController::class, 'updateReceiptTemplate']);
+    Route::apiResource('receipt-templates', App\Http\Controllers\Api\V1\Admin\Configuration\ReceiptTemplateController::class);
 
     // Staff Task Routes
     Route::get('/my-tasks', [TaskController::class, 'myTasks']);
