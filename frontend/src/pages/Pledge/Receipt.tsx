@@ -64,42 +64,55 @@ const Receipt = () => {
             if (!id) return;
 
             try {
-                const [pledgeResponse, rates, configData] = await Promise.all([
+                const [pledgeResponse, rates, configData, brandResponse] = await Promise.all([
                     getPledge(Number(id)),
                     fetchLatestRates(),
-                    fetchConfig()
+                    fetchConfig(),
+                    api.get('/api/brand-settings').catch(() => ({ data: {} }))
                 ]);
 
                 setConfig(configData);
 
-                const loan = pledgeResponse.data.data || pledgeResponse.data;
-                const customer = loan.customer;
-                const jewel = Array.isArray(loan.jewels) ? loan.jewels[0] : loan.jewel;
+                const pledge = pledgeResponse.data.data || pledgeResponse.data;
+                const customer = pledge.customer;
+                const loan = pledge.loan;
+                const jewel = Array.isArray(pledge.jewels) ? pledge.jewels[0] : pledge.jewel; // Handle single/multi jewel
+
+                // Brand Data
+                const brand = brandResponse.data;
 
                 const customerImageUrl = customer?.customer_image_url || customer?.photo_url || null;
                 const jewelImageUrl = jewel?.image_url || null;
 
                 setData({
+                    // Legacy flattened data (keep for backward compatibility if needed)
                     name: customer?.name || 'N/A',
                     address: customer?.address || 'N/A',
                     phone: customer?.mobile_no || 'N/A',
                     whatsapp: customer?.whatsapp_no || '',
-                    date: formatDate(loan.date),
-                    duedate: formatDate(loan.due_date),
+                    date: formatDate(loan?.date), // loan might be null in some edge cases?
+                    duedate: formatDate(loan?.due_date),
                     weight: jewel?.gross_weight || jewel?.net_weight || 0,
-                    interest: loan.interest_rate,
-                    interestTaken: loan.interest_taken === 1 || loan.interest_taken === true,
+                    interest: loan?.interest_rate,
+                    interestTaken: loan?.interest_taken === 1 || loan?.interest_taken === true,
                     jewelName: jewel?.description || jewel?.jewel_name || 'N/A',
                     faults: jewel?.faults || 'N/A',
                     quality: jewel?.quality || 'N/A',
                     count: jewel?.quantity || jewel?.pieces || 1,
-                    itemNo: loan.loan_no,
-                    amount: loan.amount,
+                    itemNo: loan?.loan_no,
+                    amount: loan?.amount,
                     customerImage: customerImageUrl,
                     jewelImage: jewelImageUrl,
-                    goldRate: loan.gold_rate ?? rates.goldRate,
-                    silverRate: loan.silver_rate ?? rates.silverRate,
+                    goldRate: loan?.gold_rate ?? rates.goldRate,
+                    silverRate: loan?.silver_rate ?? rates.silverRate,
                     ID: customer?.id_proof_number || customer?.id_proof || 'N/A',
+
+                    // NEW: Raw nested data for DynamicReceipt
+                    pledge: pledge,
+                    customer: customer,
+                    loan: loan,
+                    jewels: pledge.jewels,
+                    brand: brand // Pass brand settings
                 });
             } catch (err) {
                 console.error("Error fetching data:", err);
@@ -176,7 +189,9 @@ const Receipt = () => {
         )
     }
 
-    if (config?.type === 'dynamic') {
+    // Check if configuration exists and has layout_config (New Type) OR type='dynamic' (Old Type)
+    // We treat everything as dynamic if it has layout_config or explicitly set type
+    if (config?.layout_config || config?.type === 'dynamic') {
         return (
             <React.Suspense fallback={<div className="flex items-center justify-center p-20">Loading template...</div>}>
                 <DynamicReceipt data={data} config={config} />

@@ -1,27 +1,105 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import * as htmlToImage from 'html-to-image';
 import { FiShare2, FiLoader, FiPrinter } from 'react-icons/fi';
 import { useReactToPrint } from 'react-to-print';
 
+// Define Interface matching ReceiptTemplateNew
+interface ReceiptField {
+    id: string;
+    type: 'text' | 'image' | 'line' | 'barcode' | 'qr';
+    label: string; // Display label for editor, or static text content
+    dataKey: string; // e.g., 'pledge.no'
+    x: number; // mm
+    y: number; // mm
+    width: number; // mm
+    height: number; // mm (for images/lines)
+    fontSize?: number; // pt
+    fontWeight?: 'normal' | 'bold' | 'medium' | 'black';
+    align?: 'left' | 'center' | 'right';
+    visible: boolean;
+}
+
 interface DynamicReceiptProps {
-    data: any;
+    data: any; // Contains { pledge, customer, loan, jewels, brand, ...anything else }
     config: {
-        size: "A4" | "A5" | "A6" | "A6 Landscape" | "Thermal";
-        alignment: "left" | "center" | "right";
-        title: string;
-        header: string;
-        footer: string;
-        show_logo: boolean;
+        paper_size?: "A4" | "A5" | "A6" | "A6 Landscape" | "Thermal";
+        layout_config?: ReceiptField[];
+        // Legacy props fallback
+        size?: string;
+        type?: string;
     };
 }
+
+const formatDate = (isoDateString: string) => {
+    if (!isoDateString) return '';
+    const date = new Date(isoDateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+};
 
 const DynamicReceipt: React.FC<DynamicReceiptProps> = ({ data, config }) => {
     const componentRef = useRef<HTMLDivElement>(null);
     const [sharing, setSharing] = React.useState(false);
 
+    // Consolidated Data Resolver
+    const resolvedData = useMemo(() => {
+        const d = data || {};
+        const p = d.pledge || {}; // Raw pledge object if passed
+        const l = d.loan || p.loan || {};
+        const c = d.customer || p.customer || {};
+        const j = Array.isArray(d.jewels) ? d.jewels : (p.jewels || []);
+        const b = d.brand || {}; // Expecting brand settings object
+
+        return {
+            receipt: {
+                date: new Date().toLocaleDateString('en-GB'), // Today's date for receipt printing
+            },
+            brand: {
+                name: b.brand_name || 'Brand Name',
+                address: b.brand_address || '',
+                mobile: b.brand_mobile || '',
+                email: b.brand_email || '',
+                logo: b.brand_logo_url || null,
+            },
+            pledge: {
+                no: l.loan_no || p.reference_no || 'N/A',
+                amount: l.amount || 0,
+                date: formatDate(l.date),
+                due_date: formatDate(l.due_date),
+                interest_rate: l.interest_percentage || 0,
+                scheme_interest_rate: l.interest_percentage || 0, // Fallback as scheme relation is missing
+                item_count: j.length || (j[0]?.quantity) || 1, // Simple count
+                total_weight: j.reduce((acc: number, item: any) => acc + (parseFloat(item.gross_weight || item.weight || 0)), 0).toFixed(2),
+                items_description: j.map((item: any) => item.description || item.jewel_name || item.name).join(', '),
+                jewel_image: j[0]?.image_url || null, // Primary jewel image
+            },
+            customer: {
+                name: c.name || 'N/A',
+                mobile: c.mobile_no || '',
+                address: c.address || '',
+                id_proof: c.id_proof_number || '',
+                image: c.customer_image_url || c.photo_url || null,
+            }
+        };
+    }, [data]);
+
+    // Helper to get value from dot notation string
+    const getValue = (path: string) => {
+        if (!path) return '';
+        const keys = path.split('.');
+        let val: any = resolvedData;
+        for (const key of keys) {
+            val = val ? val[key] : undefined;
+        }
+        return val;
+    };
+
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
-        documentTitle: `Receipt-${data.itemNo}`,
+        documentTitle: `Receipt-${resolvedData.pledge.no}`,
+        onAfterPrint: () => { console.log('Print finished'); }
     });
 
     const handleShare = async () => {
@@ -35,18 +113,17 @@ const DynamicReceipt: React.FC<DynamicReceiptProps> = ({ data, config }) => {
             });
 
             const blob = await (await fetch(dataUrl)).blob();
-            const file = new File([blob], `Receipt-${data.itemNo}.png`, { type: "image/png" });
+            const file = new File([blob], `Receipt-${resolvedData.pledge.no}.png`, { type: "image/png" });
 
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
                     files: [file],
                     title: "Receipt",
-                    text: `Receipt for Pledge ${data.itemNo}`,
+                    text: `Receipt for Pledge ${resolvedData.pledge.no}`,
                 });
             } else {
-                // Fallback: Download
                 const link = document.createElement("a");
-                link.download = `Receipt-${data.itemNo}.png`;
+                link.download = `Receipt-${resolvedData.pledge.no}.png`;
                 link.href = dataUrl;
                 link.click();
             }
@@ -57,148 +134,107 @@ const DynamicReceipt: React.FC<DynamicReceiptProps> = ({ data, config }) => {
         }
     };
 
-    // Calculate width based on size
-    const getWidth = () => {
-        switch (config.size) {
-            case 'A4': return '210mm';
-            case 'A5': return '148mm';
-            case 'A6': return '105mm';
-            case 'A6 Landscape': return '148mm';
-            case 'Thermal': return '80mm';
-            default: return '210mm';
-        }
-    };
+    // Determine Paper Dimensions
+    const paperSize = config.paper_size || config.size || 'A4';
+    let width = '210mm';
+    let height = 'auto'; // Let height grow or be fixed
+    let minHeight = '297mm';
 
-    const getMinHeight = () => {
-        switch (config.size) {
-            case 'A4': return '297mm';
-            case 'A5': return '210mm';
-            case 'A6': return '148mm';
-            case 'A6 Landscape': return '105mm';
-            case 'Thermal': return 'auto';
-            default: return '297mm';
-        }
-    };
+    switch (paperSize) {
+        case 'A4': width = '210mm'; minHeight = '297mm'; break;
+        case 'A5': width = '148mm'; minHeight = '210mm'; break;
+        case 'A6': width = '105mm'; minHeight = '148mm'; break;
+        case 'A6 Landscape': width = '148mm'; minHeight = '105mm'; height = '105mm'; break; // Fixed height for landscape usually
+        case 'Thermal': width = '80mm'; minHeight = 'auto'; break;
+        default: width = '210mm'; minHeight = '297mm'; break;
+    }
 
-    const containerStyle: React.CSSProperties = {
-        width: getWidth(),
-        minHeight: getMinHeight(),
-        padding: config.size === 'Thermal' ? '10px' : '20px',
-        margin: '0 auto',
-        backgroundColor: 'white',
-        textAlign: config.alignment,
-        fontSize: config.size === 'Thermal' ? '12px' : '14px',
-        color: 'black',
-        display: 'flex',
-        flexDirection: 'column'
-    };
+    const fields = config.layout_config || [];
+
+    if (fields.length === 0) {
+        return <div className="p-10 text-center text-red-500">No layout configuration found for this template.</div>;
+    }
 
     return (
         <div className="min-h-screen bg-slate-900 py-8 flex flex-col items-center gap-4">
-            {/* Action Bar */}
-            <div className="w-full max-w-2xl bg-white/10 backdrop-blur rounded-xl p-4 flex justify-between items-center text-white border border-white/20">
+            {/* Header / Actions */}
+            <div className="w-full max-w-2xl bg-white/10 backdrop-blur rounded-xl p-4 flex justify-between items-center text-white border border-white/20 print:hidden">
                 <div>
-                    <span className="font-bold text-lg">{config.size} Receipt</span>
-                    <span className="text-sm opacity-60 ml-2">({config.alignment})</span>
+                    <span className="font-bold text-lg">{paperSize} Receipt</span>
+                    <span className="text-sm opacity-60 ml-2">({fields.length} fields)</span>
                 </div>
                 <div className="flex gap-2">
-                    <button
-                        onClick={handlePrint}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 font-medium transition-colors"
-                    >
+                    <button onClick={() => handlePrint()} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2 font-medium">
                         <FiPrinter /> Print
                     </button>
-                    <button
-                        onClick={handleShare}
-                        disabled={sharing}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2 font-medium transition-colors disabled:opacity-50"
-                    >
-                        {sharing ? <FiLoader className="animate-spin" /> : <FiShare2 />}
-                        Share
+                    <button onClick={handleShare} disabled={sharing} className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2 font-medium disabled:opacity-50">
+                        {sharing ? <FiLoader className="animate-spin" /> : <FiShare2 />} Share
                     </button>
                 </div>
             </div>
 
-            {/* Receipt Preview/Canvas */}
-            <div className="shadow-2xl overflow-auto max-w-full">
-                <div ref={componentRef} style={containerStyle} className="print:shadow-none bg-white">
-                    {/* Header */}
-                    <div className="mb-6 border-b-2 border-black pb-4">
-                        {config.show_logo && <div className="mb-2 font-bold text-xl">[LOGO]</div>}
-                        <h1 className="text-xl font-bold uppercase mb-1">{config.title}</h1>
-                        <div className="whitespace-pre-wrap opacity-80 text-sm">{config.header}</div>
-                    </div>
+            {/* Canvas Area */}
+            <div className="overflow-auto max-w-full p-4">
+                <div
+                    ref={componentRef}
+                    className="bg-white relative shadow-2xl print:shadow-none mx-auto"
+                    style={{
+                        width: width,
+                        height: height === 'auto' ? undefined : height,
+                        minHeight: minHeight,
+                        position: 'relative',
+                        overflow: 'hidden' // Clip content outside standard size
+                    }}
+                >
+                    {/* Render Fields */}
+                    {fields.map((field) => {
+                        if (!field.visible) return null;
 
-                    {/* Main Content Area */}
-                    {config.size !== 'A6 Landscape' ? (
-                        <>
-                            {/* Metadata */}
-                            <div className="grid grid-cols-2 gap-4 text-left mb-6 text-sm">
-                                <div>
-                                    <p><span className="font-bold">Date:</span> {data.date}</p>
-                                    <p><span className="font-bold">Pledge No:</span> {data.itemNo}</p>
+                        const value = field.dataKey ? getValue(field.dataKey) : field.label; // If dataKey exists, resolve it, else show label (static text)
+
+                        // Style object
+                        const style: React.CSSProperties = {
+                            position: 'absolute',
+                            left: `${field.x}mm`,
+                            top: `${field.y}mm`,
+                            width: `${field.width}mm`,
+                            textAlign: field.align || 'left',
+                            fontSize: `${field.fontSize || 12}pt`,
+                            fontWeight: field.fontWeight || 'normal',
+                            whiteSpace: 'pre-wrap', // Allow wrapping
+                            lineHeight: 1.2,
+                            zIndex: 10,
+                        };
+
+                        if (field.type === 'image') {
+                            // Value acts as Image URL
+                            const imgSrc = field.dataKey ? getValue(field.dataKey) : field.label; // Label stores custom URL if static
+                            if (!imgSrc) return null; // Don't render empty images
+
+                            return (
+                                <img
+                                    key={field.id}
+                                    src={imgSrc}
+                                    alt={field.label}
+                                    style={{
+                                        ...style,
+                                        height: `${field.height}mm`,
+                                        objectFit: 'contain'
+                                    }}
+                                />
+                            );
+                        } else {
+                            // Text Field
+                            // If it's a static label (no dataKey), just show label content.
+                            // If it has dataKey, show resolved value.
+
+                            return (
+                                <div key={field.id} style={style}>
+                                    {value !== undefined && value !== null ? String(value) : ''}
                                 </div>
-                                <div className="text-right">
-                                    <p><span className="font-bold">Due Date:</span> {data.duedate}</p>
-                                    <p><span className="font-bold">Customer ID:</span> {data.ID}</p>
-                                </div>
-                            </div>
-
-                            {/* Customer Info */}
-                            <div className="mb-6 text-left border p-2 rounded border-black/10">
-                                <p className="font-bold border-b border-black/10 mb-1 pb-1">Customer Details</p>
-                                <p className="font-bold text-lg">{data.name}</p>
-                                <p>{data.address}</p>
-                                <p>{data.phone} {data.whatsapp && `, ${data.whatsapp}`}</p>
-                            </div>
-
-                            {/* Item Details Table/List */}
-                            <div className="flex-1">
-                                <table className="w-full text-left mb-6 text-sm">
-                                    <thead className="border-b-2 border-black">
-                                        <tr>
-                                            <th className="py-1">Description</th>
-                                            <th className="py-1 text-right">Qty/Gross</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-black/10">
-                                        <tr>
-                                            <td className="py-2">
-                                                <div className="font-bold">{data.jewelName}</div>
-                                                <div className="text-xs opacity-70">
-                                                    {data.quality} | {data.faults !== 'N/A' && `Faults: ${data.faults}`}
-                                                </div>
-                                            </td>
-                                            <td className="py-2 text-right">
-                                                <div>{data.count} pcs</div>
-                                                <div>{data.weight} g</div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-
-                                <div className="flex justify-between items-center border-t-2 border-black pt-2 font-bold text-lg">
-                                    <span>Loan Amount</span>
-                                    <span>₹{data.amount}/-</span>
-                                </div>
-                                <div className="flex justify-between items-center text-xs mt-1 opacity-70">
-                                    <span>Interest Rate: {data.interest}% / month</span>
-                                    <span>{data.interestTaken ? 'Prepaid Interest' : 'Postpaid Interest'}</span>
-                                </div>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="flex-1 min-h-[50mm] flex items-center justify-center border border-dashed border-gray-300 m-8 text-gray-400 text-sm">
-                            {/* Empty Content for A6 Landscape */}
-                            Content Area (Blank)
-                        </div>
-                    )}
-
-                    {/* Footer */}
-                    <div className="mt-8 pt-4 border-t border-black text-center text-xs">
-                        <div className="whitespace-pre-wrap mb-4">{config.footer}</div>
-                        <p className="opacity-50">Generated by AuraLendr</p>
-                    </div>
+                            );
+                        }
+                    })}
                 </div>
             </div>
         </div>
