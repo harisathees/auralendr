@@ -24,6 +24,7 @@ const formatDate = (isoDateString: string) => {
 };
 
 const DynamicReceipt = React.lazy(() => import('./components/DynamicReceipt'));
+const A4ReceiptSheet = React.lazy(() => import('./components/A4ReceiptSheet'));
 
 const Receipt = () => {
     const { id } = useParams();
@@ -52,7 +53,11 @@ const Receipt = () => {
 
         const fetchConfig = async () => {
             try {
-                const { data } = await api.get('/api/templates/receipt');
+                const { data } = await api.get('/api/receipt-templates');
+                // The API returns an array, so we need to find the active one
+                if (Array.isArray(data)) {
+                    return data.find((t: any) => t.status === 'active') || data[0] || null;
+                }
                 return data;
             } catch (error) {
                 console.error("Failed to load receipt config", error);
@@ -192,10 +197,64 @@ const Receipt = () => {
     // Check if configuration exists and has layout_config (New Type) OR type='dynamic' (Old Type)
     // We treat everything as dynamic if it has layout_config or explicitly set type
     if (config?.layout_config || config?.type === 'dynamic') {
+        const [viewMode, setViewMode] = React.useState<'single' | 'a4'>('single');
+        const [showDuplicates, setShowDuplicates] = React.useState(true);
+
         return (
-            <React.Suspense fallback={<div className="flex items-center justify-center p-20">Loading template...</div>}>
-                <DynamicReceipt data={data} config={config} />
-            </React.Suspense>
+            <div className="min-h-screen bg-slate-900 py-8">
+                {/* Tab Navigation */}
+                <div className="max-w-4xl mx-auto px-4 mb-6">
+                    <div className="bg-white/10 backdrop-blur rounded-xl p-2 flex gap-2 border border-white/20">
+                        <button
+                            onClick={() => setViewMode('single')}
+                            className={`flex-1 px-4 py-2 rounded-lg font-medium transition ${viewMode === 'single'
+                                ? 'bg-blue-600 text-white'
+                                : 'text-white/70 hover:text-white hover:bg-white/10'
+                                }`}
+                        >
+                            Single Receipt
+                        </button>
+                        <button
+                            onClick={() => setViewMode('a4')}
+                            className={`flex-1 px-4 py-2 rounded-lg font-medium transition ${viewMode === 'a4'
+                                ? 'bg-blue-600 text-white'
+                                : 'text-white/70 hover:text-white hover:bg-white/10'
+                                }`}
+                        >
+                            A4 Sheet Layout
+                        </button>
+                    </div>
+
+                    {/* Duplicate Toggle (only visible in A4 mode) */}
+                    {viewMode === 'a4' && (
+                        <div className="mt-4 bg-white/10 backdrop-blur rounded-xl p-4 border border-white/20">
+                            <label className="flex items-center gap-3 text-white cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={showDuplicates}
+                                    onChange={(e) => setShowDuplicates(e.target.checked)}
+                                    className="w-5 h-5 rounded border-white/30 bg-white/10 checked:bg-blue-600 focus:ring-2 focus:ring-blue-500"
+                                />
+                                <span className="font-medium">Show Duplicate Copies (4 per sheet)</span>
+                            </label>
+                            <p className="text-white/60 text-sm mt-2 ml-8">
+                                {showDuplicates
+                                    ? 'Printing 2 office copies + 2 customer copies per sheet'
+                                    : 'Printing 1 office copy + 1 customer copy per sheet'}
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Render based on view mode */}
+                <React.Suspense fallback={<div className="flex items-center justify-center p-20 text-white">Loading template...</div>}>
+                    {viewMode === 'single' ? (
+                        <DynamicReceipt data={data} config={config} />
+                    ) : (
+                        <A4ReceiptSheet data={data} config={config} showDuplicates={showDuplicates} />
+                    )}
+                </React.Suspense>
+            </div>
         );
     }
 

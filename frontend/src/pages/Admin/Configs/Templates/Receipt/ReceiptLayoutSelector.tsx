@@ -183,7 +183,7 @@ const ReceiptLayoutSelector: React.FC = () => {
                                 <span className="material-symbols-outlined">east</span>
                             </button>
                             <Link
-                                to="/admin/configs"
+                                to="/admin/configs/templates/receipt"
                                 className="w-full mt-4 flex items-center justify-center text-[10px] font-bold text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 uppercase tracking-[2px] transition-colors"
                             >
                                 Cancel & Return

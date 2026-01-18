@@ -33,8 +33,10 @@ const RepledgeSources = lazy(() => import("../pages/Admin/Finance/RepledgeSource
 
 // Repledge Pages
 const Notices = lazy(() => import("../pages/Staff/Notices/Notices"));
+const Notifications = lazy(() => import("../pages/Staff/Notifications/Notifications"));
 const RepledgeList = lazy(() => import("../pages/Repledge/List"));
-const ReceiptTemplateConfig = lazy(() => import("../pages/Admin/Configs/Templates/Receipt/ReceiptLayoutSelector"));
+const ReceiptTemplateList = lazy(() => import("../pages/Admin/Configs/Templates/Receipt/ReceiptTemplateList"));
+const ReceiptLayoutSelector = lazy(() => import("../pages/Admin/Configs/Templates/Receipt/ReceiptLayoutSelector"));
 const ReceiptDesigner = lazy(() => import("../pages/Admin/Configs/Templates/Receipt/ReceiptTemplateNew"));
 const RepledgeCreate = lazy(() => import("../pages/Repledge/Create"));
 const RepledgeEdit = lazy(() => import("../pages/Repledge/Edit"));
@@ -107,6 +109,7 @@ const AppRoutes: React.FC = () => {
 
         {/* Placeholder Routes for Staff Navigation */}
         <Route path="/notices" element={<Notices />} />
+        <Route path="/notifications" element={<Notifications />} />
         <Route path="/privileges" element={<Privileges />} />
         <Route path="/privileges/metal-rates" element={<StaffMetalRates />} />
       </Route>
@@ -135,7 +138,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/configs/brand-kit" element={<BrandKit />} />
         <Route path="/admin/configs/money-sources" element={<MoneySources />} />
         <Route path="/admin/configs/metal-rates" element={<MetalRates />} />
-        <Route path="/admin/configs/templates/receipt" element={<ReceiptTemplateConfig />} />
+        <Route path="/admin/configs/templates/receipt" element={<ReceiptTemplateList />} />
+        <Route path="/admin/configs/templates/receipt/setup" element={<ReceiptLayoutSelector />} />
         <Route path="/admin/configs/templates/receipt/designer" element={<ReceiptDesigner />} />
 
         {/* Transaction Categories */}

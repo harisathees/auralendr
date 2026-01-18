@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import api from "../../../api/apiClient";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, Phone, MapPin, UserX } from "lucide-react";
+import { ArrowLeft, Search, Phone, MapPin, UserX, TrendingUp } from "lucide-react";
 import GoldCoinSpinner from "../../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
+import CustomerAnalysisModal from "./CustomerAnalysisModal";
 
 import type { Customer } from "../../../types/models";
 
@@ -62,6 +63,12 @@ const CustomersList: React.FC = () => {
         }
     };
 
+
+    const [analysisModal, setAnalysisModal] = useState<{ isOpen: boolean; customerId: number | null; customerName: string }>({
+        isOpen: false,
+        customerId: null,
+        customerName: '',
+    });
 
     return (
         <div className="flex flex-col h-full bg-background-light dark:bg-background-dark font-display text-text-main">
@@ -123,6 +130,13 @@ const CustomersList: React.FC = () => {
                                                 )}
                                             </div>
                                         </div>
+                                        <button
+                                            onClick={() => setAnalysisModal({ isOpen: true, customerId: customer.id, customerName: customer.name })}
+                                            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/5 text-gray-500 dark:text-gray-400 transition-colors"
+                                            title="Analysis"
+                                        >
+                                            <TrendingUp className="w-5 h-5" />
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -158,6 +172,13 @@ const CustomersList: React.FC = () => {
                     </div>
                 )}
             </main>
+
+            <CustomerAnalysisModal
+                isOpen={analysisModal.isOpen}
+                onClose={() => setAnalysisModal(prev => ({ ...prev, isOpen: false }))}
+                customerId={analysisModal.customerId}
+                customerName={analysisModal.customerName}
+            />
         </div>
     );
 };

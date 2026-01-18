@@ -55,4 +55,60 @@ class CustomerController extends Controller
 
         return response()->json($customers);
     }
+
+    public function analysis($id)
+    {
+        $customer = Customer::findOrFail($id);
+
+        // Active Pledges & Overdue
+        $activePledgesQuery = $customer->pledges()->where('status', 'active');
+        $activePledgesCount = $activePledgesQuery->count();
+        $activePledges = $activePledgesQuery->with(['loan', 'jewels'])->get();
+
+        $activePledgesAmount = $activePledges->sum(function ($pledge) {
+            return $pledge->loan ? $pledge->loan->amount : 0;
+        });
+
+        $overduePledgesCount = $activePledges->filter(function ($pledge) {
+            return $pledge->loan && $pledge->loan->due_date < now();
+        })->count();
+
+        // Total Gold Weight (Active)
+        $totalGoldWeight = $activePledges->sum(function ($pledge) {
+            return $pledge->jewels->sum('net_weight');
+        });
+
+        // Closed Pledges & Interest
+        $closedPledgesQuery = $customer->pledges()->where('status', 'closed');
+        $closedPledgesCount = $closedPledgesQuery->count();
+        $totalInterestPaid = $closedPledgesQuery->with('closure')->get()->sum(function ($pledge) {
+            if ($pledge->closure) {
+                return $pledge->closure->calculated_interest - ($pledge->closure->interest_reduction ?? 0);
+            }
+            return 0;
+        });
+
+        // Default Pledges
+        $defaultPledgesCount = $customer->pledges()->where('status', 'default')->count();
+
+        // Customer Since
+        $customerSince = $customer->pledges()->orderBy('created_at', 'asc')->value('created_at');
+
+        // Lifetime Loan Amount
+        $lifetimeLoanAmount = $customer->pledges()->with('loan')->get()->sum(function ($pledge) {
+            return $pledge->loan ? $pledge->loan->amount : 0;
+        });
+
+        return response()->json([
+            'active_pledges_count' => $activePledgesCount,
+            'active_pledges_amount' => $activePledgesAmount,
+            'overdue_pledges_count' => $overduePledgesCount + $defaultPledgesCount, // active overdue + already defaulted
+            'total_gold_weight' => $totalGoldWeight,
+            'closed_pledges_count' => $closedPledgesCount,
+            'total_interest_paid' => $totalInterestPaid,
+            'default_pledges_count' => $defaultPledgesCount,
+            'customer_since' => $customerSince,
+            'lifetime_loan_amount' => $lifetimeLoanAmount
+        ]);
+    }
 }
