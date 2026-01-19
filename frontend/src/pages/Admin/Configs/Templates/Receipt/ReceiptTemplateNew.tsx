@@ -18,6 +18,7 @@ interface ReceiptField {
     height?: number;
     imageUrl?: string;
     side?: 'front' | 'back'; // Added side property
+    copyType?: 'office' | 'customer'; // Added copyType property
 }
 
 const DATA_KEYS = {
@@ -108,140 +109,135 @@ const IMAGE_KEYS = {
 const PRESET_LAYOUTS = {
     'sabari_haris': [
         // --- A6 Landscape Layout (148mm x 105mm) ---
-
+        // === OFFICE COPY ===
         // Header Left - Logo
-        { id: 'logo', type: 'image', label: 'Brand Logo', dataKey: 'brand.logo', x: 2, y: 2, width: 30, height: 18, visible: true },
+        { id: 'logo', type: 'image', label: 'Brand Logo', dataKey: 'brand.logo', x: 2, y: 2, width: 30, height: 18, visible: true, copyType: 'office', side: 'front' },
 
         // Header Center - Brand Info
-        { id: 'brand_name', type: 'text', label: 'Brand Name', dataKey: 'brand.name', fontSize: 16, fontWeight: 'black', align: 'center', x: 35, y: 4, width: 75, visible: true },
-        { id: 'brand_type', type: 'text', label: 'FINANCE', dataKey: '', fontSize: 11, fontWeight: 'bold', align: 'center', x: 35, y: 10, width: 75, visible: true },
-        { id: 'brand_addr', type: 'text', label: 'Address', dataKey: 'brand.address', fontSize: 7, fontWeight: 'medium', align: 'center', x: 35, y: 15, width: 75, visible: true },
+        { id: 'brand_name', type: 'text', label: 'Brand Name', dataKey: 'brand.name', fontSize: 16, fontWeight: 'black', align: 'center', x: 35, y: 4, width: 75, visible: true, copyType: 'office', side: 'front' },
+        { id: 'brand_type', type: 'text', label: 'FINANCE', dataKey: '', fontSize: 11, fontWeight: 'bold', align: 'center', x: 35, y: 10, width: 75, visible: true, copyType: 'office', side: 'front' },
+        { id: 'brand_addr', type: 'text', label: 'Address', dataKey: 'brand.address', fontSize: 7, fontWeight: 'medium', align: 'center', x: 35, y: 15, width: 75, visible: true, copyType: 'office', side: 'front' },
 
         // Header Right - Contact & Date
-        { id: 'contact', type: 'text', label: 'Contact', dataKey: 'brand.mobile', fontSize: 8, fontWeight: 'bold', align: 'right', x: 112, y: 3, width: 33, visible: true },
-        { id: 'date_lbl', type: 'text', label: 'Date:', dataKey: '', fontSize: 8, fontWeight: 'normal', align: 'right', x: 112, y: 8, width: 10, visible: true },
-        { id: 'date_val', type: 'text', label: 'Date', dataKey: 'receipt.date', fontSize: 8, fontWeight: 'bold', align: 'right', x: 123, y: 8, width: 22, visible: true },
-        { id: 'due_lbl', type: 'text', label: 'Due:', dataKey: '', fontSize: 8, fontWeight: 'normal', align: 'right', x: 112, y: 12, width: 10, visible: true },
-        { id: 'due_val', type: 'text', label: 'Due Date', dataKey: 'pledge.due_date', fontSize: 8, fontWeight: 'bold', align: 'right', x: 123, y: 12, width: 22, visible: true },
+        { id: 'contact', type: 'text', label: 'Contact', dataKey: 'brand.mobile', fontSize: 8, fontWeight: 'bold', align: 'right', x: 112, y: 3, width: 33, visible: true, copyType: 'office', side: 'front' },
+        { id: 'date_lbl', type: 'text', label: 'Date:', dataKey: '', fontSize: 8, fontWeight: 'normal', align: 'right', x: 112, y: 8, width: 10, visible: true, copyType: 'office', side: 'front' },
+        { id: 'date_val', type: 'text', label: 'Date', dataKey: 'receipt.date', fontSize: 8, fontWeight: 'bold', align: 'right', x: 123, y: 8, width: 22, visible: true, copyType: 'office', side: 'front' },
+        { id: 'due_lbl', type: 'text', label: 'Due:', dataKey: '', fontSize: 8, fontWeight: 'normal', align: 'right', x: 112, y: 12, width: 10, visible: true, copyType: 'office', side: 'front' },
+        { id: 'due_val', type: 'text', label: 'Due Date', dataKey: 'pledge.due_date', fontSize: 8, fontWeight: 'bold', align: 'right', x: 123, y: 12, width: 22, visible: true, copyType: 'office', side: 'front' },
 
         // Rate Info
-        { id: 'rate_lbl', type: 'text', label: 'Rate/g: ₹', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 22, width: 15, visible: true },
-        { id: 'rate_val', type: 'text', label: 'Rate', dataKey: 'pledge.scheme_interest_rate', fontSize: 9, fontWeight: 'bold', align: 'left', x: 18, y: 22, width: 20, visible: true },
+        { id: 'rate_lbl', type: 'text', label: 'Rate/g: ₹', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 22, width: 15, visible: true, copyType: 'office', side: 'front' },
+        { id: 'rate_val', type: 'text', label: 'Rate', dataKey: 'pledge.scheme_interest_rate', fontSize: 9, fontWeight: 'bold', align: 'left', x: 18, y: 22, width: 20, visible: true, copyType: 'office', side: 'front' },
 
         // Main Content - Left Column
-        { id: 'lbl_ln', type: 'text', label: 'Loan No:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 32, width: 15, visible: true },
-        { id: 'val_ln', type: 'text', label: 'Pledge No', dataKey: 'pledge.no', fontSize: 9, fontWeight: 'medium', align: 'left', x: 18, y: 32, width: 35, visible: true },
+        { id: 'lbl_ln', type: 'text', label: 'Loan No:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 32, width: 15, visible: true, copyType: 'office', side: 'front' },
+        { id: 'val_ln', type: 'text', label: 'Pledge No', dataKey: 'pledge.no', fontSize: 9, fontWeight: 'medium', align: 'left', x: 18, y: 32, width: 35, visible: true, copyType: 'office', side: 'front' },
 
-        { id: 'lbl_pcs', type: 'text', label: 'Pcs:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 40, width: 15, visible: true },
-        { id: 'val_pcs', type: 'text', label: 'Count', dataKey: 'pledge.item_count', fontSize: 9, fontWeight: 'medium', align: 'left', x: 18, y: 40, width: 35, visible: true },
+        { id: 'lbl_pcs', type: 'text', label: 'Pcs:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 40, width: 15, visible: true, copyType: 'office', side: 'front' },
+        { id: 'val_pcs', type: 'text', label: 'Count', dataKey: 'pledge.item_count', fontSize: 9, fontWeight: 'medium', align: 'left', x: 18, y: 40, width: 35, visible: true, copyType: 'office', side: 'front' },
 
-        { id: 'lbl_int', type: 'text', label: 'Interest:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 48, width: 15, visible: true },
-        { id: 'val_int', type: 'text', label: 'Rate', dataKey: 'pledge.interest_rate', fontSize: 9, fontWeight: 'medium', align: 'left', x: 18, y: 48, width: 35, visible: true },
+        { id: 'lbl_int', type: 'text', label: 'Interest:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 48, width: 15, visible: true, copyType: 'office', side: 'front' },
+        { id: 'val_int', type: 'text', label: 'Rate', dataKey: 'pledge.interest_rate', fontSize: 9, fontWeight: 'medium', align: 'left', x: 18, y: 48, width: 35, visible: true, copyType: 'office', side: 'front' },
 
-        { id: 'lbl_itm', type: 'text', label: 'Item:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 56, width: 15, visible: true },
-        { id: 'val_itm', type: 'text', label: 'Desc', dataKey: 'pledge.items_description', fontSize: 9, fontWeight: 'medium', align: 'left', x: 18, y: 56, width: 45, visible: true },
+        { id: 'lbl_itm', type: 'text', label: 'Item:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 56, width: 15, visible: true, copyType: 'office', side: 'front' },
+        { id: 'val_itm', type: 'text', label: 'Desc', dataKey: 'pledge.items_description', fontSize: 9, fontWeight: 'medium', align: 'left', x: 18, y: 56, width: 45, visible: true, copyType: 'office', side: 'front' },
 
         // Main Content - Middle Column
-        { id: 'lbl_nm', type: 'text', label: 'Name:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 60, y: 32, width: 15, visible: true },
-        { id: 'val_nm', type: 'text', label: 'Name', dataKey: 'customer.name', fontSize: 9, fontWeight: 'medium', align: 'left', x: 75, y: 32, width: 35, visible: true },
+        { id: 'lbl_nm', type: 'text', label: 'Name:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 60, y: 32, width: 15, visible: true, copyType: 'office', side: 'front' },
+        { id: 'val_nm', type: 'text', label: 'Name', dataKey: 'customer.name', fontSize: 9, fontWeight: 'medium', align: 'left', x: 75, y: 32, width: 35, visible: true, copyType: 'office', side: 'front' },
 
-        { id: 'lbl_amt', type: 'text', label: 'Amount: ₹', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 60, y: 40, width: 15, visible: true },
-        { id: 'val_amt', type: 'text', label: 'Amount', dataKey: 'pledge.amount', fontSize: 10, fontWeight: 'bold', align: 'left', x: 75, y: 40, width: 35, visible: true },
+        { id: 'lbl_amt', type: 'text', label: 'Amount: ₹', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 60, y: 40, width: 15, visible: true, copyType: 'office', side: 'front' },
+        { id: 'val_amt', type: 'text', label: 'Amount', dataKey: 'pledge.amount', fontSize: 10, fontWeight: 'bold', align: 'left', x: 75, y: 40, width: 35, visible: true, copyType: 'office', side: 'front' },
 
-        { id: 'lbl_wt', type: 'text', label: 'Weight:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 60, y: 48, width: 15, visible: true },
-        { id: 'val_wt', type: 'text', label: 'Weight', dataKey: 'pledge.total_weight', fontSize: 9, fontWeight: 'medium', align: 'left', x: 75, y: 48, width: 35, visible: true },
+        { id: 'lbl_wt', type: 'text', label: 'Weight:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 60, y: 48, width: 15, visible: true, copyType: 'office', side: 'front' },
+        { id: 'val_wt', type: 'text', label: 'Weight', dataKey: 'pledge.total_weight', fontSize: 9, fontWeight: 'medium', align: 'left', x: 75, y: 48, width: 35, visible: true, copyType: 'office', side: 'front' },
 
         // Images Column
-        { id: 'img_cust', type: 'image', label: 'Customer', dataKey: 'customer.image', x: 115, y: 28, width: 30, height: 30, visible: true },
-        { id: 'img_jwl', type: 'image', label: 'Jewel', dataKey: 'pledge.jewel_image', x: 115, y: 62, width: 30, height: 25, visible: true },
+        { id: 'img_cust', type: 'image', label: 'Customer', dataKey: 'customer.image', x: 115, y: 28, width: 30, height: 30, visible: true, copyType: 'office', side: 'front' },
+        { id: 'img_jwl', type: 'image', label: 'Jewel', dataKey: 'pledge.jewel_image', x: 115, y: 62, width: 30, height: 25, visible: true, copyType: 'office', side: 'front' },
 
         // Footer Warning
-        { id: 'warn_bg', type: 'text', label: 'If loan is not redeemed within due date, 0.5% extra interest will be charged.', dataKey: '', fontSize: 7, fontWeight: 'bold', align: 'center', x: 5, y: 92, width: 138, visible: true },
+        { id: 'warn_bg', type: 'text', label: 'If loan is not redeemed within due date, 0.5% extra interest will be charged.', dataKey: '', fontSize: 7, fontWeight: 'bold', align: 'center', x: 5, y: 92, width: 138, visible: true, copyType: 'office', side: 'front' },
 
         // Signatures
+        { id: 'sign_stf', type: 'text', label: 'Staff Sign', dataKey: '', fontSize: 8, fontWeight: 'medium', align: 'left', x: 5, y: 98, width: 30, visible: true, copyType: 'office', side: 'front' },
+        { id: 'sign_cust', type: 'text', label: 'Customer Sign', dataKey: '', fontSize: 8, fontWeight: 'medium', align: 'right', x: 110, y: 98, width: 30, visible: true, copyType: 'office', side: 'front' },
+
+        // --- Back Side Layout (OFFICE) ---
+        { id: 'back_pg', type: 'text', label: 'of', dataKey: '', fontSize: 8, fontWeight: 'bold', align: 'right', x: 130, y: 5, width: 10, visible: true, copyType: 'office', side: 'back' },
+
+        { id: 'term_1', type: 'text', label: '1. அட்டை தவறும் பட்சத்தில் முன்கூட்டியே கடையில் தகவல் தெரிவிக்கவும். அப்படி இல்லையெனில் ஆதார் கார்டு நகலுடன் நகை கடன் பத்திரம் இணைத்துக் கொடுத்து உங்களுடைய பொருளைப் பெற்றுக் கொள்ளவும்.', dataKey: '', fontSize: 7, fontWeight: 'bold', align: 'justify', x: 5, y: 15, width: 138, visible: true, copyType: 'office', side: 'back' },
+        { id: 'term_2', type: 'text', label: '2. உங்களுடைய முகவரி மற்றும் சரியான தொலைபேசி எண்ணை கொடுத்து, உங்களுடைய அடகு Loan Number-ஐ பெற்றுச் செல்லவும். ஏனென்றால் உங்கள் கால தவணை முடியும் பட்சத்தில் இந்த முகவரிக்கே தகவல் தெரிவிக்கப்படும். நீங்கள் கொடுக்கும் முகவரி தவறானதாக இருக்கும் பட்சத்தில் கடையின் உரிமையாளர் பொறுப்பு ஏற்க முடியாது.', dataKey: '', fontSize: 7, fontWeight: 'bold', align: 'justify', x: 5, y: 28, width: 138, visible: true, copyType: 'office', side: 'back' },
+        { id: 'term_3', type: 'text', label: '3. பொருளின் மீது கூடுதலாக பணம் வாங்கும்போது, பொருளை அடகு வைத்த அந்த நபரே பொருளின் கூடுதலான பணத்தைப் பெற்றுச் செல்லவும்.', dataKey: '', fontSize: 7, fontWeight: 'bold', align: 'justify', x: 5, y: 45, width: 138, visible: true, copyType: 'office', side: 'back' },
+        { id: 'term_4', type: 'text', label: '4. பொருளின் வட்டிவிகிதத்தை தெரிந்துக் கொண்டு தான் அடகு வைக்கின்றேன்.', dataKey: '', fontSize: 7, fontWeight: 'bold', align: 'justify', x: 5, y: 55, width: 138, visible: true, copyType: 'office', side: 'back' },
+        { id: 'term_5', type: 'text', label: '5. கடைசி கால தவணையாக 1 வருட கால தவணை மட்டுமே. அதன் பிறகு இந்த அட்டை செல்லுபடியாகாது. இதில் குறிப்பிடப் பட்டிருக்கும் விதிமுறைகள் அனைத்திற்கும் நான் சம்மதிக்கிறேன்.', dataKey: '', fontSize: 7, fontWeight: 'bold', align: 'justify', x: 5, y: 65, width: 138, visible: true, copyType: 'office', side: 'back' },
+
+        { id: 'back_cust_sign', type: 'text', label: 'Customer sign', dataKey: '', fontSize: 9, fontWeight: 'medium', align: 'right', x: 110, y: 95, width: 30, visible: true, copyType: 'office', side: 'back' },
+
+        // === CUSTOMER COPY (DUPLICATE) ===
+        // Header Left - Logo
+        { id: 'logo_c', type: 'image', label: 'Brand Logo', dataKey: 'brand.logo', x: 2, y: 2, width: 30, height: 18, visible: true, copyType: 'customer', side: 'front' },
+
+        // Header Center - Brand Info
+        { id: 'brand_name_c', type: 'text', label: 'Brand Name', dataKey: 'brand.name', fontSize: 16, fontWeight: 'black', align: 'center', x: 35, y: 4, width: 75, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'brand_type_c', type: 'text', label: 'FINANCE', dataKey: '', fontSize: 11, fontWeight: 'bold', align: 'center', x: 35, y: 10, width: 75, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'brand_addr_c', type: 'text', label: 'Address', dataKey: 'brand.address', fontSize: 7, fontWeight: 'medium', align: 'center', x: 35, y: 15, width: 75, visible: true, copyType: 'customer', side: 'front' },
+
+        // Header Right - Contact & Date
+        { id: 'contact_c', type: 'text', label: 'Contact', dataKey: 'brand.mobile', fontSize: 8, fontWeight: 'bold', align: 'right', x: 112, y: 3, width: 33, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'date_lbl_c', type: 'text', label: 'Date:', dataKey: '', fontSize: 8, fontWeight: 'normal', align: 'right', x: 112, y: 8, width: 10, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'date_val_c', type: 'text', label: 'Date', dataKey: 'receipt.date', fontSize: 8, fontWeight: 'bold', align: 'right', x: 123, y: 8, width: 22, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'due_lbl_c', type: 'text', label: 'Due:', dataKey: '', fontSize: 8, fontWeight: 'normal', align: 'right', x: 112, y: 12, width: 10, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'due_val_c', type: 'text', label: 'Due Date', dataKey: 'pledge.due_date', fontSize: 8, fontWeight: 'bold', align: 'right', x: 123, y: 12, width: 22, visible: true, copyType: 'customer', side: 'front' },
+
+        // Rate Info
+        { id: 'rate_lbl_c', type: 'text', label: 'Rate/g: ₹', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 22, width: 15, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'rate_val_c', type: 'text', label: 'Rate', dataKey: 'pledge.scheme_interest_rate', fontSize: 9, fontWeight: 'bold', align: 'left', x: 18, y: 22, width: 20, visible: true, copyType: 'customer', side: 'front' },
+
+        // Main Content - Left Column
+        { id: 'lbl_ln_c', type: 'text', label: 'Loan No:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 32, width: 15, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'val_ln_c', type: 'text', label: 'Pledge No', dataKey: 'pledge.no', fontSize: 9, fontWeight: 'medium', align: 'left', x: 18, y: 32, width: 35, visible: true, copyType: 'customer', side: 'front' },
+
+        { id: 'lbl_pcs_c', type: 'text', label: 'Pcs:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 40, width: 15, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'val_pcs_c', type: 'text', label: 'Count', dataKey: 'pledge.item_count', fontSize: 9, fontWeight: 'medium', align: 'left', x: 18, y: 40, width: 35, visible: true, copyType: 'customer', side: 'front' },
+
+        { id: 'lbl_int_c', type: 'text', label: 'Interest:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 48, width: 15, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'val_int_c', type: 'text', label: 'Rate', dataKey: 'pledge.interest_rate', fontSize: 9, fontWeight: 'medium', align: 'left', x: 18, y: 48, width: 35, visible: true, copyType: 'customer', side: 'front' },
+
+        { id: 'lbl_itm_c', type: 'text', label: 'Item:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 2, y: 56, width: 15, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'val_itm_c', type: 'text', label: 'Desc', dataKey: 'pledge.items_description', fontSize: 9, fontWeight: 'medium', align: 'left', x: 18, y: 56, width: 45, visible: true, copyType: 'customer', side: 'front' },
+
+        // Main Content - Middle Column
+        { id: 'lbl_nm_c', type: 'text', label: 'Name:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 60, y: 32, width: 15, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'val_nm_c', type: 'text', label: 'Name', dataKey: 'customer.name', fontSize: 9, fontWeight: 'medium', align: 'left', x: 75, y: 32, width: 35, visible: true, copyType: 'customer', side: 'front' },
+
+        { id: 'lbl_amt_c', type: 'text', label: 'Amount: ₹', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 60, y: 40, width: 15, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'val_amt_c', type: 'text', label: 'Amount', dataKey: 'pledge.amount', fontSize: 10, fontWeight: 'bold', align: 'left', x: 75, y: 40, width: 35, visible: true, copyType: 'customer', side: 'front' },
+
+        { id: 'lbl_wt_c', type: 'text', label: 'Weight:', dataKey: '', fontSize: 9, fontWeight: 'bold', align: 'left', x: 60, y: 48, width: 15, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'val_wt_c', type: 'text', label: 'Weight', dataKey: 'pledge.total_weight', fontSize: 9, fontWeight: 'medium', align: 'left', x: 75, y: 48, width: 35, visible: true, copyType: 'customer', side: 'front' },
+
+        // Images Column
+        { id: 'img_cust_c', type: 'image', label: 'Customer', dataKey: 'customer.image', x: 115, y: 28, width: 30, height: 30, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'img_jwl_c', type: 'image', label: 'Jewel', dataKey: 'pledge.jewel_image', x: 115, y: 62, width: 30, height: 25, visible: true, copyType: 'customer', side: 'front' },
+
+        // Footer Warning
+        { id: 'warn_bg_c', type: 'text', label: 'If loan is not redeemed within due date, 0.5% extra interest will be charged.', dataKey: '', fontSize: 7, fontWeight: 'bold', align: 'center', x: 5, y: 92, width: 138, visible: true, copyType: 'customer', side: 'front' },
+
         // Signatures
-        { id: 'sign_stf', type: 'text', label: 'Staff Sign', dataKey: '', fontSize: 8, fontWeight: 'medium', align: 'left', x: 5, y: 98, width: 30, visible: true, side: 'front' },
-        { id: 'sign_cust', type: 'text', label: 'Customer Sign', dataKey: '', fontSize: 8, fontWeight: 'medium', align: 'right', x: 110, y: 98, width: 30, visible: true, side: 'front' },
+        { id: 'sign_stf_c', type: 'text', label: 'Staff Sign', dataKey: '', fontSize: 8, fontWeight: 'medium', align: 'left', x: 5, y: 98, width: 30, visible: true, copyType: 'customer', side: 'front' },
+        { id: 'sign_cust_c', type: 'text', label: 'Customer Sign', dataKey: '', fontSize: 8, fontWeight: 'medium', align: 'right', x: 110, y: 98, width: 30, visible: true, copyType: 'customer', side: 'front' },
 
-        // --- Back Side Layout ---
-        // Header
-        { id: 'back_pg', type: 'text', label: 'of', dataKey: '', fontSize: 8, fontWeight: 'bold', align: 'right', x: 130, y: 5, width: 10, visible: true, side: 'back' },
+        // --- Back Side Layout (CUSTOMER) ---
+        { id: 'back_pg_c', type: 'text', label: 'of', dataKey: '', fontSize: 8, fontWeight: 'bold', align: 'right', x: 130, y: 5, width: 10, visible: true, copyType: 'customer', side: 'back' },
 
-        // Terms and Conditions (Placeholders for Tamil Text)
-        {
-            id: 'term_1',
-            type: 'text',
-            label: '1. அட்டை தவறும் பட்சத்தில் முன்கூட்டியே கடையில் தகவல் தெரிவிக்கவும். அப்படி இல்லையெனில் ஆதார் கார்டு நகலுடன் நகை கடன் பத்திரம் இணைத்துக் கொடுத்து உங்களுடைய பொருளைப் பெற்றுக் கொள்ளவும்.',
-            dataKey: '',
-            fontSize: 7,
-            fontWeight: 'bold',
-            align: 'justify',
-            x: 5,
-            y: 15,
-            width: 138,
-            visible: true,
-            side: 'back'
-        },
-        {
-            id: 'term_2',
-            type: 'text',
-            label: '2. உங்களுடைய முகவரி மற்றும் சரியான தொலைபேசி எண்ணை கொடுத்து, உங்களுடைய அடகு Loan Number-ஐ பெற்றுச் செல்லவும். ஏனென்றால் உங்கள் கால தவணை முடியும் பட்சத்தில் இந்த முகவரிக்கே தகவல் தெரிவிக்கப்படும். நீங்கள் கொடுக்கும் முகவரி தவறானதாக இருக்கும் பட்சத்தில் கடையின் உரிமையாளர் பொறுப்பு ஏற்க முடியாது.',
-            dataKey: '',
-            fontSize: 7,
-            fontWeight: 'bold',
-            align: 'justify',
-            x: 5,
-            y: 28,
-            width: 138,
-            visible: true,
-            side: 'back'
-        },
-        {
-            id: 'term_3',
-            type: 'text',
-            label: '3. பொருளின் மீது கூடுதலாக பணம் வாங்கும்போது, பொருளை அடகு வைத்த அந்த நபரே பொருளின் கூடுதலான பணத்தைப் பெற்றுச் செல்லவும்.',
-            dataKey: '',
-            fontSize: 7,
-            fontWeight: 'bold',
-            align: 'justify',
-            x: 5,
-            y: 45,
-            width: 138,
-            visible: true,
-            side: 'back'
-        },
-        {
-            id: 'term_4',
-            type: 'text',
-            label: '4. பொருளின் வட்டிவிகிதத்தை தெரிந்துக் கொண்டு தான் அடகு வைக்கின்றேன்.',
-            dataKey: '',
-            fontSize: 7,
-            fontWeight: 'bold',
-            align: 'justify',
-            x: 5,
-            y: 55,
-            width: 138,
-            visible: true,
-            side: 'back'
-        },
-        {
-            id: 'term_5',
-            type: 'text',
-            label: '5. கடைசி கால தவணையாக 1 வருட கால தவணை மட்டுமே. அதன் பிறகு இந்த அட்டை செல்லுபடியாகாது. இதில் குறிப்பிடப் பட்டிருக்கும் விதிமுறைகள் அனைத்திற்கும் நான் சம்மதிக்கிறேன்.',
-            dataKey: '',
-            fontSize: 7,
-            fontWeight: 'bold',
-            align: 'justify',
-            x: 5,
-            y: 65,
-            width: 138,
-            visible: true,
-            side: 'back'
-        },
+        { id: 'term_1_c', type: 'text', label: '1. அட்டை தவறும் பட்சத்தில் முன்கூட்டியே கடையில் தகவல் தெரிவிக்கவும். அப்படி இல்லையெனில் ஆதார் கார்டு நகலுடன் நகை கடன் பத்திரம் இணைத்துக் கொடுத்து உங்களுடைய பொருளைப் பெற்றுக் கொள்ளவும்.', dataKey: '', fontSize: 7, fontWeight: 'bold', align: 'justify', x: 5, y: 15, width: 138, visible: true, copyType: 'customer', side: 'back' },
+        { id: 'term_2_c', type: 'text', label: '2. உங்களுடைய முகவரி மற்றும் சரியான தொலைபேசி எண்ணை கொடுத்து, உங்களுடைய அடகு Loan Number-ஐ பெற்றுச் செல்லவும். ஏனென்றால் உங்கள் கால தவணை முடியும் பட்சத்தில் இந்த முகவரிக்கே தகவல் தெரிவிக்கப்படும். நீங்கள் கொடுக்கும் முகவரி தவறானதாக இருக்கும் பட்சத்தில் கடையின் உரிமையாளர் பொறுப்பு ஏற்க முடியாது.', dataKey: '', fontSize: 7, fontWeight: 'bold', align: 'justify', x: 5, y: 28, width: 138, visible: true, copyType: 'customer', side: 'back' },
+        { id: 'term_3_c', type: 'text', label: '3. பொருளின் மீது கூடுதலாக பணம் வாங்கும்போது, பொருளை அடகு வைத்த அந்த நபரே பொருளின் கூடுதலான பணத்தைப் பெற்றுச் செல்லவும்.', dataKey: '', fontSize: 7, fontWeight: 'bold', align: 'justify', x: 5, y: 45, width: 138, visible: true, copyType: 'customer', side: 'back' },
+        { id: 'term_4_c', type: 'text', label: '4. பொருளின் வட்டிவிகிதத்தை தெரிந்துக் கொண்டு தான் அடகு வைக்கின்றேன்.', dataKey: '', fontSize: 7, fontWeight: 'bold', align: 'justify', x: 5, y: 55, width: 138, visible: true, copyType: 'customer', side: 'back' },
+        { id: 'term_5_c', type: 'text', label: '5. கடைசி கால தவணையாக 1 வருட கால தவணை மட்டுமே. அதன் பிறகு இந்த அட்டை செல்லுபடியாகாது. இதில் குறிப்பிடப் பட்டிருக்கும் விதிமுறைகள் அனைத்திற்கும் நான் சம்மதிக்கிறேன்.', dataKey: '', fontSize: 7, fontWeight: 'bold', align: 'justify', x: 5, y: 65, width: 138, visible: true, copyType: 'customer', side: 'back' },
 
-        // Footer
-        { id: 'back_cust_sign', type: 'text', label: 'Customer sign', dataKey: '', fontSize: 9, fontWeight: 'medium', align: 'right', x: 110, y: 95, width: 30, visible: true, side: 'back' },
-
+        { id: 'back_cust_sign_c', type: 'text', label: 'Customer sign', dataKey: '', fontSize: 9, fontWeight: 'medium', align: 'right', x: 110, y: 95, width: 30, visible: true, copyType: 'customer', side: 'back' },
     ] as ReceiptField[]
 };
 
@@ -249,6 +245,58 @@ const DEFAULT_FIELDS: ReceiptField[] = [];
 
 const ReceiptTemplateNew: React.FC = () => {
     const [searchParams] = useSearchParams();
+    const [showA4Preview, setShowA4Preview] = useState(false);
+    const [layoutMode, setLayoutMode] = useState<"single" | "a4_2x2" | "a4_4up" | "thermal">("single");
+
+    // Mock Data for Preview
+    const PREVIEW_DATA = useMemo(() => ({
+        pledge: {
+            no: 'PL-2024-001',
+            amount: 50000,
+            date: new Date().toISOString(),
+            due_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+            scheme_name: 'Gold Loan Standard',
+            interest_rate: 12,
+            scheme_interest_rate: 12,
+            total_weight: 24.5,
+            gross_weight: 22.0,
+            item_count: 3,
+            items_description: '1 Gold Ring, 2 Gold Chains',
+            remarks: 'Handle with care',
+            jewel_image: 'https://via.placeholder.com/150'
+        },
+        customer: {
+            name: 'John Doe',
+            id: 'CUST-1001',
+            mobile_no: '+91 98765 43210',
+            address: '123 Main St, Tech Park',
+            city: 'Bangalore',
+            alt_phone: '+91 98765 00000',
+            customer_image_url: 'https://via.placeholder.com/150'
+        },
+        brand: {
+            brand_name: 'Auralendr Gold Loans',
+            brand_address: '456 Gold Lane, Finance District',
+            brand_mobile: '+91 80 1234 5678',
+            brand_email: 'support@auralendr.com',
+            brand_logo_url: 'https://via.placeholder.com/50'
+        },
+        jewels: [
+            {
+                description: 'Gold Ring',
+                gross_weight: 10.5,
+                quantity: 1
+            },
+            {
+                description: 'Gold Chain',
+                gross_weight: 14.0,
+                quantity: 2
+            }
+        ]
+    }), []);
+
+    // Load A4ReceiptSheet lazily
+    const A4ReceiptSheet = useMemo(() => React.lazy(() => import('../../../../../pages/Pledge/components/A4ReceiptSheet')), []);
     const navigate = useNavigate();
     const [selectedTab, setSelectedTab] = useState<"layout" | "fields" | "styles">("fields");
     const [templateName, setTemplateName] = useState("Standard Receipt Template");
@@ -257,14 +305,16 @@ const ReceiptTemplateNew: React.FC = () => {
     const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
     const [scale, setScale] = useState(1);
     const [viewSide, setViewSide] = useState<'front' | 'back'>('front');
+    const [selectedCopy, setSelectedCopy] = useState<'office' | 'customer'>('office');
     const [saving, setSaving] = useState(false);
+    const [templateId] = useState<string | null>(searchParams.get("id"));
     const [brandLogo, setBrandLogo] = useState<string | null>(null);
     const [brandData, setBrandData] = useState<any>(null);
 
     // Calculate Warning Fields (Overlap or Out of Bounds)
     const warningFieldIds = useMemo(() => {
         const warnings = new Set<string>();
-        const visibleFields = fields.filter(f => f.visible && (f.side || 'front') === viewSide);
+        const visibleFields = fields.filter(f => f.visible && (f.side || 'front') === viewSide && (f.copyType || 'office') === selectedCopy);
 
         for (let i = 0; i < visibleFields.length; i++) {
             const a = visibleFields[i];
@@ -290,7 +340,7 @@ const ReceiptTemplateNew: React.FC = () => {
             }
         }
         return warnings;
-    }, [fields, viewSide]);
+    }, [fields, viewSide, selectedCopy]);
 
     // Merge Placeholders with Dynamic Brand Data
     const previewValues = useMemo(() => {
@@ -314,6 +364,10 @@ const ReceiptTemplateNew: React.FC = () => {
                 const response = await apiClient.get('/api/brand-settings');
                 if (response.data) {
                     setBrandData(response.data);
+                    // Only overwrite logo if we are creating new (no ID) or if needed?
+                    // Actually, let's keep the logic: if we fetch brand, we might want to use it
+                    // But if we are editing a template, it might have its own opinion?
+                    // Just set it, fields will decide if they use it.
                     if (response.data.brand_logo_url) {
                         setBrandLogo(response.data.brand_logo_url);
                     }
@@ -323,7 +377,44 @@ const ReceiptTemplateNew: React.FC = () => {
             }
         };
         fetchBrandSettings();
+        fetchBrandSettings();
     }, []);
+
+    // Effect: Fetch Template Data if Editing
+    useEffect(() => {
+        if (templateId) {
+            const fetchTemplate = async () => {
+                try {
+                    const response = await apiClient.get(`/api/receipt-templates/${templateId}`);
+                    const t = response.data;
+                    if (t) {
+                        setTemplateName(t.name);
+                        // Parse papersize if needed, currently we assume configWidth matches or we override
+                        // But wait, the component initializes configWidth from URL params w/h
+                        // If we are editing, we should probably redirect OR update state?
+                        // This component seems designed to take w/h from URL.
+                        // For now, let's just load the fields and margin.
+
+                        if (t.margin) setMargin(t.margin);
+
+                        // Handle new layout_config structure
+                        if (t.layout_config) {
+                            if (t.layout_config.fields) {
+                                setFields(t.layout_config.fields);
+                            }
+                            if (t.layout_config.scale) {
+                                setScale(Number(t.layout_config.scale));
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Failed to load template", error);
+                    toast.error("Failed to load template for editing");
+                }
+            };
+            fetchTemplate();
+        }
+    }, [templateId]);
 
     // Interaction State
     const [interaction, setInteraction] = useState<{
@@ -488,24 +579,34 @@ const ReceiptTemplateNew: React.FC = () => {
         try {
             const payload = {
                 name: templateName,
-                type: "dynamic",
-                paper_size: `${configWidth}x${configHeight}`,
+                papersize: { width: Number(configWidth), height: Number(configHeight), unit: 'mm' },
                 orientation: configOrientation,
+                margin: margin,
                 layout_config: {
                     fields: fields,
                     margin: margin,
-                    scale: scale
+                    scale: scale,
+                    papersize: { width: Number(configWidth), height: Number(configHeight), unit: 'mm' },
+                    layout_mode: layoutMode
                 },
-                is_active: true
+                status: "active",
+                layout_mode: layoutMode
             };
 
             console.log("Publishing template:", payload);
-            await apiClient.post("/api/receipt-templates", payload);
-            toast.success("Template published successfully!");
-            navigate("/admin/configs/templates/receipt"); // Go back to list
+
+            if (templateId) {
+                await apiClient.put(`/api/receipt-templates/${templateId}`, payload);
+                toast.success("Template updated successfully!");
+                // Stay on page or navigate? Usually stay for "Save Changes" behavior.
+            } else {
+                await apiClient.post("/api/receipt-templates", payload);
+                toast.success("Template published successfully!");
+                navigate("/admin/configs/templates/receipt"); // Go back to list only on create
+            }
         } catch (error) {
             console.error(error);
-            toast.error("Failed to publish template");
+            toast.error(templateId ? "Failed to update template" : "Failed to publish template");
         } finally {
             setSaving(false);
         }
@@ -541,7 +642,7 @@ const ReceiptTemplateNew: React.FC = () => {
     }, [configWidth]);
 
     return (
-        <div className="flex flex-col h-screen bg-[#F8FAFC] dark:bg-[#0F172A] overflow-hidden">
+        <div className="fixed inset-0 z-40 flex flex-col bg-[#F8FAFC] dark:bg-[#0F172A] overflow-hidden">
             <style>{`
                 .no-scrollbar::-webkit-scrollbar {
                     display: none;
@@ -556,7 +657,7 @@ const ReceiptTemplateNew: React.FC = () => {
                 <div className="max-w-[1920px] mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link
-                            to="/admin/configs"
+                            to="/admin/configs/templates/receipt"
                             className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all"
                         >
                             <span className="material-symbols-outlined">arrow_back</span>
@@ -577,12 +678,19 @@ const ReceiptTemplateNew: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center space-x-4">
                         <button
                             onClick={() => navigate(-1)}
                             className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
                         >
                             Discard
+                        </button>
+                        <button
+                            onClick={() => setShowA4Preview(true)}
+                            className="px-4 py-2 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-xl font-bold text-xs flex items-center gap-2 transition-all"
+                        >
+                            <span className="material-symbols-outlined text-sm">grid_view</span>
+                            Preview A4 Layout
                         </button>
                         <button
                             onClick={handlePublish}
@@ -592,9 +700,9 @@ const ReceiptTemplateNew: React.FC = () => {
                             {saving ? (
                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white dark:border-slate-900/30 dark:border-t-slate-900 rounded-full animate-spin" />
                             ) : (
-                                <span className="material-symbols-outlined text-sm">publish</span>
+                                <span className="material-symbols-outlined text-sm">{templateId ? "save" : "publish"}</span>
                             )}
-                            Publish Changes
+                            {templateId ? "Update Template" : "Publish Changes"}
                         </button>
                     </div>
                 </div>
@@ -961,7 +1069,8 @@ const ReceiptTemplateNew: React.FC = () => {
                                                             fontWeight: 'normal',
                                                             align: 'left',
                                                             visible: true,
-                                                            side: viewSide
+                                                            side: viewSide,
+                                                            copyType: selectedCopy
                                                         };
                                                         setFields([...fields, newField]);
                                                         setSelectedFieldId(newField.id);
@@ -1014,6 +1123,59 @@ const ReceiptTemplateNew: React.FC = () => {
                                         </div>
 
                                         <div className="mt-8">
+                                            <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[2px] mb-4">Print Layout Mode</h4>
+                                            <div className="grid grid-cols-1 gap-3">
+                                                <button
+                                                    onClick={() => setLayoutMode('single')}
+                                                    className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all ${layoutMode === 'single' ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 shadow-md ring-1 ring-blue-500" : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-300"}`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`p-2 rounded-lg ${layoutMode === 'single' ? "bg-blue-100 dark:bg-blue-800 text-blue-600" : "bg-slate-100 dark:bg-slate-700 text-slate-500"}`}>
+                                                            <span className="material-symbols-outlined">description</span>
+                                                        </div>
+                                                        <div className="text-left">
+                                                            <div className={`text-sm font-bold ${layoutMode === 'single' ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300"}`}>Single Receipt</div>
+                                                            <div className="text-[10px] text-slate-500">Print exactly as designed (e.g. A6, Thermal)</div>
+                                                        </div>
+                                                    </div>
+                                                    {layoutMode === 'single' && <span className="material-symbols-outlined text-blue-500">check_circle</span>}
+                                                </button>
+
+                                                <button
+                                                    onClick={() => setLayoutMode('a4_4up')}
+                                                    className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all ${layoutMode === 'a4_4up' ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 shadow-md ring-1 ring-blue-500" : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-300"}`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`p-2 rounded-lg ${layoutMode === 'a4_4up' ? "bg-blue-100 dark:bg-blue-800 text-blue-600" : "bg-slate-100 dark:bg-slate-700 text-slate-500"}`}>
+                                                            <span className="material-symbols-outlined">grid_view</span>
+                                                        </div>
+                                                        <div className="text-left">
+                                                            <div className={`text-sm font-bold ${layoutMode === 'a4_4up' ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300"}`}>A4 Sheet (4 Copies)</div>
+                                                            <div className="text-[10px] text-slate-500">4 receipts per A4 page (2 Office + 2 Customer)</div>
+                                                        </div>
+                                                    </div>
+                                                    {layoutMode === 'a4_4up' && <span className="material-symbols-outlined text-blue-500">check_circle</span>}
+                                                </button>
+
+                                                <button
+                                                    onClick={() => setLayoutMode('a4_2x2')}
+                                                    className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all ${layoutMode === 'a4_2x2' ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 shadow-md ring-1 ring-blue-500" : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-300"}`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`p-2 rounded-lg ${layoutMode === 'a4_2x2' ? "bg-blue-100 dark:bg-blue-800 text-blue-600" : "bg-slate-100 dark:bg-slate-700 text-slate-500"}`}>
+                                                            <span className="material-symbols-outlined">filter_2</span>
+                                                        </div>
+                                                        <div className="text-left">
+                                                            <div className={`text-sm font-bold ${layoutMode === 'a4_2x2' ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300"}`}>A4 Sheet (2 Copies)</div>
+                                                            <div className="text-[10px] text-slate-500">2 receipts per A4 page (1 Office + 1 Customer)</div>
+                                                        </div>
+                                                    </div>
+                                                    {layoutMode === 'a4_2x2' && <span className="material-symbols-outlined text-blue-500">check_circle</span>}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-8">
                                             <h4 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[2px] mb-4">Page Margins (mm)</h4>
                                             <div className="grid grid-cols-2 gap-4">
                                                 {(['top', 'bottom', 'left', 'right'] as const).map((dir) => (
@@ -1050,6 +1212,22 @@ const ReceiptTemplateNew: React.FC = () => {
                     ref={containerRef}
                     className="col-span-12 lg:col-span-8 xl:col-span-9 bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200/60 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden relative"
                 >
+                    {/* Copy Type Selector (Top Sticky) */}
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex bg-white/90 dark:bg-slate-800/90 backdrop-blur shadow-lg rounded-2xl p-1 border border-slate-200 dark:border-slate-700">
+                        <button
+                            onClick={() => setSelectedCopy('office')}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${selectedCopy === 'office' ? "bg-blue-600 text-white shadow-md" : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"}`}
+                        >
+                            Office Copy
+                        </button>
+                        <button
+                            onClick={() => setSelectedCopy('customer')}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${selectedCopy === 'customer' ? "bg-blue-600 text-white shadow-md" : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"}`}
+                        >
+                            Customer Copy
+                        </button>
+                    </div>
+
                     {/* Preview Toolbar */}
                     <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -1111,7 +1289,7 @@ const ReceiptTemplateNew: React.FC = () => {
                         >
                             {/* Inner Canvas Area (Relative for absolute fields) */}
                             <div className="relative flex-1">
-                                {fields.filter(f => f.visible && (f.side || 'front') === viewSide).map((field) => (
+                                {fields.filter(f => f.visible && (f.side || 'front') === viewSide && (f.copyType || 'office') === selectedCopy).map((field) => (
                                     <div
                                         key={field.id}
                                         onMouseDown={(e) => {
@@ -1262,6 +1440,39 @@ const ReceiptTemplateNew: React.FC = () => {
                     </div>
                 </div>
             </main>
+
+            {/* A4 Preview Modal */}
+            {showA4Preview && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-8">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full h-full max-w-6xl flex flex-col overflow-hidden relative shadow-2xl">
+                        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 z-10">
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <span className="material-symbols-outlined text-blue-600">grid_view</span>
+                                A4 Sheet Layout Preview
+                            </h2>
+                            <button
+                                onClick={() => setShowA4Preview(false)}
+                                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-red-100 hover:text-red-600 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-lg">close</span>
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-auto bg-slate-100 dark:bg-slate-950 p-4">
+                            <React.Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>}>
+                                <A4ReceiptSheet
+                                    data={PREVIEW_DATA}
+                                    config={{
+                                        papersize: { width: Number(configWidth), height: Number(configHeight), unit: 'mm' },
+                                        orientation: configOrientation as any,
+                                        layout_config: { fields: fields }
+                                    }}
+                                    layoutMode={layoutMode === 'thermal' ? 'single' : layoutMode}
+                                />
+                            </React.Suspense>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style dangerouslySetInnerHTML={{
                 __html: `

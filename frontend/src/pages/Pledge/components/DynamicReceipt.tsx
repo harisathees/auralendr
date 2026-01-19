@@ -23,10 +23,12 @@ interface DynamicReceiptProps {
     data: any; // Contains { pledge, customer, loan, jewels, brand, ...anything else }
     config: {
         paper_size?: "A4" | "A5" | "A6" | "A6 Landscape" | "Thermal";
-        layout_config?: ReceiptField[];
+        papersize?: { width: number; height: number; unit: string }; // New format
+        layout_config?: ReceiptField[] | { fields: ReceiptField[] }; // Updated to support nested object
         // Legacy props fallback
         size?: string;
         type?: string;
+        orientation?: string;
     };
 }
 
@@ -135,21 +137,38 @@ const DynamicReceipt: React.FC<DynamicReceiptProps> = ({ data, config }) => {
     };
 
     // Determine Paper Dimensions
-    const paperSize = config.paper_size || config.size || 'A4';
-    let width = '210mm';
-    let height = 'auto'; // Let height grow or be fixed
-    let minHeight = '297mm';
+    const getPaperDimensions = () => {
+        // New format: config.papersize is an object
+        if (config.papersize && typeof config.papersize === 'object') {
+            const { width, height, unit } = config.papersize as any;
+            return {
+                width: `${width}${unit}`,
+                height: orientation === 'landscape' ? `${Math.min(width, height)}${unit}` : 'auto', // For height, we usually let contents flow unless fixed
+                minHeight: orientation === 'landscape' ? `${Math.min(width, height)}${unit}` : `${Math.max(width, height)}${unit}`
+            };
+        }
 
-    switch (paperSize) {
-        case 'A4': width = '210mm'; minHeight = '297mm'; break;
-        case 'A5': width = '148mm'; minHeight = '210mm'; break;
-        case 'A6': width = '105mm'; minHeight = '148mm'; break;
-        case 'A6 Landscape': width = '148mm'; minHeight = '105mm'; height = '105mm'; break; // Fixed height for landscape usually
-        case 'Thermal': width = '80mm'; minHeight = 'auto'; break;
-        default: width = '210mm'; minHeight = '297mm'; break;
+        // Legacy string format
+        const paperSize = config.paper_size || config.size || 'A4';
+        switch (paperSize) {
+            case 'A4': return { width: '210mm', minHeight: '297mm', height: 'auto' };
+            case 'A5': return { width: '148mm', minHeight: '210mm', height: 'auto' };
+            case 'A6': return { width: '105mm', minHeight: '148mm', height: 'auto' };
+            case 'A6 Landscape': return { width: '148mm', minHeight: '105mm', height: '105mm' };
+            case 'Thermal': return { width: '80mm', minHeight: 'auto', height: 'auto' };
+            default: return { width: '210mm', minHeight: '297mm', height: 'auto' };
+        }
     }
 
-    const fields = config.layout_config || [];
+    const orientation = config.orientation || 'portrait';
+    const { width, height, minHeight } = getPaperDimensions();
+    const paperSizeDisplayName = config.paper_size || (config.papersize ? `${config.papersize.width}${config.papersize.unit} x ${config.papersize.height}${config.papersize.unit}` : 'Custom Size');
+
+    const fieldsRaw = config.layout_config;
+    // Handle both array and object wrapper
+    const fields: ReceiptField[] = Array.isArray(fieldsRaw)
+        ? fieldsRaw
+        : (fieldsRaw && 'fields' in fieldsRaw ? (fieldsRaw as any).fields : []);
 
     if (fields.length === 0) {
         return <div className="p-10 text-center text-red-500">No layout configuration found for this template.</div>;
@@ -160,7 +179,7 @@ const DynamicReceipt: React.FC<DynamicReceiptProps> = ({ data, config }) => {
             {/* Header / Actions */}
             <div className="w-full max-w-2xl bg-white/10 backdrop-blur rounded-xl p-4 flex justify-between items-center text-white border border-white/20 print:hidden">
                 <div>
-                    <span className="font-bold text-lg">{paperSize} Receipt</span>
+                    <span className="font-bold text-lg">{paperSizeDisplayName} Receipt</span>
                     <span className="text-sm opacity-60 ml-2">({fields.length} fields)</span>
                 </div>
                 <div className="flex gap-2">
