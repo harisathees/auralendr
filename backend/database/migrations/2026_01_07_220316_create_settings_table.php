@@ -15,7 +15,7 @@ return new class extends Migration {
                 $table->id();
                 $table->string('key')->unique();
                 $table->text('value')->nullable();
-                $table->unsignedBigInteger('branch_id')->nullable();
+                $table->foreignUlid('branch_id')->nullable();
                 $table->timestamps();
             });
         }

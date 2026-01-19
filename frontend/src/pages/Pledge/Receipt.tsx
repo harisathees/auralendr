@@ -65,7 +65,7 @@ const Receipt = () => {
 
             try {
                 const [pledgeResponse, rates, configData, brandResponse] = await Promise.all([
-                    getPledge(Number(id)),
+                    getPledge(id),
                     fetchLatestRates(),
                     fetchConfig(),
                     api.get('/api/brand-settings').catch(() => ({ data: {} }))

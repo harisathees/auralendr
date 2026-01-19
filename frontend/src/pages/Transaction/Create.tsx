@@ -4,7 +4,7 @@ import api from '../../api/apiClient';
 import { useAuth } from '../../context/Auth/AuthContext';
 
 interface MoneySource {
-    id: number;
+    id: number | string;
     name: string;
     balance: string;
     show_balance: boolean;

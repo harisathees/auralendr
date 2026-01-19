@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('jewels', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('pledge_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('pledge_id')->constrained()->cascadeOnDelete();
             $table->string('jewel_type');
             $table->string('quality')->nullable();
             $table->text('description')->nullable();

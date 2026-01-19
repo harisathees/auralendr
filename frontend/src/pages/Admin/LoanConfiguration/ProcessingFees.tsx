@@ -61,7 +61,7 @@ const ProcessingFees: React.FC = () => {
     }, [selectedBranchId]);
 
     const getFeeForType = (typeId: number) => {
-        const targetBranchId = selectedBranchId === "GLOBAL" ? null : parseInt(selectedBranchId);
+        const targetBranchId = selectedBranchId === "GLOBAL" ? null : selectedBranchId;
         const fee = processingFees.find(f => f.jewel_type_id === typeId && f.branch_id === targetBranchId);
         return {
             percentage: fee?.percentage || "",
@@ -76,7 +76,7 @@ const ProcessingFees: React.FC = () => {
         try {
             const payload = {
                 jewel_type_id: jewelTypeId,
-                branch_id: selectedBranchId === "GLOBAL" ? null : parseInt(selectedBranchId),
+                branch_id: selectedBranchId === "GLOBAL" ? null : selectedBranchId,
                 percentage: parseFloat(percentage),
                 max_amount: maxAmount ? parseFloat(maxAmount) : null
             };
@@ -85,7 +85,7 @@ const ProcessingFees: React.FC = () => {
 
             // Update local state
             setProcessingFees(prev => {
-                const targetBranchId = selectedBranchId === "GLOBAL" ? null : parseInt(selectedBranchId);
+                const targetBranchId = selectedBranchId === "GLOBAL" ? null : selectedBranchId;
                 const existingIndex = prev.findIndex(f => f.jewel_type_id === jewelTypeId && f.branch_id === targetBranchId);
                 if (existingIndex >= 0) {
                     const updated = [...prev];

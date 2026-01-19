@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('repledge_banks', function (Blueprint $table) {
-            $table->foreignId('branch_id')->nullable()->change();
+            $table->foreignUlid('branch_id')->nullable()->change();
         });
     }
 
@@ -21,7 +21,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('repledge_banks', function (Blueprint $table) {
-            $table->foreignId('branch_id')->nullable(false)->change();
+            $table->foreignUlid('branch_id')->nullable(false)->change();
         });
     }
 };

@@ -19,7 +19,7 @@ const RepledgeSourceForm: React.FC<RepledgeSourceFormProps> = ({ initialData, on
 
     // Branch assignment
     const [availableBranches, setAvailableBranches] = useState<Branch[]>([]);
-    const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
+    const [selectedBranchIds, setSelectedBranchIds] = useState<string[]>([]);
 
     // Payment Methods
     const [moneySources, setMoneySources] = useState<import("../../../types/models").MoneySource[]>([]);
@@ -69,7 +69,7 @@ const RepledgeSourceForm: React.FC<RepledgeSourceFormProps> = ({ initialData, on
         }
     }, [initialData]);
 
-    const toggleBranch = (branchId: number) => {
+    const toggleBranch = (branchId: string) => {
         setSelectedBranchIds(prev =>
             prev.includes(branchId)
                 ? prev.filter(id => id !== branchId)

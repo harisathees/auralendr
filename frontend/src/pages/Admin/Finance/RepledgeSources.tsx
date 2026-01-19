@@ -17,7 +17,7 @@ const RepledgeSources: React.FC = () => {
 
     // Delete Modal State
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchSources();
@@ -46,7 +46,7 @@ const RepledgeSources: React.FC = () => {
         }
     };
 
-    const handleDeleteClick = (id: number) => {
+    const handleDeleteClick = (id: string) => {
         setDeletingId(id);
         setIsDeleteOpen(true);
     };

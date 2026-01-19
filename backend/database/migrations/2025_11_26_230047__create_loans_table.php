@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void {
         Schema::create('loans', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('pledge_id')->constrained()->cascadeOnDelete();
+            $table->ulid('id')->primary();
+            $table->foreignUlid('pledge_id')->constrained()->cascadeOnDelete();
             $table->string('loan_no')->nullable()->unique();
             $table->date('date')->nullable();
             $table->decimal('amount', 15, 2);

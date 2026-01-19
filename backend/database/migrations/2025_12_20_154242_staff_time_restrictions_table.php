@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->string('key');
             $table->text('value')->nullable();
             $table->string('group')->nullable()->index();
-            $table->unsignedBigInteger('branch_id')->nullable()->index();
+            $table->foreignUlid('branch_id')->nullable()->index();
             $table->timestamps();
 
             // Unique key per branch. Global settings have NULL branch_id.

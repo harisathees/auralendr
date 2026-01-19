@@ -12,8 +12,8 @@ return new class extends Migration {
     {
         Schema::create('pledge_closures', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('pledge_id')->constrained()->onDelete('cascade');
-            $table->foreignId('created_by')->constrained('users');
+            $table->foreignUlid('pledge_id')->constrained()->onDelete('cascade');
+            $table->foreignUlid('created_by')->constrained('users');
 
             // Closure Details
             $table->date('closed_date');

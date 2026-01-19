@@ -27,7 +27,7 @@ const BranchList: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         if (!window.confirm("Are you sure?")) return;
         try {
             await api.delete(`/api/branches/${id}`);

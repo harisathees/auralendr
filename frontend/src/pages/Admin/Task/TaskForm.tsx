@@ -11,7 +11,7 @@ interface TaskFormProps {
 const TaskForm: React.FC<TaskFormProps> = ({ task, onSuccess, onCancel }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [assignedTo, setAssignedTo] = useState<number | ''>('');
+    const [assignedTo, setAssignedTo] = useState<string>('');
     const [status, setStatus] = useState<string>('pending');
     const [dueDate, setDueDate] = useState('');
     const [users, setUsers] = useState<User[]>([]);
@@ -125,7 +125,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSuccess, onCancel }) => {
                             <select
                                 required
                                 value={assignedTo}
-                                onChange={(e) => setAssignedTo(Number(e.target.value))}
+                                onChange={(e) => setAssignedTo(e.target.value)}
                                 className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                                 disabled={loadingUsers}
                             >

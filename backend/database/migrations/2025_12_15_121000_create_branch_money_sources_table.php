@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('branch_money_sources', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('branch_id')->constrained('branches')->onDelete('cascade');
+            $table->foreignUlid('branch_id')->constrained('branches')->onDelete('cascade');
             $table->foreignId('money_source_id')->constrained('money_sources')->onDelete('cascade');
             $table->timestamps();
         });

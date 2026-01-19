@@ -22,7 +22,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('repledge_banks', function (Blueprint $table) {
-            $table->foreignId('branch_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignUlid('branch_id')->nullable()->constrained()->onDelete('cascade');
         });
     }
 };

@@ -12,8 +12,8 @@ return new class extends Migration {
     {
         Schema::create('branch_repledge_banks', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('branch_id')->constrained()->onDelete('cascade');
-            $table->foreignId('repledge_bank_id')->constrained('repledge_banks')->onDelete('cascade');
+            $table->foreignUlid('branch_id')->constrained()->onDelete('cascade');
+            $table->foreignUlid('repledge_bank_id')->constrained('repledge_banks')->onDelete('cascade');
             $table->timestamps();
 
             $table->unique(['branch_id', 'repledge_bank_id']);

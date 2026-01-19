@@ -1,5 +1,5 @@
 export interface Branch {
-    id: number;
+    id: string;
     branch_name: string;
     location: string | null;
     created_at?: string;
@@ -7,11 +7,11 @@ export interface Branch {
 }
 
 export interface User {
-    id: number;
+    id: string;
     name: string;
     email: string;
     role: 'admin' | 'staff' | 'developer' | 'superadmin' | string;
-    branch_id: number | null;
+    branch_id: string | null;
     branch?: Branch;
     permissions?: string[];
     created_at?: string;
@@ -22,11 +22,11 @@ export interface Task {
     id: number;
     title: string;
     description: string | null;
-    assigned_to: number | null;
-    created_by: number;
+    assigned_to: string | null;
+    created_by: string;
     status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
     due_date: string | null;
-    branch_id?: number | null;
+    branch_id?: string | null;
     created_at: string;
     updated_at: string;
     assignee?: User;
@@ -56,7 +56,7 @@ export interface MoneySourceType {
 }
 
 export interface RepledgeSource {
-    id: number;
+    id: string;
     name: string;
     description: string | null;
     branch: string | null; // legacy field name in DB for branch name text
@@ -70,11 +70,11 @@ export interface RepledgeSource {
 }
 
 export interface Repledge {
-    id: number | string; // Unified to allow string IDs if used in frontend logic
-    loan_id?: string | number | null;
+    id: string; // Unified to allow string IDs if used in frontend logic
+    loan_id?: string | null;
     loan_no: string;
     re_no: string;
-    repledge_source_id: number | string | null;
+    repledge_source_id: string | null;
     net_weight?: number;
     gross_weight?: number;
     stone_weight?: number;
@@ -114,7 +114,7 @@ export interface LoanSuggestion {
 }
 
 export interface Transaction {
-    id: number;
+    id: string;
     type: 'credit' | 'debit';
     amount: string;
     date: string;
@@ -156,7 +156,7 @@ export interface JewelType {
 export interface ProcessingFee {
     id: number;
     jewel_type_id: number;
-    branch_id: number;
+    branch_id: string;
     percentage: string;
     max_amount: string;
 }
@@ -182,7 +182,7 @@ export interface RepledgeItem {
 }
 
 export interface Pledge {
-    id: number;
+    id: string;
     customer: Customer;
     jewels: Jewel[];
     loan: Loan;
@@ -195,7 +195,7 @@ export interface Pledge {
 }
 
 export interface Customer {
-    id: number;
+    id: string;
     name: string;
     mobile_no: string;
     email?: string | null;
@@ -226,7 +226,7 @@ export interface Jewel {
 }
 
 export interface Loan {
-    id?: number;
+    id?: string;
     loan_no: string;
     date: string;
     amount: string | number;

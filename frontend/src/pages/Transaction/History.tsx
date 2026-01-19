@@ -14,12 +14,12 @@ const TransactionHistory = () => {
     const [loading, setLoading] = useState(true);
 
     // Filtering State
-    const [moneySources, setMoneySources] = useState<{ id: number, name: string, balance: number, show_balance: boolean, type: string }[]>([]);
+    const [moneySources, setMoneySources] = useState<{ id: number | string, name: string, balance: number, show_balance: boolean, type: string }[]>([]);
     const [selectedSourceId, setSelectedSourceId] = useState<string>('');
     const [isFilterOpen, setIsFilterOpen] = useState(false); // For source dropdown toggle
 
     // Branch Filter State
-    const [branches, setBranches] = useState<{ id: number, branch_name: string }[]>([]);
+    const [branches, setBranches] = useState<{ id: string, branch_name: string }[]>([]);
     const [selectedBranchId, setSelectedBranchId] = useState<string>('');
     const [isBranchFilterOpen, setIsBranchFilterOpen] = useState(false);
 
@@ -30,7 +30,7 @@ const TransactionHistory = () => {
 
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
     const [reportData, setReportData] = useState<{ opening_balance: number, transactions: Transaction[] } | null>(null);
-    const [expandedId, setExpandedId] = useState<number | null>(null);
+    const [expandedId, setExpandedId] = useState<number | string | null>(null);
     const statementRef = useRef<any>(null);
 
     const handlePrint = useReactToPrint({

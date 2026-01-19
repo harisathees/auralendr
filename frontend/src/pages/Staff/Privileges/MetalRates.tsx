@@ -15,7 +15,7 @@ const MetalRates: React.FC = () => {
     const fetchRates = async () => {
         try {
             setLoading(true);
-            const response = await api.get("/metal-rates");
+            const response = await api.get("/api/metal-rates");
             setJewelTypes(response.data);
         } catch (error) {
             console.error("Failed to fetch metal rates", error);
@@ -27,7 +27,7 @@ const MetalRates: React.FC = () => {
 
     const handleRateUpdate = async (typeId: number, rate: string) => {
         try {
-            await api.post("/metal-rates", {
+            await api.post("/api/metal-rates", {
                 jewel_type_id: typeId,
                 rate: rate
             });

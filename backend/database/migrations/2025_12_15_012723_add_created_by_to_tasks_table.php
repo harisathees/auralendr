@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::table('tasks', function (Blueprint $table) {
             if (!Schema::hasColumn('tasks', 'created_by')) {
-                $table->foreignId('created_by')->after('assigned_to')->constrained('users')->onDelete('cascade');
+                $table->foreignUlid('created_by')->after('assigned_to')->constrained('users')->onDelete('cascade');
             }
         });
     }

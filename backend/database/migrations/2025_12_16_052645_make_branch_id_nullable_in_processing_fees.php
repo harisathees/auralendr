@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('processing_fees', function (Blueprint $table) {
-            $table->foreignId('branch_id')->nullable()->change();
+            $table->foreignUlid('branch_id')->nullable()->change();
         });
     }
 

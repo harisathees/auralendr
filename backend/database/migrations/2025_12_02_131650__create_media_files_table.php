@@ -8,9 +8,9 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('media_files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('customer_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignId('pledge_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignId('loan_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignUlid('customer_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignUlid('pledge_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignUlid('loan_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('jewel_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('type');         // image / audio / video / pdf
             $table->string('category');     // id_proof, customer_image, jewel_image, etc.

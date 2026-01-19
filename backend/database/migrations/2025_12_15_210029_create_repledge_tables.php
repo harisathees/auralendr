@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('repledge_banks', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('branch_id')->constrained()->onDelete('cascade');
+            $table->ulid('id')->primary();
+            $table->foreignUlid('branch_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->string('code')->nullable();
             $table->string('branch')->nullable();
@@ -25,12 +25,12 @@ return new class extends Migration
         });
 
         Schema::create('repledges', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('branch_id')->constrained()->onDelete('cascade');
-            $table->foreignId('loan_id')->nullable()->constrained()->onDelete('set null'); // Optional link to original loan
+            $table->ulid('id')->primary();
+            $table->foreignUlid('branch_id')->constrained()->onDelete('cascade');
+            $table->foreignUlid('loan_id')->nullable()->constrained()->onDelete('set null'); // Optional link to original loan
             $table->string('loan_no'); // Keep string in case loan is deleted or external
             $table->string('re_no');
-            $table->foreignId('bank_id')->constrained('repledge_banks')->onDelete('cascade');
+            $table->foreignUlid('bank_id')->constrained('repledge_banks')->onDelete('cascade');
             $table->string('status')->default('active');
             $table->decimal('amount', 15, 2)->default(0);
             $table->decimal('processing_fee', 15, 2)->default(0);

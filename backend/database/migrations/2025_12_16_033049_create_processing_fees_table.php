@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('processing_fees', function (Blueprint $table) {
             $table->id();
             $table->foreignId('jewel_type_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('branch_id')->constrained()->cascadeOnDelete();
             $table->decimal('percentage', 5, 2); // e.g. 1.50
             $table->decimal('max_amount', 10, 2)->nullable(); // e.g. 500.00
             $table->timestamps();

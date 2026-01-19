@@ -28,7 +28,7 @@ const UserList: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         if (!window.confirm("Are you sure you want to delete this user?")) return;
         try {
             await api.delete(`/api/staff/${id}`);

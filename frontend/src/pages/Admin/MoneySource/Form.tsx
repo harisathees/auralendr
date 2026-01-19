@@ -23,7 +23,7 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
 
     // Branch Selection
     const [availableBranches, setAvailableBranches] = useState<Branch[]>([]);
-    const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>([]);
+    const [selectedBranchIds, setSelectedBranchIds] = useState<string[]>([]);
 
     // Dynamic Types
     const [moneySourceTypes, setMoneySourceTypes] = useState<MoneySourceType[]>([]);
@@ -82,7 +82,7 @@ const MoneySourceForm: React.FC<MoneySourceFormProps> = ({ initialData, onSucces
         }
     }, [initialData]);
 
-    const handleBranchToggle = (branchId: number) => {
+    const handleBranchToggle = (branchId: string) => {
         if (selectedBranchIds.includes(branchId)) {
             setSelectedBranchIds(selectedBranchIds.filter(id => id !== branchId));
         } else {
