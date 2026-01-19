@@ -18,7 +18,7 @@ interface AnalysisData {
 interface CustomerAnalysisModalProps {
     isOpen: boolean;
     onClose: () => void;
-    customerId: number | null;
+    customerId: string | null;
     customerName: string;
 }
 

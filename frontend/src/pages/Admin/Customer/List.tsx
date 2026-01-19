@@ -64,7 +64,7 @@ const CustomersList: React.FC = () => {
     };
 
 
-    const [analysisModal, setAnalysisModal] = useState<{ isOpen: boolean; customerId: number | null; customerName: string }>({
+    const [analysisModal, setAnalysisModal] = useState<{ isOpen: boolean; customerId: string | null; customerName: string }>({
         isOpen: false,
         customerId: null,
         customerName: '',
@@ -131,7 +131,7 @@ const CustomersList: React.FC = () => {
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => setAnalysisModal({ isOpen: true, customerId: customer.id, customerName: customer.name })}
+                                            onClick={() => setAnalysisModal({ isOpen: true, customerId: customer.id, customerName: customer.name || '' })}
                                             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/5 text-gray-500 dark:text-gray-400 transition-colors"
                                             title="Analysis"
                                         >
