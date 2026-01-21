@@ -3,8 +3,8 @@ import { useParams } from 'react-router-dom';
 import * as htmlToImage from 'html-to-image';
 import { FiShare2, FiLoader } from 'react-icons/fi';
 import { FaIdCard } from 'react-icons/fa';
-const bg1 = '/assets/front.jpg';
-const bg2 = '/assets/back.jpg';
+import bg1 from '/assets/auralendr/front.png';
+import bg2 from '/assets/auralendr/back.jpg';
 import GoldCoinSpinner from '../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner';
 import { getPledge } from '../../api/pledgeService';
 import api from '../../api/apiClient';
@@ -86,8 +86,22 @@ const Receipt = () => {
                 // Brand Data
                 const brand = brandResponse.data;
 
-                const customerImageUrl = customer?.customer_image_url || customer?.photo_url || null;
-                const jewelImageUrl = jewel?.image_url || null;
+                // Media Handling (New Service)
+                const mediaFiles = pledge.media || [];
+                const customerMedia = mediaFiles.find((m: any) => m.category === 'customer_image');
+                const jewelMedia = mediaFiles.find((m: any) => m.category === 'jewel_image');
+
+                // Helper to fix potential localhost port issues if present in API response
+                const fixUrl = (url: string | null) => {
+                    if (!url) return null;
+                    if (url.startsWith('http://localhost/') && !url.includes(':8000')) {
+                        return url.replace('http://localhost/', 'http://localhost:8000/');
+                    }
+                    return url;
+                };
+
+                const customerImageUrl = fixUrl(customerMedia?.url) || customer?.customer_image_url || customer?.photo_url || null;
+                const jewelImageUrl = fixUrl(jewelMedia?.url) || jewel?.image_url || null;
 
                 setData({
                     // Legacy flattened data (keep for backward compatibility if needed)
@@ -130,6 +144,46 @@ const Receipt = () => {
         fetchData();
     }, [id]);
 
+    // Pre-load images to Data URLs to avoid CORS/Fetch issues in html-to-image
+    const [loadedImages, setLoadedImages] = useState({
+        bg1: '',
+        bg2: '',
+        customer: '',
+        jewel: ''
+    });
+
+    useEffect(() => {
+        if (!data) return;
+
+        const loadToDataUrl = async (url: string): Promise<string> => {
+            if (!url) return '';
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.readAsDataURL(blob);
+                });
+            } catch (e) {
+                console.error("Failed to load image:", url, e);
+                return '';
+            }
+        };
+
+        const loadAll = async () => {
+            const [b1, b2, c, j] = await Promise.all([
+                loadToDataUrl(bg1),
+                loadToDataUrl(bg2),
+                loadToDataUrl(data.customerImage),
+                loadToDataUrl(data.jewelImage)
+            ]);
+            setLoadedImages({ bg1: b1, bg2: b2, customer: c, jewel: j });
+        };
+
+        loadAll();
+    }, [data]);
+
     const handleShare = async (ref: React.RefObject<HTMLDivElement | null>, filename: string, target: string) => {
         setSharingTarget(target);
         try {
@@ -139,7 +193,15 @@ const Receipt = () => {
             const dataUrl = await htmlToImage.toPng(ref.current, {
                 quality: 1,
                 pixelRatio: scale,
-                cacheBust: true,
+                cacheBust: false,
+                skipFonts: true, // Attempt to skip font embedding to avoid CORS issues
+                filter: (node) => {
+                    // Filter out external stylesheets if they cause issues
+                    if (node.tagName === 'LINK' && (node as HTMLLinkElement).rel === 'stylesheet') {
+                        return false;
+                    }
+                    return true;
+                }
             });
 
             // Generate blob and file regardless of platform
@@ -301,9 +363,9 @@ const Receipt = () => {
                 </div>
             </div>
 
-            <div className="mt-16 flex flex-col items-center gap-8 print:mt-0 print:block">
+            <div className="mt-16 flex flex-col items-center gap-4 print:mt-0 print:block">
                 {/* Front */}
-                <div className="relative w-full flex justify-center print:block print:w-auto">
+                <div className="relative w-full flex justify-center print:block print:w-auto print:h-auto h-[119mm] sm:h-[179mm] md:h-[238mm] lg:h-[297mm] transition-[height] duration-300">
                     <div className="a4-wrapper origin-top print:transform-none transform scale-[0.4] sm:scale-[0.6] md:scale-[0.8] lg:scale-100 transition-transform duration-300">
                         <div
                             ref={frontRef}
@@ -314,9 +376,9 @@ const Receipt = () => {
                                 overflow: 'hidden'
                             }}
                         >
-                            <img src={bg1} alt="front" style={{ position: 'absolute', width: '210mm', height: '297mm', pointerEvents: 'none' }} />
+                            <img src={loadedImages.bg1 || bg1} crossOrigin="anonymous" alt="front" style={{ position: 'absolute', width: '210mm', height: '297mm', pointerEvents: 'none' }} />
 
-                            {data.customerImage && (
+                            {data.customerImage && loadedImages.customer && (
                                 <div style={{
                                     position: 'absolute', top: '90mm', left: '70mm', width: '26mm', height: '33mm',
                                     transform: 'rotate(90deg)', transformOrigin: 'left top', overflow: 'hidden',
@@ -324,14 +386,15 @@ const Receipt = () => {
                                     backgroundColor: '#eee'
                                 }}>
                                     <img
-                                        src={data.customerImage}
+                                        src={loadedImages.customer}
+                                        crossOrigin="anonymous"
                                         alt="Customer"
                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                         onError={(e: any) => e.target.style.display = 'none'}
                                     />
                                 </div>
                             )}
-                            {data.jewelImage && (
+                            {data.jewelImage && loadedImages.jewel && (
                                 <div style={{
                                     position: 'absolute', top: '120mm', left: '179mm', width: '26mm', height: '33mm',
                                     transform: 'rotate(90deg)', transformOrigin: 'left top', overflow: 'hidden',
@@ -339,7 +402,8 @@ const Receipt = () => {
                                     backgroundColor: '#eee'
                                 }}>
                                     <img
-                                        src={data.jewelImage}
+                                        src={loadedImages.jewel}
+                                        crossOrigin="anonymous"
                                         alt="Jewel"
                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                         onError={(e: any) => e.target.style.display = 'none'}
@@ -348,7 +412,7 @@ const Receipt = () => {
                             )}
 
                             {/* Duplicate images logic/Office Copy */}
-                            {data.customerImage && (
+                            {data.customerImage && loadedImages.customer && (
                                 <div style={{
                                     position: 'absolute', top: '91mm', left: '179mm', width: '26mm', height: '33mm',
                                     transform: 'rotate(90deg)', transformOrigin: 'left top', overflow: 'hidden',
@@ -356,14 +420,15 @@ const Receipt = () => {
                                     backgroundColor: '#eee'
                                 }}>
                                     <img
-                                        src={data.customerImage}
+                                        src={loadedImages.customer}
+                                        crossOrigin="anonymous"
                                         alt="Customer"
                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                         onError={(e: any) => e.target.style.display = 'none'}
                                     />
                                 </div>
                             )}
-                            {data.jewelImage && (
+                            {data.jewelImage && loadedImages.jewel && (
                                 <div style={{
                                     position: 'absolute', top: '119mm', left: '70mm', width: '26mm', height: '33mm',
                                     transform: 'rotate(90deg)', transformOrigin: 'left top', overflow: 'hidden',
@@ -371,7 +436,8 @@ const Receipt = () => {
                                     backgroundColor: '#eee'
                                 }}>
                                     <img
-                                        src={data.jewelImage}
+                                        src={loadedImages.jewel}
+                                        crossOrigin="anonymous"
                                         alt="Jewel"
                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                         onError={(e: any) => e.target.style.display = 'none'}
@@ -396,7 +462,7 @@ const Receipt = () => {
                 </div>
 
                 {/* Back */}
-                <div className="relative w-full flex justify-center print:block print:w-auto print:page-break-before-always">
+                <div className="relative w-full flex justify-center print:block print:w-auto print:page-break-before-always print:h-auto h-[119mm] sm:h-[179mm] md:h-[238mm] lg:h-[297mm] transition-[height] duration-300">
                     <div className="a4-wrapper origin-top print:transform-none transform scale-[0.4] sm:scale-[0.6] md:scale-[0.8] lg:scale-100 transition-transform duration-300">
                         <div
                             ref={backRef}
@@ -407,7 +473,7 @@ const Receipt = () => {
                                 overflow: 'hidden'
                             }}
                         >
-                            <img src={bg2} alt="back" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img src={loadedImages.bg2 || bg2} crossOrigin="anonymous" alt="back" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                     </div>
                 </div>
