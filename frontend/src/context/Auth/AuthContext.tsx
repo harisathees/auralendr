@@ -162,7 +162,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       authService.me().catch(() => {
         // Interceptor or global handler will catch 401
       });
-    }, 60000);
+    }, 60000000);
 
     return () => clearInterval(interval);
   }, [token, booting]);

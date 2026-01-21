@@ -101,8 +101,7 @@ const Privileges: React.FC = () => {
                 <span className="material-symbols-outlined text-gray-400 dark:text-gray-600">verified_user</span>
             </div>
 
-            {/* Subtle Grain Overlay */}
-            <div className="absolute inset-0 pointer-events-none opacity-[0.02] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+    
         </div>
     );
 };

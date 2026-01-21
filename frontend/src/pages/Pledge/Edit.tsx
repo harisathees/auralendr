@@ -16,7 +16,11 @@ const Edit: React.FC = () => {
 
   const handleSubmit = async (fd: FormData) => {
     try {
-      await api.post(`/api/pledges/${id}?_method=PUT`, fd);
+      await api.post(`/api/pledges/${id}?_method=PUT`, fd, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       navigate("/pledges");
     } catch (err) {
       console.error("Failed to update pledge", err);

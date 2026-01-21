@@ -152,9 +152,9 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
             ) : (
               <>
                 {loading ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-3 opacity-60">
-                    <span className="material-symbols-outlined animate-spin text-3xl text-primary">progress_activity</span>
-                    <p className="text-sm font-medium text-gray-500">Loading loans...</p>
+                  <div className="flex flex-col items-center justify-center py-24 gap-3">
+                    <div className="h-7 w-7 animate-spin rounded-full border-[3px] border-gray-100 dark:border-gray-800 border-t-primary"></div>
+                    <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest animate-pulse">Loading loans...</p>
                   </div>
                 ) : (
                   <div className="space-y-4 pb-12">
@@ -273,9 +273,9 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
             ) : (
               <>
                 {repledgeLoading ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-3 opacity-60">
-                    <span className="material-symbols-outlined animate-spin text-3xl text-purple-600">progress_activity</span>
-                    <p className="text-sm font-medium text-gray-500">Loading repledges...</p>
+                  <div className="flex flex-col items-center justify-center py-24 gap-3">
+                    <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-gray-100 dark:border-gray-800 border-t-purple-600 shadow-sm"></div>
+                    <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest animate-pulse">Loading repledges...</p>
                   </div>
                 ) : (
                   <div className="space-y-4 pb-12">

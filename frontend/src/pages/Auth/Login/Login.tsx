@@ -43,14 +43,14 @@ const Login: React.FC = () => {
 
         {/* Top Header Section (Image) */}
         <div className="relative w-full h-[220px] pt-safe-top flex flex-col items-center rounded-b-[2rem] shadow-sm z-0 overflow-hidden sm:bg-primary">
-          <img src="/assets/auralendr.png" alt="Header Background" className="absolute inset-0 w-full h-full object-cover sm:hidden" />
+          <img src="/assets/auralendr/auralendr.png" alt="Header Background" className="absolute inset-0 w-full h-full object-cover sm:hidden" />
         </div>
 
         {/* Floating Brand Icon */}
         <div className="absolute top-[172px] left-1/2 -translate-x-1/2 z-10">
           <div className="flex items-center justify-center w-24 h-24 bg-white dark:bg-background-dark rounded-full shadow-lg p-1">
             <div className="flex items-center justify-center w-full h-full bg-white dark:bg-zinc-800 rounded-full border border-gray-100 dark:border-zinc-700 overflow-hidden">
-              <img src="/assets/login-nsh.png" alt="NSH Logo" className="w-full h-full object-cover" />
+              <img src="/assets/auralendr/images.jpg" alt="Logo" className="w-full h-full object-cover" />
             </div>
           </div>
         </div>

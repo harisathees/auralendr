@@ -243,6 +243,17 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
   const [existingFiles, setExistingFiles] = useState<any[]>([]);
   const [deletedFileIds, setDeletedFileIds] = useState<number[]>([]);
 
+  // Derived state for specific slots
+  const existingDoc = useMemo(() => existingFiles.find(f => f.category === 'customer_document'), [existingFiles]);
+  const existingJewelImage = useMemo(() => existingFiles.find(f => f.category === 'jewel_image'), [existingFiles]);
+  const existingEvidence = useMemo(() => existingFiles.find(f => f.category === 'evidence_media'), [existingFiles]);
+  const existingCustomerImage = useMemo(() => existingFiles.find(f => f.category === 'customer_image'), [existingFiles]);
+
+  // Remaining files (generic uploads)
+  const remainingFiles = useMemo(() => existingFiles.filter(f =>
+    !['customer_document', 'jewel_image', 'evidence_media', 'customer_image'].includes(f.category)
+  ), [existingFiles]);
+
   // Metadata Options
   // Metadata Options
   const [jewelTypes, setJewelTypes] = useState<{ id: number; name: string }[]>([]);
@@ -719,8 +730,12 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
                 label="Customer Doc"
                 icon="upload_file"
                 file={docFile}
-                existingUrl={fetchedDocUrl && fetchedDocUrl.startsWith('http://localhost/') && !fetchedDocUrl.includes(':8000') ? fetchedDocUrl.replace('http://localhost/', 'http://localhost:8000/') : fetchedDocUrl}
-                onRemove={() => { setDocFile(null); setFetchedDocUrl(null); }}
+                existingUrl={fetchedDocUrl ? (fetchedDocUrl.startsWith('http://localhost/') && !fetchedDocUrl.includes(':8000') ? fetchedDocUrl.replace('http://localhost/', 'http://localhost:8000/') : fetchedDocUrl) : (existingDoc?.url ? (existingDoc.url.startsWith('http://localhost/') && !existingDoc.url.includes(':8000') ? existingDoc.url.replace('http://localhost/', 'http://localhost:8000/') : existingDoc.url) : null)}
+                onRemove={() => {
+                  if (existingDoc) removeExistingFile(existingDoc.id);
+                  setDocFile(null);
+                  setFetchedDocUrl(null);
+                }}
                 onGallery={() => docInputRef.current?.click()}
                 onCamera={() => openCamera('doc')}
               />
@@ -825,7 +840,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
               <label className="flex flex-col gap-1.5">
                 <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Weight (g) <span className="text-red-500">*</span></span>
                 <input
-                  value={jewel.weight} onChange={e => updateJewel(index, 'weight', e.target.value)}
+                  value={jewel.weight ?? ""} onChange={e => updateJewel(index, 'weight', e.target.value)}
                   className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="0.00" step="0.01" type="number" required
                 />
               </label>
@@ -872,7 +887,11 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
               label="Capture Jewel"
               icon="add_a_photo"
               file={jewelFile}
-              onRemove={() => setJewelFile(null)}
+              existingUrl={existingJewelImage?.url ? (existingJewelImage.url.startsWith('http://localhost/') && !existingJewelImage.url.includes(':8000') ? existingJewelImage.url.replace('http://localhost/', 'http://localhost:8000/') : existingJewelImage.url) : null}
+              onRemove={() => {
+                if (existingJewelImage) removeExistingFile(existingJewelImage.id);
+                setJewelFile(null);
+              }}
               onGallery={() => jewelInputRef.current?.click()}
               onCamera={() => openCamera('jewel')}
             />
@@ -914,7 +933,11 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
               icon="mic"
               isAudio={true}
               file={evidenceFile}
-              onRemove={() => setEvidenceFile(null)}
+              existingUrl={existingEvidence?.url ? (existingEvidence.url.startsWith('http://localhost/') && !existingEvidence.url.includes(':8000') ? existingEvidence.url.replace('http://localhost/', 'http://localhost:8000/') : existingEvidence.url) : null}
+              onRemove={() => {
+                if (existingEvidence) removeExistingFile(existingEvidence.id);
+                setEvidenceFile(null);
+              }}
               onUpload={() => evidenceInputRef.current?.click()}
               onRecord={() => openAudio()}
             />
@@ -922,7 +945,11 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
               label="Customer Image"
               icon="account_box"
               file={customerImageFile}
-              onRemove={() => setCustomerImageFile(null)}
+              existingUrl={existingCustomerImage?.url ? (existingCustomerImage.url.startsWith('http://localhost/') && !existingCustomerImage.url.includes(':8000') ? existingCustomerImage.url.replace('http://localhost/', 'http://localhost:8000/') : existingCustomerImage.url) : null}
+              onRemove={() => {
+                if (existingCustomerImage) removeExistingFile(existingCustomerImage.id);
+                setCustomerImageFile(null);
+              }}
               onGallery={() => customerImageInputRef.current?.click()}
               onCamera={() => openCamera('customer_image')}
             />
@@ -1042,11 +1069,11 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
 
 
           {/* Existing Files Display (for Edit Mode) */}
-          {existingFiles.length > 0 && (
+          {remainingFiles.length > 0 && (
             <div className="flex flex-col gap-3 pt-2">
-              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Existing Files</span>
+              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Other Files</span>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {existingFiles.map((f) => (
+                {remainingFiles.map((f) => (
                   <div key={f.id} className="relative group border rounded-xl overflow-hidden aspect-square border-gray-200 dark:border-gray-700">
                     <button
                       type="button"

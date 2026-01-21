@@ -16,9 +16,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Services\MediaService;
 
 class PledgeController extends Controller
 {
+    protected $mediaService;
+
+    public function __construct(MediaService $mediaService)
+    {
+        $this->mediaService = $mediaService;
+    }
     // Middleware is applied in routes/api.php
 
     /**
@@ -250,50 +257,24 @@ class PledgeController extends Controller
                     }
                 }
 
-                // Files - Handle 'files[]' array notation from frontend
-                // When files are sent as files[], Laravel stores them as files.0, files.1, etc. inside the 'files' array in Request
-                
+                // Files - Handle 'files[]' array notation via Service
                 // Retrieve validated files directly from request which respects 'files.*' rules
-                $uploadedFiles = $request->file('files') ?? [];
+                $uploadedFiles = $request->file('files');
+                // Ensure it's an array (laravel might return single instance if only one file and not array syntax, but here we expect array)
+                // But handleUploads handles normalization.
                 
-                // If it's a single file (not array), wrap it
-                if (!is_array($uploadedFiles) && $uploadedFiles instanceof \Illuminate\Http\UploadedFile) {
-                    $uploadedFiles = [$uploadedFiles];
-                }
-
-                // Get categories array
                 $categories = $request->input('categories', []);
 
-                // Process uploaded files
-                // Note: Index might be discontinuous if keys are files.0, files.2 etc, so we iterate keys
-                foreach ($uploadedFiles as $index => $file) {
-                    // Strict type check just in case
-                    if(!($file instanceof \Illuminate\Http\UploadedFile)) continue;
-                    
-                    $timestamp = now()->format('Ymd_His');
-                    $loanNoSafe = preg_replace('/[^A-Za-z0-9\-]/', '', $loan->loan_no ?? 'NoLoan');
-
-                    // Determine category
-                    $category = $categories[$index] ?? 'uploaded_file';
-
-                    $extension = $file->getClientOriginalExtension();
-                    // filename format: LoanNo_Category_DateTime_UniqID.ext
-                    $filename = "{$category}_{$loanNoSafe}_{$timestamp}_" . uniqid() . ".{$extension}";
-
-                    $path = $file->storeAs('pledge_media', $filename, 'public');
-
-                    MediaFile::create([
+                $this->mediaService->handleUploads(
+                    $uploadedFiles, 
+                    [
                         'customer_id' => $customer->id,
                         'pledge_id' => $pledge->id,
-                        'loan_id' => $loan->id,
-                        'jewel_id' => null, // Explicitly null as requested
-                        'type' => explode('/', $file->getClientMimeType())[0] ?? 'file',
-                        'category' => $category,
-                        'file_path' => $path,
-                        'mime_type' => $file->getClientMimeType(),
-                        'size' => $file->getSize(),
-                    ]);
-                }
+                        'loan_id' => $loan->id
+                    ],
+                    $categories,
+                    $loan->loan_no ?? 'NoLoan'
+                );
 
                 return response()->json([
                     'message' => 'Pledge created successfully',
@@ -464,73 +445,31 @@ class PledgeController extends Controller
 
                 // Handle File Deletion
                 if ($request->has('deleted_file_ids')) {
-                    $deletedIds = $request->input('deleted_file_ids');
-                    if (is_array($deletedIds)) {
-                        $filesToDelete = MediaFile::whereIn('id', $deletedIds)
-                            ->where('pledge_id', $pledge->id)
-                            ->get();
-
-                        foreach ($filesToDelete as $fileRecord) {
-                            // Delete physical file
-                            if ($fileRecord->file_path && Storage::disk('public')->exists($fileRecord->file_path)) {
-                                Storage::disk('public')->delete($fileRecord->file_path);
-                            }
-                            // Delete record
-                            $fileRecord->delete();
-                        }
-                    }
+                    $this->mediaService->deleteFiles($request->input('deleted_file_ids'), (int) $pledge->id);
                 }
 
                 // Handle uploaded files (append) - Handle 'files[]' array notation from frontend
-                $uploadedFiles = [];
-
-                // Check for indexed files (files.0, files.1, etc.) - handles files[] array notation
-                $index = 0;
-                while ($request->hasFile("files.{$index}")) {
-                    $uploadedFiles[] = $request->file("files.{$index}");
-                    $index++;
-                }
-
-                // Fallback: Check for single 'files' key (in case it's sent differently)
-                if (empty($uploadedFiles) && $request->hasFile('files')) {
-                    $file = $request->file('files');
-                    // Handle both single file and array of files
-                    if (is_array($file)) {
-                        $uploadedFiles = $file;
-                    } else {
-                        $uploadedFiles = [$file];
-                    }
-                }
-
-                // Get categories array
+                // PledgeController::store logic is standard, we reuse the service here.
+                // We must grab files correctly. $request->file('files') should work for both standard and array notation if configured correctly,
+                // But for form-data with _method=PUT, PHP parsing can be tricky.
+                // Using the unified service which normalizes input.
+                
+                $uploadedFiles = $request->file('files');
                 $categories = $request->input('categories', []);
+                
+                // Current Loan No
+                $currentLoanNo = $pledge->loan ? $pledge->loan->loan_no : ($data['loan']['loan_no'] ?? 'NoLoan');
 
-                // Process uploaded files
-                foreach ($uploadedFiles as $index => $file) {
-                    $timestamp = now()->format('Ymd_His');
-                    $currentLoanNo = $pledge->loan ? $pledge->loan->loan_no : ($data['loan']['loan_no'] ?? 'NoLoan');
-                    $loanNoSafe = preg_replace('/[^A-Za-z0-9\-]/', '', $currentLoanNo);
-
-                    // Determine category
-                    $category = $categories[$index] ?? 'uploaded_file';
-
-                    $extension = $file->getClientOriginalExtension();
-                    $filename = "{$loanNoSafe}_{$category}_{$timestamp}_" . uniqid() . ".{$extension}";
-
-                    $path = $file->storeAs('pledge_media', $filename, 'public');
-
-                    MediaFile::create([
+                $this->mediaService->handleUploads(
+                    $uploadedFiles,
+                    [
                         'customer_id' => $pledge->customer_id,
                         'pledge_id' => $pledge->id,
-                        'loan_id' => $pledge->loan?->id,
-                        'jewel_id' => null,
-                        'type' => explode('/', $file->getClientMimeType())[0] ?? 'file',
-                        'category' => $category,
-                        'file_path' => $path,
-                        'mime_type' => $file->getClientMimeType(),
-                        'size' => $file->getSize(),
-                    ]);
-                }
+                        'loan_id' => $pledge->loan?->id
+                    ],
+                    $categories,
+                    $currentLoanNo
+                );
 
                 return response()->json([
                     'message' => 'Pledge updated successfully',
