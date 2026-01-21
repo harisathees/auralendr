@@ -103,7 +103,7 @@ class PledgeController extends Controller
      * POST /api/pledges
      * Create a full pledge (customer, pledge, jewels, loan, media)
      */
-    public function store(StorePledgeRequest $request)
+    public function store(Request $request)
     {
         // Guard against empty POST (usually file size limit exceeded)
         if (empty($request->all()) && empty($request->allFiles())) {
