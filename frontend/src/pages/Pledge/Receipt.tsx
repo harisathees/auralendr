@@ -126,12 +126,17 @@ const Receipt = () => {
                     silverRate: loan?.silver_rate ?? rates.silverRate,
                     ID: customer?.id_proof_number || customer?.id_proof || 'N/A',
 
+
                     // NEW: Raw nested data for DynamicReceipt
                     pledge: pledge,
                     customer: customer,
                     loan: loan,
                     jewels: pledge.jewels,
-                    brand: brand // Pass brand settings
+                    brand: brand, // Pass brand settings
+
+                    // Pass specific media objects for secure loading
+                    customerMedia: customerMedia,
+                    jewelMedia: jewelMedia
                 });
             } catch (err) {
                 console.error("Error fetching data:", err);
@@ -155,11 +160,26 @@ const Receipt = () => {
     useEffect(() => {
         if (!data) return;
 
-        const loadToDataUrl = async (url: string): Promise<string> => {
+        const loadToDataUrl = async (url: string | null): Promise<string> => {
             if (!url) return '';
             try {
-                const response = await fetch(url);
-                const blob = await response.blob();
+                // Determine if we need to use the authenticated API client or standard fetch
+                // If the URL is our secure API endpoint (starts with /api), use 'api' client to send auth headers.
+                // If it's a static asset (like bg1), use standard fetch.
+
+                let blob: Blob;
+
+                if (url.startsWith('/api/')) {
+                    // Use axios instance which has the interceptors for Auth Token
+                    const response = await api.get(url, { responseType: 'blob' });
+                    blob = response.data;
+                } else {
+                    // Static asset or external URL
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`Fetch failed: ${response.statusText}`);
+                    blob = await response.blob();
+                }
+
                 return new Promise((resolve) => {
                     const reader = new FileReader();
                     reader.onloadend = () => resolve(reader.result as string);
@@ -171,12 +191,32 @@ const Receipt = () => {
             }
         };
 
+        // Helper to get Secure URL or fallback
+        const getSecureUrl = (mediaObj: any, fallbackUrl: string | null) => {
+            if (mediaObj && mediaObj.id) {
+                // Use the secure backend endpoint which validates auth and serves the file
+                // We don't need a full URL here if we are using our axios/fetch relative to API
+                // But since we use fetch() in loadToDataUrl, we need to be careful with base URL.
+                // However, loadToDataUrl uses the 'api' client approach or we construct full URL.
+                // Ideally, we just return the endpoint path.
+                return `/api/media/${mediaObj.id}/stream`;
+            }
+            return fallbackUrl;
+        };
+
         const loadAll = async () => {
+            // Prioritize MediaService objects from data
+            const cUrl = getSecureUrl(data.customerMedia, data.customerImage);
+            const jUrl = getSecureUrl(data.jewelMedia, data.jewelImage);
+
+            // Backgrounds are static assets (public folder), so they are fine as is.
+            // Customer/Jewel images need the secure stream if they are from MediaService.
+
             const [b1, b2, c, j] = await Promise.all([
                 loadToDataUrl(bg1),
                 loadToDataUrl(bg2),
-                loadToDataUrl(data.customerImage),
-                loadToDataUrl(data.jewelImage)
+                loadToDataUrl(cUrl),
+                loadToDataUrl(jUrl)
             ]);
             setLoadedImages({ bg1: b1, bg2: b2, customer: c, jewel: j });
         };

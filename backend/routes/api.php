@@ -136,4 +136,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     // Staff Task Routes
     Route::get('/my-tasks', [TaskController::class, 'myTasks']);
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus']);
+
+    // Secure Media Serving
+    Route::get('/media/{mediaFile}/stream', [App\Http\Controllers\Api\V1\MediaController::class, 'stream']);
 });
