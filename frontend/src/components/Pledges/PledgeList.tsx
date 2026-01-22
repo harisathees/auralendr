@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Search, X, SlidersHorizontal, Lock, Banknote, PlusCircle, CheckCircle } from "lucide-react";
 import { useRepledge } from "../../hooks/useRepledge";
 import { useAuth } from "../../context/Auth/AuthContext";
+import SecureImage from "../Shared/SecureImage";
 
 import type { Pledge } from "../../types/models";
 
@@ -174,10 +175,11 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
                       >
                         <div className="flex items-start gap-4">
                           <div className="relative">
-                            <img
-                              onClick={(e) => { e.stopPropagation(); navigate(`/pledges/${p.id}`); }}
+                            <SecureImage
+                              onClick={(e: React.MouseEvent) => { e.stopPropagation(); navigate(`/pledges/${p.id}`); }}
                               className="w-14 h-14 rounded-2xl object-cover border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
-                              src={fixImageUrl(p.media?.find((m: any) => m.category === 'customer_image')?.url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
+                              mediaId={p.media?.find((m: any) => m.category === 'customer_image')?.id}
+                              fallbackSrc={fixImageUrl(p.media?.find((m: any) => m.category === 'customer_image')?.url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
                               alt=""
                             />
                             <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-[#1A1D1F] ${p.status === 'closed' ? 'bg-rose-500' : 'bg-primary'}`} />

@@ -24,24 +24,38 @@ interface MediaDisplayProps {
   mediaItem?: any;
 }
 
+import SecureImage from "../Shared/SecureImage";
+
 const MediaDisplay: React.FC<MediaDisplayProps> = ({ label, icon, mediaItem }) => {
-  const url = useMemo(() => {
-    if (!mediaItem?.url) return null;
-    if (mediaItem.url.startsWith('http://localhost/') && !mediaItem.url.includes(':8000')) {
-      return mediaItem.url.replace('http://localhost/', 'http://localhost:8000/');
+  const hasMedia = mediaItem?.id || mediaItem?.url || mediaItem?.file_path;
+
+  // Fallback URL Construction (Legacy)
+  const legacyUrl = useMemo(() => {
+    if (!mediaItem?.url && !mediaItem?.file_path) return null;
+    let src = mediaItem?.url;
+    if (!src && mediaItem?.file_path) {
+      src = `${import.meta.env.VITE_API_BASE_URL}/storage/${mediaItem.file_path.replace('public/', '')}`;
     }
-    return mediaItem.url;
+    if (src && src.startsWith('http://localhost/') && !src.includes(':8000')) {
+      return src.replace('http://localhost/', 'http://localhost:8000/');
+    }
+    return src;
   }, [mediaItem]);
 
   return (
     <div className="flex flex-col gap-2 h-full">
       <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 flex flex-col items-center justify-center gap-3 border border-dashed border-gray-300 dark:border-gray-700 flex-1 min-h-[140px] relative overflow-hidden">
-        {url ? (
-          mediaItem.type === 'image' || mediaItem.mime_type?.startsWith('image/') ? (
-            <img src={url} alt={label} className="w-full h-full object-cover rounded-lg" />
+        {hasMedia ? (
+          mediaItem.type === 'image' || mediaItem.mime_type?.startsWith('image/') || !mediaItem.type ? (
+            <SecureImage
+              mediaId={mediaItem.id}
+              fallbackSrc={legacyUrl}
+              alt={label}
+              className="w-full h-full object-cover rounded-lg"
+            />
           ) : (
             <div className="flex flex-col items-center justify-center w-full">
-              <audio controls src={url} className="w-full max-w-[200px]" />
+              <audio controls src={legacyUrl || ""} className="w-full max-w-[200px]" />
             </div>
           )
         ) : (
@@ -60,7 +74,6 @@ const MediaDisplay: React.FC<MediaDisplayProps> = ({ label, icon, mediaItem }) =
     </div>
   );
 };
-
 interface Props {
   data: any;
 }
