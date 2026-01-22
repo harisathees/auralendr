@@ -1,5 +1,8 @@
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import SecureAudio from "../Shared/AudioAndImageFetch/SecureAudio";
+import SecureImage from "../Shared/AudioAndImageFetch/SecureImage";
+import CommunicationButtons from "../Shared/WhatsappAndSms/CommunicationButtons";
 
 // --- Helper Components ---
 
@@ -24,7 +27,6 @@ interface MediaDisplayProps {
   mediaItem?: any;
 }
 
-import SecureImage from "../Shared/SecureImage";
 
 const MediaDisplay: React.FC<MediaDisplayProps> = ({ label, icon, mediaItem }) => {
   const hasMedia = mediaItem?.id || mediaItem?.url || mediaItem?.file_path;
@@ -55,7 +57,11 @@ const MediaDisplay: React.FC<MediaDisplayProps> = ({ label, icon, mediaItem }) =
             />
           ) : (
             <div className="flex flex-col items-center justify-center w-full">
-              <audio controls src={legacyUrl || ""} className="w-full max-w-[200px]" />
+              <SecureAudio
+                mediaId={mediaItem.id}
+                fallbackSrc={legacyUrl}
+                className="w-full max-w-[200px]"
+              />
             </div>
           )
         ) : (
@@ -341,13 +347,18 @@ const PledgeView: React.FC<Props> = ({ data }) => {
             </section>
 
             <div className="flex justify-center py-8">
-              <button
-                onClick={() => navigate(`/pledges/${data.id}/edit`)}
-                className="flex items-center gap-2.5 px-8 py-3 bg-primary text-white rounded-full font-bold text-sm hover:bg-primary-dark transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
-              >
-                <span className="material-symbols-outlined text-[20px]">edit_square</span>
-                <span>Edit Pledge Details</span>
-              </button>
+              <div className="w-full max-w-sm flex flex-col gap-4">
+                <CommunicationButtons
+                  pledge={data}
+                />
+                <button
+                  onClick={() => navigate(`/pledges/${data.id}/edit`)}
+                  className="flex w-full items-center justify-center gap-2.5 px-8 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-dark transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  <span className="material-symbols-outlined text-[20px]">edit_square</span>
+                  <span>Edit Pledge Details</span>
+                </button>
+              </div>
             </div>
           </>
         )}

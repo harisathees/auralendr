@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../api/apiClient';
+import api from '../../../api/apiClient';
 
-interface SecureImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface SecureAudioProps extends React.AudioHTMLAttributes<HTMLAudioElement> {
     mediaId?: number | null;
     fallbackSrc?: string | null;
 }
 
-const SecureImage: React.FC<SecureImageProps> = ({
+const SecureAudio: React.FC<SecureAudioProps> = ({
     mediaId,
     fallbackSrc,
     className,
-    alt,
     ...props
 }) => {
-    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [audioUrl, setAudioUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<boolean>(false);
 
@@ -35,29 +34,19 @@ const SecureImage: React.FC<SecureImageProps> = ({
 
                         if (active) {
                             objectUrl = URL.createObjectURL(response.data);
-                            setImageUrl(objectUrl);
+                            setAudioUrl(objectUrl);
                             setLoading(false);
                         }
                         return;
                     } catch (e) {
-                        console.warn(`Secure load failed for media ${mediaId}, falling back...`, e);
-                        // Fall through to fallbackSrc
+                        console.warn(`Secure load failed for audio ${mediaId}, falling back...`, e);
                     }
                 }
 
                 // Strategy 2: If no mediaId or secure fetch failed, use fallbackSrc
                 if (fallbackSrc) {
-                    // If fallbackSrc is a relative API path but not /stream, we might need to fetch it too
-                    // Use a simple image load check
-                    const img = new Image();
-                    img.src = fallbackSrc;
-                    await new Promise((resolve, reject) => {
-                        img.onload = resolve;
-                        img.onerror = reject;
-                    });
-
                     if (active) {
-                        setImageUrl(fallbackSrc);
+                        setAudioUrl(fallbackSrc);
                         setLoading(false);
                     }
                 } else {
@@ -66,7 +55,7 @@ const SecureImage: React.FC<SecureImageProps> = ({
 
             } catch (err) {
                 if (active) {
-                    console.error("Image load failed", err);
+                    console.error("Audio load failed", err);
                     setError(true);
                     setLoading(false);
                 }
@@ -85,29 +74,30 @@ const SecureImage: React.FC<SecureImageProps> = ({
 
     if (loading) {
         return (
-            <div className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 animate-pulse ${className}`} style={{ minHeight: '100px' }}>
-                <span className="material-symbols-outlined text-gray-400 animate-spin">progress_activity</span>
+            <div className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg p-2 ${className}`}>
+                <span className="material-symbols-outlined text-gray-400 animate-spin text-sm">progress_activity</span>
+                <span className="text-xs text-gray-500 ml-2">Loading Audio...</span>
             </div>
         );
     }
 
-    if (error || !imageUrl) {
+    if (error || !audioUrl) {
         return (
-            <div className={`flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400 ${className}`} style={{ minHeight: '100px' }}>
-                <span className="material-symbols-outlined text-3xl opacity-50">broken_image</span>
-                <span className="text-[10px] mt-1">Failed to load</span>
+            <div className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg p-2 text-gray-400 ${className}`}>
+                <span className="material-symbols-outlined text-sm opacity-50">broken_image</span>
+                <span className="text-xs ml-2">Audio unavailable</span>
             </div>
         );
     }
 
     return (
-        <img
-            src={imageUrl}
-            alt={alt || "Secure Image"}
+        <audio
+            controls
+            src={audioUrl}
             className={className}
             {...props}
         />
     );
 };
 
-export default SecureImage;
+export default SecureAudio;

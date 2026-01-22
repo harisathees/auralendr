@@ -2,9 +2,10 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import api from "../../api/apiClient";
 import { AudioRecorder } from "../../components/AudioCamera/AudioRecorder";
 import { CameraCapture } from "../../components/AudioCamera/CameraCapture";
-
 import { useAuth } from "../../context/Auth/AuthContext";
 import { compressImage } from "../../utils/imageCompression";
+import SecureImage from "../Shared/AudioAndImageFetch/SecureImage";
+import SecureAudio from "../Shared/AudioAndImageFetch/SecureAudio";
 
 // --- UI Components from Create.tsx ---
 
@@ -43,11 +44,12 @@ interface MediaUploadBlockProps {
   isAudio?: boolean;
   file?: File | null;
   existingUrl?: string | null;
+  mediaId?: number | null;
   onRemove?: () => void;
 }
 
 const MediaUploadBlock: React.FC<MediaUploadBlockProps> = ({
-  label, icon, onCamera, onGallery, onRecord, onUpload, isAudio = false, file, existingUrl, onRemove
+  label, icon, onCamera, onGallery, onRecord, onUpload, isAudio = false, file, existingUrl, mediaId, onRemove
 }) => {
   return (
     <div className="flex flex-col gap-2 h-full">
@@ -66,12 +68,23 @@ const MediaUploadBlock: React.FC<MediaUploadBlockProps> = ({
             </button>
             <span className="text-xs text-gray-500 mt-2 truncate w-full text-center px-2">{file.name}</span>
           </div>
-        ) : existingUrl ? (
+        ) : existingUrl || mediaId ? (
           <div className="flex flex-col items-center justify-center w-full h-full">
             {isAudio ? (
-              <div className="text-xs text-gray-500">Audio Preview Not Supported for URL</div>
+              <div className="w-full flex justify-center">
+                <SecureAudio
+                  mediaId={mediaId}
+                  fallbackSrc={existingUrl}
+                  className="w-full max-w-[200px]"
+                />
+              </div>
             ) : (
-              <img src={existingUrl} alt="existing" className="w-full h-full object-cover rounded-lg" />
+              <SecureImage
+                mediaId={mediaId}
+                fallbackSrc={existingUrl}
+                alt="existing"
+                className="w-full h-full object-cover rounded-lg"
+              />
             )}
             <button onClick={onRemove} type="button" className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 z-10 hover:bg-red-600">
               <span className="material-symbols-outlined text-sm">close</span>
@@ -731,6 +744,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
                 icon="upload_file"
                 file={docFile}
                 existingUrl={fetchedDocUrl ? (fetchedDocUrl.startsWith('http://localhost/') && !fetchedDocUrl.includes(':8000') ? fetchedDocUrl.replace('http://localhost/', 'http://localhost:8000/') : fetchedDocUrl) : (existingDoc?.url ? (existingDoc.url.startsWith('http://localhost/') && !existingDoc.url.includes(':8000') ? existingDoc.url.replace('http://localhost/', 'http://localhost:8000/') : existingDoc.url) : null)}
+                mediaId={existingDoc?.id}
                 onRemove={() => {
                   if (existingDoc) removeExistingFile(existingDoc.id);
                   setDocFile(null);
@@ -888,6 +902,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
               icon="add_a_photo"
               file={jewelFile}
               existingUrl={existingJewelImage?.url ? (existingJewelImage.url.startsWith('http://localhost/') && !existingJewelImage.url.includes(':8000') ? existingJewelImage.url.replace('http://localhost/', 'http://localhost:8000/') : existingJewelImage.url) : null}
+              mediaId={existingJewelImage?.id}
               onRemove={() => {
                 if (existingJewelImage) removeExistingFile(existingJewelImage.id);
                 setJewelFile(null);
@@ -934,6 +949,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
               isAudio={true}
               file={evidenceFile}
               existingUrl={existingEvidence?.url ? (existingEvidence.url.startsWith('http://localhost/') && !existingEvidence.url.includes(':8000') ? existingEvidence.url.replace('http://localhost/', 'http://localhost:8000/') : existingEvidence.url) : null}
+              mediaId={existingEvidence?.id}
               onRemove={() => {
                 if (existingEvidence) removeExistingFile(existingEvidence.id);
                 setEvidenceFile(null);
@@ -946,6 +962,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
               icon="account_box"
               file={customerImageFile}
               existingUrl={existingCustomerImage?.url ? (existingCustomerImage.url.startsWith('http://localhost/') && !existingCustomerImage.url.includes(':8000') ? existingCustomerImage.url.replace('http://localhost/', 'http://localhost:8000/') : existingCustomerImage.url) : null}
+              mediaId={existingCustomerImage?.id}
               onRemove={() => {
                 if (existingCustomerImage) removeExistingFile(existingCustomerImage.id);
                 setCustomerImageFile(null);
@@ -1081,7 +1098,12 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
                       className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-red-600 z-10"
                     >&times;</button>
                     {f.type === 'image' ? (
-                      <img src={f.url && f.url.startsWith('http://localhost/') && !f.url.includes(':8000') ? f.url.replace('http://localhost/', 'http://localhost:8000/') : f.url} alt="existing" className="w-full h-full object-cover" />
+                      <SecureImage
+                        mediaId={f.id}
+                        fallbackSrc={f.url && f.url.startsWith('http://localhost/') && !f.url.includes(':8000') ? f.url.replace('http://localhost/', 'http://localhost:8000/') : f.url}
+                        alt="existing"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-400">
                         <span className="material-symbols-outlined text-4xl">audiotrack</span>

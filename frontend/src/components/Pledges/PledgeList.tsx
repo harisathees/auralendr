@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Search, X, SlidersHorizontal, Lock, Banknote, PlusCircle, CheckCircle } from "lucide-react";
 import { useRepledge } from "../../hooks/useRepledge";
 import { useAuth } from "../../context/Auth/AuthContext";
-import SecureImage from "../Shared/SecureImage";
+import SecureImage from "../Shared/AudioAndImageFetch/SecureImage";
+import CommunicationButtons from "../Shared/WhatsappAndSms/CommunicationButtons";
 
 import type { Pledge } from "../../types/models";
 
@@ -214,37 +215,41 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="overflow-hidden">
-                            <div className={`pt-4 mt-4 border-t border-gray-100 dark:border-gray-800 grid grid-cols-3 gap-2 ${expandedPledgeId === p.id ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+                            <div className={`pt-4 mt-4 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-3 ${expandedPledgeId === p.id ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
                               } transition-all duration-300`}>
-                              {p.status === 'closed' ? (
-                                Number(p.closure?.balance_amount) > 0 && (
-                                  <button
-                                    onClick={() => navigate(`/transactions/create?amount=${p.closure?.balance_amount}&description=Balance payment for Loan ${p.loan?.loan_no}&type=credit&pledgeId=${p.id}`)}
-                                    className="col-span-3 h-11 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
-                                  >
-                                    <Banknote size={16} />
-                                    Pay Balance (₹{p.closure?.balance_amount})
-                                  </button>
-                                )
-                              ) : (
-                                <>
-                                  <button className="h-11 flex flex-col items-center justify-center bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 transition-colors border border-blue-100 dark:border-blue-800/50">
-                                    <Banknote size={16} />
-                                    <span className="text-[9px] font-black uppercase mt-0.5">Partial</span>
-                                  </button>
-                                  <button className="h-11 flex flex-col items-center justify-center bg-amber-50 dark:bg-amber-900/10 text-amber-600 dark:text-amber-400 rounded-xl hover:bg-amber-100 transition-colors border border-amber-100 dark:border-amber-800/50">
-                                    <PlusCircle size={16} />
-                                    <span className="text-[9px] font-black uppercase mt-0.5">Top-up</span>
-                                  </button>
-                                  <button
-                                    onClick={() => navigate(`/pledges/${p.id}/close`)}
-                                    className="h-11 flex flex-col items-center justify-center bg-rose-50 dark:bg-rose-900/10 text-rose-600 dark:text-rose-400 rounded-xl hover:bg-rose-100 transition-colors border border-rose-100 dark:border-rose-800/50"
-                                  >
-                                    <CheckCircle size={16} />
-                                    <span className="text-[9px] font-black uppercase mt-0.5">Close</span>
-                                  </button>
-                                </>
-                              )}
+
+                              <div className="grid grid-cols-3 gap-2">
+                                {p.status === 'closed' ? (
+                                  Number(p.closure?.balance_amount) > 0 && (
+                                    <button
+                                      onClick={() => navigate(`/transactions/create?amount=${p.closure?.balance_amount}&description=Balance payment for Loan ${p.loan?.loan_no}&type=credit&pledgeId=${p.id}`)}
+                                      className="col-span-3 h-11 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+                                    >
+                                      <Banknote size={16} />
+                                      Pay Balance (₹{p.closure?.balance_amount})
+                                    </button>
+                                  )
+                                ) : (
+                                  <>
+                                    <button className="h-11 flex flex-col items-center justify-center bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 transition-colors border border-blue-100 dark:border-blue-800/50">
+                                      <Banknote size={16} />
+                                      <span className="text-[9px] font-black uppercase mt-0.5">Partial</span>
+                                    </button>
+                                    <button className="h-11 flex flex-col items-center justify-center bg-amber-50 dark:bg-amber-900/10 text-amber-600 dark:text-amber-400 rounded-xl hover:bg-amber-100 transition-colors border border-amber-100 dark:border-amber-800/50">
+                                      <PlusCircle size={16} />
+                                      <span className="text-[9px] font-black uppercase mt-0.5">Top-up</span>
+                                    </button>
+                                    <button
+                                      onClick={() => navigate(`/pledges/${p.id}/close`)}
+                                      className="h-11 flex flex-col items-center justify-center bg-rose-50 dark:bg-rose-900/10 text-rose-600 dark:text-rose-400 rounded-xl hover:bg-rose-100 transition-colors border border-rose-100 dark:border-rose-800/50"
+                                    >
+                                      <CheckCircle size={16} />
+                                      <span className="text-[9px] font-black uppercase mt-0.5">Close</span>
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                              <CommunicationButtons pledge={p} className="w-full" />
                             </div>
                           </div>
                         </div>
