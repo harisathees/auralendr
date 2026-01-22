@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, X, SlidersHorizontal, Lock, Banknote, PlusCircle, CheckCircle } from "lucide-react";
+import { Search, X, SlidersHorizontal, Lock, Banknote, PlusCircle, CheckCircle, ChevronDown } from "lucide-react";
 import { useRepledge } from "../../hooks/useRepledge";
 import { useAuth } from "../../context/Auth/AuthContext";
 import SecureImage from "../Shared/AudioAndImageFetch/SecureImage";
@@ -204,7 +204,10 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
                               <span className="opacity-30">•</span>
                               <span>{p.loan?.date ? new Date(p.loan.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'No Date'}</span>
                             </p>
+                          </div>
 
+                          <div className={`mt-2 text-gray-400 transition-transform duration-300 ${expandedPledgeId === p.id ? 'rotate-180' : ''}`}>
+                            <ChevronDown size={20} />
                           </div>
                         </div>
 

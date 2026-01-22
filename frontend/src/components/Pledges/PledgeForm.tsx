@@ -274,7 +274,10 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
   const [jewelNames, setJewelNames] = useState<{ id: number; name: string }[]>([]);
   const [activeSearchJewelIndex, setActiveSearchJewelIndex] = useState<number | null>(null);
 
-  // Hidden File Inputs for triggering system dialogs
+  // Validation State
+  const [mobileError, setMobileError] = useState<boolean>(false);
+  const [whatsappError, setWhatsappError] = useState<boolean>(false);
+
   const docInputRef = useRef<HTMLInputElement>(null);
   const jewelInputRef = useRef<HTMLInputElement>(null);
   const evidenceInputRef = useRef<HTMLInputElement>(null);
@@ -635,17 +638,27 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
 
           <label className="flex flex-col gap-1.5 z-40">
             <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Mobile No <span className="text-red-500">*</span></span>
-            <div className="relative">
+            <div className={`relative flex items-center rounded-lg border bg-white dark:bg-gray-800 transition-all ${mobileError ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300 dark:border-gray-600 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary'
+              }`}>
+              <span className="pl-3 pr-2 text-gray-500 dark:text-gray-400 text-sm font-medium border-r border-gray-200 dark:border-gray-700 select-none">+91</span>
               <input
                 value={customer.mobile_no}
                 onChange={e => {
-                  setCustomer({ ...customer, mobile_no: e.target.value });
-                  searchCustomer(e.target.value, 'mobile');
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  setCustomer({ ...customer, mobile_no: val });
+                  setMobileError(val.length > 0 && val.length < 10);
+                  searchCustomer(val, 'mobile');
                 }}
-                onBlur={clearSuggestions}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400"
-                placeholder="Enter mobile number" type="tel" required
+                onBlur={() => {
+                  clearSuggestions();
+                  setMobileError(customer.mobile_no.length > 0 && customer.mobile_no.length < 10);
+                }}
+                className="w-full h-12 px-3 bg-transparent outline-none text-gray-900 dark:text-white placeholder:text-gray-400"
+                placeholder="Enter 10-digit number" type="tel" required
               />
+              {mobileError && (
+                <span className="material-symbols-outlined text-red-500 text-lg pr-3 animate-in zoom-in">error</span>
+              )}
               {activeSearchField === 'mobile' && customerSuggestions.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto no-scrollbar z-50">
                   {customerSuggestions.map(c => (
@@ -660,17 +673,27 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
 
           <label className="flex flex-col gap-1.5 z-30">
             <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Whatsapp No</span>
-            <div className="relative">
+            <div className={`relative flex items-center rounded-lg border bg-white dark:bg-gray-800 transition-all ${whatsappError ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300 dark:border-gray-600 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary'
+              }`}>
+              <span className="pl-3 pr-2 text-gray-500 dark:text-gray-400 text-sm font-medium border-r border-gray-200 dark:border-gray-700 select-none">+91</span>
               <input
                 value={customer.whatsapp_no}
                 onChange={e => {
-                  setCustomer({ ...customer, whatsapp_no: e.target.value });
-                  searchCustomer(e.target.value, 'whatsapp');
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  setCustomer({ ...customer, whatsapp_no: val });
+                  setWhatsappError(val.length > 0 && val.length < 10);
+                  searchCustomer(val, 'whatsapp');
                 }}
-                onBlur={clearSuggestions}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400"
-                placeholder="Enter whatsapp number" type="tel"
+                onBlur={() => {
+                  clearSuggestions();
+                  setWhatsappError(customer.whatsapp_no.length > 0 && customer.whatsapp_no.length < 10);
+                }}
+                className="w-full h-12 px-3 bg-transparent outline-none text-gray-900 dark:text-white placeholder:text-gray-400"
+                placeholder="Enter 10-digit number" type="tel"
               />
+              {whatsappError && (
+                <span className="material-symbols-outlined text-red-500 text-lg pr-3 animate-in zoom-in">error</span>
+              )}
               {activeSearchField === 'whatsapp' && customerSuggestions.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto no-scrollbar z-50">
                   {customerSuggestions.map(c => (

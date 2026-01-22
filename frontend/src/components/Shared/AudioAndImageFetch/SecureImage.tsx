@@ -86,7 +86,7 @@ const SecureImage: React.FC<SecureImageProps> = ({
     if (loading) {
         return (
             <div className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 animate-pulse ${className}`} style={{ minHeight: '100px' }}>
-                <span className="material-symbols-outlined text-gray-400 animate-spin">progress_activity</span>
+                <span className="material-symbols-outlined text-gray-400 animate-spin">.</span>
             </div>
         );
     }
