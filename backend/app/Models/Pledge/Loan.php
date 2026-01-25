@@ -24,6 +24,7 @@ class Loan extends Model
         'include_processing_fee',
         'interest_taken',
         'amount_to_be_given',
+        'calculation_method',
         'metal_rate',
         'status'
     ];
