@@ -1,5 +1,5 @@
 import React, { lazy } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams, useNavigate } from "react-router-dom";
 import ProtectedRoute from "../pages/Auth/Guards/ProtectedRoute";
 import PublicRoute from "../pages/Auth/Guards/PublicRoute";
 import Login from "../pages/Auth/Login/Login";
@@ -56,6 +56,7 @@ const JewelNameForm = lazy(() => import("../pages/Admin/JewelManagement/JewelNam
 const InterestRateForm = lazy(() => import("../pages/Admin/LoanConfiguration/InterestRateForm"));
 const ValidityPeriodForm = lazy(() => import("../pages/Admin/LoanConfiguration/LoanValidityForm"));
 const RolesIndex = lazy(() => import("../pages/Developer/index"));
+const CustomerAppControl = lazy(() => import("../pages/Developer/CustomerAppControl"));
 
 // Organization Configurations
 const PledgeClosingCalculations = lazy(() => import("../pages/Admin/LoanConfiguration/Calculations/PledgeClosingCalculations"));
@@ -63,6 +64,22 @@ const RepledgeClosingCalculations = lazy(() => import("../pages/Admin/LoanConfig
 const RepledgeProcessingFees = lazy(() => import("../pages/Admin/LoanConfiguration/Calculations/RepledgeProcessingFees"));
 
 const TransactionCategories = lazy(() => import("../pages/Admin/Finance/TransactionCategories"));
+
+const RedirectWithState = ({ to, param }: { to: string, param: string }) => {
+  const params = useParams();
+  const navigate = useNavigate();
+  const value = params[param];
+
+  React.useEffect(() => {
+    if (value) {
+      navigate(to, { replace: true, state: { [param]: value } });
+    } else {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [value, navigate, to, param]);
+
+  return null;
+};
 
 const AppRoutes: React.FC = () => {
   return (
@@ -93,19 +110,32 @@ const AppRoutes: React.FC = () => {
         {/* Repledge Routes */}
         <Route path="/pledges" element={<List />} />
         <Route path="/pledges/create" element={<Create />} />
-        <Route path="/pledges/:id/edit" element={<Edit />} />
-        <Route path="/pledges/:id/receipt" element={<Receipt />} />
-        <Route path="/pledges/:id" element={<View />} />
-        <Route path="/pledges/:loanId/close" element={<ClosePledge />} />
+
+        {/* URL Obfuscation: Generic Routes */}
+        <Route path="/pledges/edit" element={<Edit />} />
+        <Route path="/pledges/view" element={<View />} />
+        <Route path="/pledges/receipt" element={<Receipt />} />
+        <Route path="/pledges/close" element={<ClosePledge />} />
+
+        {/* Redirect Routes (Capture ID -> Redirect to Generic) */}
+        <Route path="/pledges/:id/edit" element={<RedirectWithState to="/pledges/edit" param="id" />} />
+        <Route path="/pledges/:id/receipt" element={<RedirectWithState to="/pledges/receipt" param="id" />} />
+        <Route path="/pledges/:id" element={<RedirectWithState to="/pledges/view" param="id" />} />
+        <Route path="/pledges/:loanId/close" element={<RedirectWithState to="/pledges/close" param="loanId" />} />
 
         {/* Repledge Routes */}
         <Route path="/re-pledge" element={<RepledgeList />} />
         <Route path="/re-pledge/create" element={<RepledgeCreate />} />
-        <Route path="/re-pledge/:id/edit" element={<RepledgeEdit />} />
-        <Route path="/re-pledge/:id" element={<RepledgeView />} />
-        <Route path="/re-pledge/:id/close" element={<CloseRepledge />} />
 
-        {/* Placeholder Routes for Staff Navigation */}
+        {/* Generic Routes */}
+        <Route path="/re-pledge/edit" element={<RepledgeEdit />} />
+        <Route path="/re-pledge/view" element={<RepledgeView />} />
+        <Route path="/re-pledge/close" element={<CloseRepledge />} />
+
+        {/* Redirect Routes */}
+        <Route path="/re-pledge/:id/edit" element={<RedirectWithState to="/re-pledge/edit" param="id" />} />
+        <Route path="/re-pledge/:id" element={<RedirectWithState to="/re-pledge/view" param="id" />} />
+        <Route path="/re-pledge/:id/close" element={<RedirectWithState to="/re-pledge/close" param="id" />} />
 
         {/* Placeholder Routes for Staff Navigation */}
         <Route path="/notices" element={<Notices />} />
@@ -125,13 +155,22 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/dashboard" element={<Dashboard />} />
         <Route path="/admin/configs/branches" element={<BranchList />} />
         <Route path="/admin/configs/branches/create" element={<BranchForm />} />
-        <Route path="/admin/configs/branches/edit/:id" element={<BranchForm />} />
+
+        <Route path="/admin/configs/branches/edit" element={<BranchForm />} />
+        <Route path="/admin/configs/branches/edit/:id" element={<RedirectWithState to="/admin/configs/branches/edit" param="id" />} />
+
         <Route path="/admin/configs/users" element={<UsersList />} />
         <Route path="/admin/configs/users/create" element={<UserForm />} />
-        <Route path="/admin/configs/users/edit/:id" element={<UserForm />} />
+
+        <Route path="/admin/configs/users/edit" element={<UserForm />} />
+        <Route path="/admin/configs/users/edit/:id" element={<RedirectWithState to="/admin/configs/users/edit" param="id" />} />
+
         <Route path="/admin/loans" element={<LoansList />} />
         <Route path="/admin/customers" element={<CustomersList />} />
-        <Route path="/admin/pledges/:id" element={<View />} />
+
+        <Route path="/admin/pledges/view" element={<View />} />
+        <Route path="/admin/pledges/:id" element={<RedirectWithState to="/admin/pledges/view" param="id" />} />
+
         <Route path="/admin/cashflow" element={<TransactionHistory />} />
 
         <Route path="/admin/configs" element={<AdminConfigs />} />
@@ -148,28 +187,41 @@ const AppRoutes: React.FC = () => {
         {/* Jewel Types */}
         <Route path="/admin/configs/jewel-types" element={<JewelTypesIndex />} />
         <Route path="/admin/configs/jewel-types/create" element={<JewelTypeForm />} />
-        <Route path="/admin/configs/jewel-types/edit/:id" element={<JewelTypeForm />} />
+
+        <Route path="/admin/configs/jewel-types/edit" element={<JewelTypeForm />} />
+        <Route path="/admin/configs/jewel-types/edit/:id" element={<RedirectWithState to="/admin/configs/jewel-types/edit" param="id" />} />
 
         {/* Jewel Qualities */}
         <Route path="/admin/configs/jewel-qualities" element={<JewelQualitiesIndex />} />
         <Route path="/admin/configs/jewel-qualities/create" element={<JewelQualityForm />} />
-        <Route path="/admin/configs/jewel-qualities/edit/:id" element={<JewelQualityForm />} />
+
+        <Route path="/admin/configs/jewel-qualities/edit" element={<JewelQualityForm />} />
+        <Route path="/admin/configs/jewel-qualities/edit/:id" element={<RedirectWithState to="/admin/configs/jewel-qualities/edit" param="id" />} />
 
         {/* Jewel Names */}
         <Route path="/admin/configs/jewel-names" element={<JewelNamesIndex />} />
         <Route path="/admin/configs/jewel-names/create" element={<JewelNameForm />} />
-        <Route path="/admin/configs/jewel-names/edit/:id" element={<JewelNameForm />} />
+
+        <Route path="/admin/configs/jewel-names/edit" element={<JewelNameForm />} />
+        <Route path="/admin/configs/jewel-names/edit/:id" element={<RedirectWithState to="/admin/configs/jewel-names/edit" param="id" />} />
+
         <Route path="/admin/configs/interest-settings" element={<InterestSettings />} />
         <Route path="/admin/configs/interest-settings/create" element={<InterestRateForm />} />
-        <Route path="/admin/configs/interest-settings/edit/:id" element={<InterestRateForm />} />
+
+        <Route path="/admin/configs/interest-settings/edit" element={<InterestRateForm />} />
+        <Route path="/admin/configs/interest-settings/edit/:id" element={<RedirectWithState to="/admin/configs/interest-settings/edit" param="id" />} />
+
         <Route path="/admin/configs/validity-periods" element={<ValidityPeriods />} />
         <Route path="/admin/configs/validity-periods/create" element={<ValidityPeriodForm />} />
-        <Route path="/admin/configs/validity-periods/edit/:id" element={<ValidityPeriodForm />} />
+
+        <Route path="/admin/configs/validity-periods/edit" element={<ValidityPeriodForm />} />
+        <Route path="/admin/configs/validity-periods/edit/:id" element={<RedirectWithState to="/admin/configs/validity-periods/edit" param="id" />} />
         <Route path="/admin/configs/processing-fees" element={<ProcessingFees />} />
         <Route path="/admin/configs/repledge-sources" element={<RepledgeSources />} />
 
         {/* Developer - Privileges */}
         <Route path="/admin/configs/roles" element={<RolesIndex />} />
+        <Route path="/admin/developer/customer-app" element={<CustomerAppControl />} />
 
         {/* Organization - Calculations */}
         <Route path="/admin/configs/pledge-closing-calculations" element={<PledgeClosingCalculations />} />

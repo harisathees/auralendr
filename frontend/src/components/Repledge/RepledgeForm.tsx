@@ -27,7 +27,7 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
     useEffect(() => {
         const fetchPaymentMethods = async () => {
             try {
-                const res = await api.get('/api/money-sources');
+                const res = await api.get('/money-sources');
                 setPaymentMethods(res.data || []);
             } catch (e) {
                 console.error("Failed to fetch payment methods", e);
@@ -75,7 +75,7 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
 
         fetchTimeoutRef.current = setTimeout(async () => {
             try {
-                const res = await api.get('/api/pledges', { params: { search: query, suggestions: true } });
+                const res = await api.get('/pledges', { params: { search: query, suggestions: true } });
                 setSuggestions(res.data.data || []);
             } catch (e) {
                 console.error(e);

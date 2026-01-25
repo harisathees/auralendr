@@ -361,7 +361,7 @@ const ReceiptTemplateNew: React.FC = () => {
     useEffect(() => {
         const fetchBrandSettings = async () => {
             try {
-                const response = await apiClient.get('/api/brand-settings');
+                const response = await apiClient.get('/brand-settings');
                 if (response.data) {
                     setBrandData(response.data);
                     // Only overwrite logo if we are creating new (no ID) or if needed?
@@ -385,7 +385,7 @@ const ReceiptTemplateNew: React.FC = () => {
         if (templateId) {
             const fetchTemplate = async () => {
                 try {
-                    const response = await apiClient.get(`/api/receipt-templates/${templateId}`);
+                    const response = await apiClient.get(`/receipt-templates/${templateId}`);
                     const t = response.data;
                     if (t) {
                         setTemplateName(t.name);
@@ -596,11 +596,11 @@ const ReceiptTemplateNew: React.FC = () => {
             console.log("Publishing template:", payload);
 
             if (templateId) {
-                await apiClient.put(`/api/receipt-templates/${templateId}`, payload);
+                await apiClient.put(`/receipt-templates/${templateId}`, payload);
                 toast.success("Template updated successfully!");
                 // Stay on page or navigate? Usually stay for "Save Changes" behavior.
             } else {
-                await apiClient.post("/api/receipt-templates", payload);
+                await apiClient.post("/receipt-templates", payload);
                 toast.success("Template published successfully!");
                 navigate("/admin/configs/templates/receipt"); // Go back to list only on create
             }

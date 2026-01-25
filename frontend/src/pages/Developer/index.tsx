@@ -39,12 +39,14 @@ const RolesIndex: React.FC = () => {
     const [staffTimeRestrictions, setStaffTimeRestrictions] = useState({ start: '09:00', end: '17:00' });
     const [loadingSettings, setLoadingSettings] = useState(false);
 
+
+
     const fetchData = async () => {
         try {
             setLoading(true);
-            const rolesRes = await api.get("/api/roles");
-            const permsRes = await api.get("/api/permissions");
-            const branchesRes = await api.get("/api/branches");
+            const rolesRes = await api.get("/roles");
+            const permsRes = await api.get("/permissions");
+            const branchesRes = await api.get("/branches");
             setRoles(rolesRes.data);
             setAllPermissions(permsRes.data);
             setBranches(branchesRes.data);
@@ -58,7 +60,7 @@ const RolesIndex: React.FC = () => {
 
     const fetchRoleUsers = async () => {
         try {
-            let url = `/api/users-by-role?role=${selectedRoleName}`;
+            let url = `/users-by-role?role=${selectedRoleName}`;
             if (selectedBranchId) {
                 url += `&branch_id=${selectedBranchId}`;
             }
@@ -71,7 +73,7 @@ const RolesIndex: React.FC = () => {
 
     const fetchSettings = async () => {
         try {
-            let url = '/api/settings?group=auth';
+            let url = '/settings?group=auth';
             if (selectedBranchId) {
                 url += `&branch_id=${selectedBranchId}`;
             } else {
@@ -94,7 +96,7 @@ const RolesIndex: React.FC = () => {
         try {
             setLoadingSettings(true);
 
-            await api.post('/api/settings', {
+            await api.post('/settings', {
                 group: 'auth',
                 branch_id: selectedBranchId, // API handles null vs value
                 settings: {
@@ -164,7 +166,7 @@ const RolesIndex: React.FC = () => {
             }
 
             try {
-                const res = await api.put(`/api/users/${user.id}/permissions`, { permissions: newDirect });
+                const res = await api.put(`/users/${user.id}/permissions`, { permissions: newDirect });
                 // Update local state
                 // We rely on 'all_permission_names' from response if available, or calc locally?
                 // The backend response I wrote returns 'all_permission_names'.
@@ -206,7 +208,7 @@ const RolesIndex: React.FC = () => {
         }
 
         try {
-            await api.put(`/api/roles/${role.id}`, { permissions: newPermissions });
+            await api.put(`/roles/${role.id}`, { permissions: newPermissions });
 
             // Optimistic update or refetch
             const updatedRoles = roles.map(r => {
@@ -261,7 +263,7 @@ const RolesIndex: React.FC = () => {
         }
 
         try {
-            await api.put(`/api/roles/${role.id}`, { permissions: newPermissions });
+            await api.put(`/roles/${role.id}`, { permissions: newPermissions });
             fetchData(); // Simplest way to sync everything
             fetchRoleUsers();
             toast.success(`Group permissions ${allEnabled ? 'removed' : 'added'}`);
@@ -351,6 +353,8 @@ const RolesIndex: React.FC = () => {
                     ))}
                 </select>
             </div>
+
+
 
             {/* Permissions Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

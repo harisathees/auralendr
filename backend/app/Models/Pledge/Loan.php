@@ -37,4 +37,9 @@ class Loan extends Model
     {
         return $this->hasMany(MediaFile::class);
     }
+
+    public function customer_loan_track()
+    {
+        return $this->hasOne(\App\Models\CustomerApp\CustomerLoanTrack::class);
+    }
 }

@@ -32,7 +32,7 @@ const TransactionForm = () => {
 
     useEffect(() => {
         // Fetch money sources
-        api.get('/api/money-sources').then(res => {
+        api.get('/money-sources').then(res => {
             if (Array.isArray(res.data)) {
                 setMoneySources(res.data);
                 if (res.data.length > 0) {
@@ -42,7 +42,7 @@ const TransactionForm = () => {
         });
 
         // Fetch categories
-        api.get('/api/transaction-categories').then(res => {
+        api.get('/transaction-categories').then(res => {
             if (Array.isArray(res.data)) {
                 setCategories(res.data);
             }
@@ -82,7 +82,7 @@ const TransactionForm = () => {
 
         setLoading(true);
         try {
-            await api.post('/api/transactions', formData);
+            await api.post('/transactions', formData);
             navigate(-1); // Go back to history
         } catch (error) {
             console.error(error);

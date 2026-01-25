@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import api from "../../api/apiClient";
 import GoldCoinSpinner from "../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
 import { useToast } from "../../context";
@@ -58,8 +58,9 @@ interface Repledge {
 }
 
 const View: React.FC = () => {
-    const { id } = useParams();
+    const location = useLocation();
     const navigate = useNavigate();
+    const id = location.state?.id || useParams().id;
     const { showToast } = useToast();
     const { can } = useAuth();
     const [repledge, setRepledge] = useState<Repledge | null>(null);
@@ -74,9 +75,14 @@ const View: React.FC = () => {
     };
 
     useEffect(() => {
+        if (!id) {
+            navigate("/pledges", { state: { tab: 'repledges' } });
+            return;
+        }
+
         const fetchData = async () => {
             try {
-                const res = await api.get(`/api/repledges/${id}`);
+                const res = await api.get(`/repledges/${id}`);
                 setRepledge(res.data);
             } catch (err: any) {
                 console.error(err);
@@ -124,7 +130,7 @@ const View: React.FC = () => {
                         <button
                             onClick={() => {
                                 if (confirm("Delete this repledge?")) {
-                                    api.delete(`/api/repledges/${id}`).then(() => {
+                                    api.delete(`/repledges/${id}`).then(() => {
                                         showToast("Deleted successfully", "success");
                                         navigate("/pledges", { state: { tab: 'repledges' } });
                                     });

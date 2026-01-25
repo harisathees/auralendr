@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../api/apiClient";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import GoldCoinSpinner from "../../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
 
 const JewelNameForm: React.FC = () => {
-    const { id } = useParams();
+    const location = useLocation();
     const navigate = useNavigate();
+    const id = location.state?.id || useParams().id;
     const isEdit = !!id;
 
     const [name, setName] = useState("");
@@ -16,7 +17,7 @@ const JewelNameForm: React.FC = () => {
     useEffect(() => {
         if (isEdit) {
             setLoading(true);
-            api.get(`/api/jewel-names/${id}`)
+            api.get(`/jewel-names/${id}`)
                 .then((res) => {
                     setName(res.data.name);
                 })
@@ -35,9 +36,9 @@ const JewelNameForm: React.FC = () => {
 
         try {
             if (isEdit) {
-                await api.put(`/api/jewel-names/${id}`, { name });
+                await api.put(`/jewel-names/${id}`, { name });
             } else {
-                await api.post("/api/jewel-names", { name });
+                await api.post("/jewel-names", { name });
             }
             navigate("/admin/configs/jewel-names");
         } catch (err: any) {

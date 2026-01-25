@@ -23,7 +23,7 @@ export const useLoanCalculation = (loanId: string | null) => {
     useEffect(() => {
         const fetchMetadata = async () => {
             try {
-                const res = await api.get('/api/metal-rates');
+                const res = await api.get('/metal-rates');
                 if (Array.isArray(res.data)) {
                     setMetalRates(res.data);
                 }
@@ -41,7 +41,7 @@ export const useLoanCalculation = (loanId: string | null) => {
             setLoading(true);
             setError(null);
             try {
-                const response = await api.get(`/api/pledges/${loanId}`);
+                const response = await api.get(`/pledges/${loanId}`);
 
                 const responseData = response.data;
                 // Check if data is wrapped in 'data' property (Laravel Resource) or returned directly
@@ -79,7 +79,7 @@ export const useLoanCalculation = (loanId: string | null) => {
         if (!loanId) return false;
         setSaving(true);
         try {
-            await api.post(`/api/pledges/${loanId}/close`, {
+            await api.post(`/pledges/${loanId}/close`, {
                 closed_date: toDate,
                 reduction_amount: reductionAmount,
                 calculation_method: method,

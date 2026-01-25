@@ -6,10 +6,10 @@ export const login = async (data: {
   password: string;
 }) => {
   // await csrf(); // 🔐 NOT NEEDED for PAT
-  return api.post("/api/login", data);
+  return api.post("/login", data);
 };
 
-export const logout = () => api.post("/api/logout");
+export const logout = () => api.post("/logout");
 
 
-export const me = () => api.get("/api/me");
+export const me = () => api.get("/me");

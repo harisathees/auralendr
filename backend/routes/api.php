@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\ValidityMonthController;
 use App\Http\Controllers\Api\V1\Admin\DashboardController;
 use App\Http\Controllers\Api\V1\Admin\Configuration\BrandSettingsController;
 use App\Http\Controllers\Api\V1\Admin\Configuration\ReceiptTemplateController;
+use App\Http\Controllers\Api\V2\DeveloperSettingsController;
 
 Route::get('/test', function () {
     return response()->json(['status' => 'API Working']);
@@ -48,6 +49,11 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::get('/roles', [RolePermissionController::class, 'index']);
     Route::get('/permissions', [RolePermissionController::class, 'getPermissions']);
     Route::put('/roles/{role}', [RolePermissionController::class, 'update']);
+    
+
+    // Developer Routes - For Controll CustomerApp
+    Route::get('/developer/settings', [DeveloperSettingsController::class, 'index']);
+    Route::post('/developer/settings', [DeveloperSettingsController::class, 'update']);
 
     // User Permissions - select seperate user for give permissions
     Route::get('/users-by-role', [RolePermissionController::class, 'getUsersByRole']);

@@ -43,7 +43,7 @@ const CustomerAnalysisModal: React.FC<CustomerAnalysisModalProps> = ({
     const fetchAnalysis = async () => {
         setLoading(true);
         try {
-            const response = await api.get(`/api/customers/${customerId}/analysis`);
+            const response = await api.get(`/customers/${customerId}/analysis`);
             setData(response.data);
         } catch (error) {
             console.error("Error fetching analysis:", error);

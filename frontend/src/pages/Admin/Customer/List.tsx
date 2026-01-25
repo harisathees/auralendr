@@ -44,7 +44,7 @@ const CustomersList: React.FC = () => {
         setLoading(true);
         try {
             const response = await api.get(
-                `/api/customers`,
+                `/customers`,
                 {
                     params: { page, search: searchTerm },
                     signal: newController.signal

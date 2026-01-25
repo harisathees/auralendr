@@ -12,7 +12,7 @@ return new class extends Migration {
             $table->foreignUlid('branch_id')->constrained()->restrictOnDelete();
             $table->foreignUlid('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignUlid('updated_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->enum('status', ['active','released','cancelled'])->default('active');
+            $table->string('status')->default('active');
             $table->string('reference_no')->nullable()->unique();
             $table->timestamps();
             $table->index(['branch_id']);

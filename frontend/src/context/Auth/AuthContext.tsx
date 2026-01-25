@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = (): void => {
     // Only call API if we think we have a session
     if (token || user) {
-      api.post("/api/logout").catch(() => { });
+      api.post("/logout").catch(() => { });
     }
     setToken(null);
     setUser(null);

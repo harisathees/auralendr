@@ -15,10 +15,11 @@ return new class extends Migration {
                 $table->id();
                 $table->string('title');
                 $table->text('description')->nullable();
-                $table->foreignUlid('assigned_to')->constrained('users')->onDelete('cascade');
+                $table->foreignUlid('assigned_to')->nullable()->constrained('users')->onDelete('cascade');
                 $table->foreignUlid('created_by')->constrained('users')->onDelete('cascade');
                 $table->string('status')->default('pending');
                 $table->date('due_date')->nullable();
+                $table->foreignUlid('branch_id')->nullable()->constrained('branches')->onDelete('cascade');
                 $table->timestamps();
             });
         }

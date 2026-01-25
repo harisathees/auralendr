@@ -3,6 +3,7 @@ import * as htmlToImage from 'html-to-image';
 import { FiShare2, FiLoader, FiPrinter } from 'react-icons/fi';
 import { useReactToPrint } from 'react-to-print';
 
+
 // Define Interface matching ReceiptTemplateNew
 interface ReceiptField {
     id: string;
@@ -57,6 +58,7 @@ const DynamicReceipt: React.FC<DynamicReceiptProps> = ({ data, config }) => {
         return {
             receipt: {
                 date: new Date().toLocaleDateString('en-GB'), // Today's date for receipt printing
+                tracking_url: d.qrCode || '',
             },
             brand: {
                 name: b.brand_name || 'Brand Name',
@@ -241,6 +243,18 @@ const DynamicReceipt: React.FC<DynamicReceiptProps> = ({ data, config }) => {
                                         objectFit: 'contain'
                                     }}
                                 />
+                            );
+                        } else if (field.type === 'qr') {
+                            const value = field.dataKey ? getValue(field.dataKey) : field.label;
+                            if (!value) return null;
+                            return (
+                                <div key={field.id} style={style}>
+                                    <div
+                                        dangerouslySetInnerHTML={{ __html: String(value) }}
+                                        style={{ width: '100%', height: '100%' }}
+                                        className="[&>svg]:w-full [&>svg]:h-full"
+                                    />
+                                </div>
                             );
                         } else {
                             // Text Field

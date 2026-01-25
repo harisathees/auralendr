@@ -1,22 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import api from "../../api/apiClient";
 import PledgeForm from "../../components/Pledges/PledgeForm";
 import { useAuth } from "../../context/Auth/AuthContext";
 
 const Edit: React.FC = () => {
-  const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+  const id = location.state?.id || useParams().id;
   const { can } = useAuth();
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
-    api.get(`/api/pledges/${id}`).then(res => setData(res.data)).catch(console.error);
-  }, [id]);
+    if (!id) {
+      navigate('/pledges');
+      return;
+    }
+    api.get(`/pledges/${id}`).then(res => setData(res.data)).catch(console.error);
+  }, [id, navigate]);
 
   const handleSubmit = async (fd: FormData) => {
     try {
-      await api.post(`/api/pledges/${id}?_method=PUT`, fd, {
+      await api.post(`/pledges/${id}?_method=PUT`, fd, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

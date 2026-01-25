@@ -13,7 +13,8 @@ return new class extends Migration {
         Schema::create('transaction_categories', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->string('type')->default('both'); // 'credit', 'debit', 'both'
+            $table->boolean('is_credit')->default(true);
+            $table->boolean('is_debit')->default(true);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

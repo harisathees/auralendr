@@ -14,6 +14,7 @@ class Branch extends Model
     protected $fillable = [
         'branch_name',
         'location',
+        'enable_customer_app',
     ];
 
     public function users()

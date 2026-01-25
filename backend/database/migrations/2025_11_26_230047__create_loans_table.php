@@ -21,6 +21,7 @@ return new class extends Migration {
             $table->boolean('include_processing_fee')->default(false);
             $table->boolean('interest_taken')->default(false);
             $table->decimal('amount_to_be_given', 15,2)->nullable();
+            $table->decimal('metal_rate', 10, 2)->nullable();
             $table->enum('status', ['active','closed'])->default('active');
             $table->timestamps();
         });

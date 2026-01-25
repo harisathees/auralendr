@@ -42,7 +42,7 @@ class PledgeController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $query = Pledge::with(['customer', 'loan', 'jewels', 'media', 'closure']);
+        $query = Pledge::with(['customer', 'loan.customer_loan_track', 'jewels', 'media', 'closure']);
 
         if (!$user->hasRole('admin')) {
             $query->where('branch_id', $user->branch_id);
@@ -279,7 +279,7 @@ class PledgeController extends Controller
 
                 return response()->json([
                     'message' => 'Pledge created successfully',
-                    'data' => $pledge->load(['customer', 'loan', 'jewels', 'media']),
+                    'data' => $pledge->load(['customer', 'loan.customer_loan_track', 'jewels', 'media']),
                 ], 201);
             }, 5);
         } catch (\Illuminate\Database\QueryException $e) {
@@ -308,10 +308,17 @@ class PledgeController extends Controller
     /**
      * GET /api/pledges/{pledge}
      */
-    public function show(Pledge $pledge, Request $request)
+    public function show(Pledge $pledge, Request $request, \App\Services\QrCodeService $qrService)
     {
         $this->authorize('view', $pledge);
-        return response()->json($pledge->load(['customer', 'loan', 'jewels', 'media', 'closure']));
+        $pledge->load(['customer', 'loan.customer_loan_track', 'jewels', 'media', 'closure']);
+        
+        // Dynamically append QR Code to the loan object if it exists
+        if ($pledge->loan) {
+            $pledge->loan->qr_code = $qrService->generateForLoan($pledge->loan);
+        }
+
+        return response()->json($pledge);
     }
 
     /**
@@ -474,7 +481,7 @@ class PledgeController extends Controller
 
                 return response()->json([
                     'message' => 'Pledge updated successfully',
-                    'data' => $pledge->fresh()->load(['customer', 'loan', 'jewels', 'media']),
+                    'data' => $pledge->fresh()->load(['customer', 'loan.customer_loan_track', 'jewels', 'media']),
                 ]);
             });
         } catch (\Illuminate\Database\QueryException $e) {

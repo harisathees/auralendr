@@ -32,6 +32,7 @@ return new class extends Migration {
             // Meta Snapshots
             $table->string('duration_str')->nullable(); // e.g. "5 Months"
             $table->string('interest_rate_snapshot')->nullable(); // e.g. "2% per month"
+            $table->decimal('metal_rate', 15, 2)->nullable();
 
             $table->string('status')->default('closed'); // Snapshot of status
 

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../api/apiClient";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import GoldCoinSpinner from "../../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
 
 const ValidityPeriodForm: React.FC = () => {
-    const { id } = useParams();
+    const location = useLocation();
     const navigate = useNavigate();
+    const id = location.state?.id || useParams().id;
     const isEdit = !!id;
 
     const [months, setMonths] = useState("");
@@ -22,11 +23,11 @@ const ValidityPeriodForm: React.FC = () => {
             setLoading(true);
             try {
                 // Fetch jewel types
-                const typesRes = await api.get("/api/jewel-types");
+                const typesRes = await api.get("/jewel-types");
                 setJewelTypes(typesRes.data);
 
                 if (isEdit) {
-                    const res = await api.get(`/api/loan-validities/${id}`);
+                    const res = await api.get(`/loan-validities/${id}`);
                     setMonths(res.data.months);
                     setLabel(res.data.label || "");
                     setJewelTypeId(res.data.jewel_type_id ? String(res.data.jewel_type_id) : "");
@@ -54,9 +55,9 @@ const ValidityPeriodForm: React.FC = () => {
             };
 
             if (isEdit) {
-                await api.put(`/api/loan-validities/${id}`, payload);
+                await api.put(`/loan-validities/${id}`, payload);
             } else {
-                await api.post("/api/loan-validities", payload);
+                await api.post("/loan-validities", payload);
             }
             navigate("/admin/configs/validity-periods");
         } catch (err: any) {

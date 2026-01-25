@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../../api/apiClient";
 import type { Branch } from "../../../../types/models";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import GoldCoinSpinner from "../../../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
 
 import { useAuth } from "../../../../context/Auth/AuthContext";
 
 const UserForm: React.FC = () => {
     const { can } = useAuth();
-    const { id } = useParams();
+    const location = useLocation();
     const navigate = useNavigate();
+    const id = location.state?.id || useParams().id;
     const isEdit = !!id;
 
     const [formData, setFormData] = useState({
@@ -27,7 +28,7 @@ const UserForm: React.FC = () => {
 
     // Fetch branches for dropdown
     useEffect(() => {
-        api.get("/api/branches").then(res => setBranches(res.data)).catch(console.error);
+        api.get("/branches").then(res => setBranches(res.data)).catch(console.error);
     }, []);
 
     // Fetch user details if editing
@@ -35,7 +36,7 @@ const UserForm: React.FC = () => {
         if (isEdit) {
             if (!can('user.update')) return;
             setLoading(true);
-            api.get(`/api/staff/${id}`)
+            api.get(`/staff/${id}`)
                 .then((res) => {
                     const user = res.data;
                     setFormData({
@@ -71,9 +72,9 @@ const UserForm: React.FC = () => {
 
         try {
             if (isEdit) {
-                await api.put(`/api/staff/${id}`, payload);
+                await api.put(`/staff/${id}`, payload);
             } else {
-                await api.post("/api/staff", payload);
+                await api.post("/staff", payload);
             }
             navigate("/admin/configs/users");
         } catch (err: any) {

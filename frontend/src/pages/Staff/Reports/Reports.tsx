@@ -35,7 +35,7 @@ export default function Reports() {
         setLoading(true);
         try {
             // Using existing /api/pledges endpoint with a new filter param
-            const response = await api.get(`/api/pledges`, {
+            const response = await api.get(`/pledges`, {
                 params: {
                     report_type: type, // Backend needs to handle this
                     per_page: 1000, // Fetch all for clientside filtering/pagination for now, or handle pagination server side

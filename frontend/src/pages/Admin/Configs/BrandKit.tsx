@@ -39,8 +39,10 @@ const BrandKit: React.FC = () => {
     const fetchSettings = async () => {
         try {
             setLoading(true);
-            const response = await api.get("/api/brand-settings");
-            setSettings((prev) => ({ ...prev, ...response.data }));
+            const response = await api.get("/brand-settings");
+            if (response.data) {
+                setSettings(response.data);
+            }
         } catch (error) {
             console.error("Failed to fetch brand settings", error);
             toast.error("Failed to load brand configuration");
@@ -95,7 +97,7 @@ const BrandKit: React.FC = () => {
             }
 
             // Important: Set Content-Type header to undefined to let browser set it with boundary
-            await api.post("/api/brand-settings", formData, {
+            await api.post("/brand-settings", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },

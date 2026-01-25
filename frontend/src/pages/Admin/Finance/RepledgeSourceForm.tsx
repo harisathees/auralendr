@@ -28,7 +28,7 @@ const RepledgeSourceForm: React.FC<RepledgeSourceFormProps> = ({ initialData, on
 
     useEffect(() => {
         // Fetch available branches
-        api.get("/api/branches").then(res => {
+        api.get("/branches").then(res => {
             if (Array.isArray(res.data)) {
                 setAvailableBranches(res.data);
             } else if (res.data.data && Array.isArray(res.data.data)) {
@@ -38,7 +38,7 @@ const RepledgeSourceForm: React.FC<RepledgeSourceFormProps> = ({ initialData, on
         }).catch(err => console.error("Failed to fetch branches", err));
 
         // Fetch money sources
-        api.get("/api/money-sources").then(res => {
+        api.get("/money-sources").then(res => {
             if (Array.isArray(res.data)) {
                 setMoneySources(res.data);
             }
@@ -94,9 +94,9 @@ const RepledgeSourceForm: React.FC<RepledgeSourceFormProps> = ({ initialData, on
 
         try {
             if (initialData) {
-                await api.put(`/api/repledge-sources/${initialData.id}`, payload);
+                await api.put(`/repledge-sources/${initialData.id}`, payload);
             } else {
-                await api.post("/api/repledge-sources", payload);
+                await api.post("/repledge-sources", payload);
             }
             onSuccess();
         } catch (err) {

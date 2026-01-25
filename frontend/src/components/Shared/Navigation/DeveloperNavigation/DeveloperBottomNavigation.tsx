@@ -68,6 +68,20 @@ const DeveloperBottomNavigation: React.FC = () => {
                     <span className="text-xs font-bold text-center leading-none">Privileges</span>
                 </Link>
 
+                {/* Customer App Control */}
+                <Link
+                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/developer/customer-app") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                        }`}
+                    to="/admin/developer/customer-app"
+                >
+                    <Store
+                        className="w-7 h-7"
+                        fill={isActive("/admin/developer/customer-app") ? "currentColor" : "none"}
+                        strokeWidth={isActive("/admin/developer/customer-app") ? 2.5 : 2}
+                    />
+                    <span className="text-xs font-bold text-center leading-none">C-App</span>
+                </Link>
+
             </div>
         </div>
     );

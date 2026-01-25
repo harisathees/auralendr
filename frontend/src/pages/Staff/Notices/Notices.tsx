@@ -34,7 +34,7 @@ export default function Notices() {
     const fetchPledges = async (type: 'overdue' | 'annual') => {
         setLoading(true);
         try {
-            const response = await api.get(`/api/pledges`, {
+            const response = await api.get(`/pledges`, {
                 params: {
                     report_type: type,
                     per_page: 1000,

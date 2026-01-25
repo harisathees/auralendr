@@ -22,7 +22,7 @@ const TaskAccordion: React.FC<TaskAccordionProps> = ({ task, onUpdate }) => {
         if (updating) return;
         setUpdating(true);
         try {
-            await api.patch(`/api/tasks/${task.id}/status`, { status: newStatus });
+            await api.patch(`/tasks/${task.id}/status`, { status: newStatus });
             onUpdate(); // Refund list
         } catch (error) {
             console.error("Failed to update status", error);

@@ -176,7 +176,7 @@ const LoansList: React.FC = () => {
         setLoadingLoans(true);
         try {
             const response = await api.get(
-                `/api/admin-all-loans`,
+                `/admin-all-loans`,
                 {
                     params: { page, search: searchTerm, status: statusFilter },
                     signal: newController.signal // Attach signal

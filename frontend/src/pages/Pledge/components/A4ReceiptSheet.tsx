@@ -60,6 +60,7 @@ const A4ReceiptSheet: React.FC<A4ReceiptSheetProps> = ({ data, config, showDupli
             receipt: {
                 date: new Date().toLocaleDateString('en-GB'),
                 no: l.loan_no || p.reference_no || 'N/A',
+                tracking_url: d.qrCode || '',
             },
             brand: {
                 name: b.brand_name || 'Brand Name',
@@ -177,7 +178,8 @@ const A4ReceiptSheet: React.FC<A4ReceiptSheetProps> = ({ data, config, showDupli
         const filteredFields = fields.filter(f =>
             f.visible &&
             f.side === side &&
-            f.copyType === copyType
+            f.copyType === copyType &&
+            !(copyType === 'office' && f.type === 'qr')
         );
 
         return (
@@ -224,6 +226,18 @@ const A4ReceiptSheet: React.FC<A4ReceiptSheetProps> = ({ data, config, showDupli
                                     objectFit: 'contain'
                                 }}
                             />
+                        );
+                    } else if (field.type === 'qr') {
+                        const value = field.dataKey ? getValue(field.dataKey) : field.label;
+                        if (!value) return null;
+                        return (
+                            <div key={field.id} style={style}>
+                                <div
+                                    dangerouslySetInnerHTML={{ __html: String(value) }}
+                                    style={{ width: '100%', height: '100%' }}
+                                    className="[&>svg]:w-full [&>svg]:h-full"
+                                />
+                            </div>
                         );
                     } else {
                         return (

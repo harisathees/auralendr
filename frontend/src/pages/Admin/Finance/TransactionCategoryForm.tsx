@@ -43,9 +43,9 @@ const TransactionCategoryForm: React.FC<TransactionCategoryFormProps> = ({ initi
         try {
             const payload = { name, is_credit: isCredit, is_debit: isDebit, is_active: isActive };
             if (isEdit && initialData) {
-                await api.put(`/api/transaction-categories/${initialData.id}`, payload);
+                await api.put(`/transaction-categories/${initialData.id}`, payload);
             } else {
-                await api.post('/api/transaction-categories', payload);
+                await api.post('/transaction-categories', payload);
             }
             onSuccess();
         } catch (error) {

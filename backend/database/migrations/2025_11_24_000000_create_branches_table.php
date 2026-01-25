@@ -11,6 +11,7 @@ return new class extends Migration {
             $table->ulid('id')->primary();
             $table->string('branch_name');
             $table->string('location')->nullable();
+            $table->boolean('enable_customer_app')->default(false);
             $table->timestamps();
         });
     }

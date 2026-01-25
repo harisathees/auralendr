@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import * as htmlToImage from 'html-to-image';
 import { FiShare2, FiLoader } from 'react-icons/fi';
 import { FaIdCard } from 'react-icons/fa';
+
 import bg1 from '/assets/auralendr/front.png';
 import bg2 from '/assets/auralendr/back.jpg';
 import GoldCoinSpinner from '../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner';
@@ -27,7 +28,9 @@ const DynamicReceipt = React.lazy(() => import('./components/DynamicReceipt'));
 const A4ReceiptSheet = React.lazy(() => import('./components/A4ReceiptSheet'));
 
 const Receipt = () => {
-    const { id } = useParams();
+    const location = useLocation();
+
+    const id = location.state?.id || useParams().id;
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -40,7 +43,7 @@ const Receipt = () => {
     useEffect(() => {
         const fetchLatestRates = async () => {
             try {
-                const { data } = await api.get('/api/metal-rates');
+                const { data } = await api.get('/metal-rates');
                 const rates = Array.isArray(data) ? data : (data.data || []);
                 const goldRate = rates.find((r: any) => r.metal_type === "Gold")?.rate || 0;
                 const silverRate = rates.find((r: any) => r.metal_type === "Silver")?.rate || 0;
@@ -53,7 +56,7 @@ const Receipt = () => {
 
         const fetchConfig = async () => {
             try {
-                const { data } = await api.get('/api/receipt-templates');
+                const { data } = await api.get('/receipt-templates');
                 // The API returns an array, so we need to find the active one
                 if (Array.isArray(data)) {
                     return data.find((t: any) => t.status === 'active') || data[0] || null;
@@ -73,7 +76,7 @@ const Receipt = () => {
                     getPledge(id),
                     fetchLatestRates(),
                     fetchConfig(),
-                    api.get('/api/brand-settings').catch(() => ({ data: {} }))
+                    api.get('/brand-settings').catch(() => ({ data: {} }))
                 ]);
 
                 setConfig(configData);
@@ -103,6 +106,8 @@ const Receipt = () => {
                 const customerImageUrl = fixUrl(customerMedia?.url) || customer?.customer_image_url || customer?.photo_url || null;
                 const jewelImageUrl = fixUrl(jewelMedia?.url) || jewel?.image_url || null;
 
+
+
                 setData({
                     // Legacy flattened data (keep for backward compatibility if needed)
                     name: customer?.name || 'N/A',
@@ -125,6 +130,7 @@ const Receipt = () => {
                     goldRate: loan?.gold_rate ?? rates.goldRate,
                     silverRate: loan?.silver_rate ?? rates.silverRate,
                     ID: customer?.id_proof_number || customer?.id_proof || 'N/A',
+                    qrCode: loan?.qr_code || null,
 
 
                     // NEW: Raw nested data for DynamicReceipt
@@ -169,7 +175,7 @@ const Receipt = () => {
 
                 let blob: Blob;
 
-                if (url.startsWith('/api/')) {
+                if (url.startsWith('/media/')) {
                     // Use axios instance which has the interceptors for Auth Token
                     const response = await api.get(url, { responseType: 'blob' });
                     blob = response.data;
@@ -199,7 +205,7 @@ const Receipt = () => {
                 // But since we use fetch() in loadToDataUrl, we need to be careful with base URL.
                 // However, loadToDataUrl uses the 'api' client approach or we construct full URL.
                 // Ideally, we just return the endpoint path.
-                return `/api/media/${mediaObj.id}/stream`;
+                return `/media/${mediaObj.id}/stream`;
             }
             return fallbackUrl;
         };
@@ -497,6 +503,21 @@ const Receipt = () => {
                                     {field.label}
                                 </div>
                             ))}
+
+                            {/* QR Code for Customer App - Customer Copy (Bottom) */}
+                            {data.qrCode && (
+                                <div style={{
+                                    position: 'absolute', top: '55mm', left: '18mm', width: '18mm', height: '18mm',
+                                    transform: 'rotate(90deg)', transformOrigin: 'left top', zIndex: 1
+                                }}>
+                                    <div
+                                        dangerouslySetInnerHTML={{ __html: data.qrCode }}
+                                        style={{ width: '100%', height: '100%' }}
+                                        className="[&>svg]:w-full [&>svg]:h-full"
+                                    />
+                                    <div style={{ fontSize: '7px', textAlign: 'center', marginTop: '2px', fontWeight: 'bold' }}>Scan to Track</div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

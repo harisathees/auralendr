@@ -25,9 +25,10 @@ const ReceiptTemplateList: React.FC = () => {
     const [loading, setLoading] = useState(true);
 
     const fetchTemplates = async () => {
+        setLoading(true);
         try {
-            const response = await apiClient.get("/api/receipt-templates");
-            setTemplates(response.data);
+            const response = await apiClient.get("/receipt-templates");
+            setTemplates(response.data || []);
         } catch (error) {
             console.error("Failed to fetch templates", error);
             toast.error("Failed to load templates");
@@ -37,11 +38,10 @@ const ReceiptTemplateList: React.FC = () => {
     };
 
     const handleDelete = async (id: number) => {
-        if (!window.confirm("Are you sure you want to delete this template? This action cannot be undone.")) return;
-
+        if (!confirm("Are you sure?")) return;
         try {
-            await apiClient.delete(`/api/receipt-templates/${id}`);
-            setTemplates(prev => prev.filter(t => t.id !== id));
+            await apiClient.delete(`/receipt-templates/${id}`);
+            fetchTemplates();
             toast.success("Template deleted successfully");
         } catch (error) {
             console.error("Failed to delete template", error);

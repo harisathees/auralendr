@@ -8,8 +8,8 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('customers', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->string('name');
-            $table->string('mobile_no')->nullable();
+            $table->string('name')->index();
+            $table->string('mobile_no')->nullable()->index();
             $table->string('whatsapp_no')->nullable();
             $table->text('address')->nullable();
             $table->text('sub_address')->nullable();

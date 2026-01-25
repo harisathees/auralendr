@@ -13,6 +13,8 @@ return new class extends Migration {
         Schema::create('interest_rates', function (Blueprint $table) {
             $table->id();
             $table->decimal('rate', 5, 2); // e.g. 1.50, 12.00
+            $table->decimal('estimation_percentage', 5, 2)->nullable();
+            $table->foreignId('jewel_type_id')->nullable()->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useLoanCalculation } from "../../hooks/useLoanCalculation";
 import GoldCoinSpinner from '../../components/GoldCoinSpinner';
 
@@ -62,8 +62,9 @@ const ErrorState: React.FC<{ error: string, onBack: () => void }> = ({ error, on
 
 
 const ClosePledge: React.FC = () => {
-    const { loanId } = useParams<{ loanId: string }>();
+    const location = useLocation();
     const navigate = useNavigate();
+    const loanId = location.state?.loanId || useParams().loanId;
     const { loanData, loading, error, saving, saveCalculationAndCloseLoan } = useLoanCalculation(loanId || null);
 
     const [selectedMethod, setSelectedMethod] = useState<string>(''); // Slug or ID

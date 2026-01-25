@@ -18,7 +18,7 @@ const BranchList: React.FC = () => {
             return;
         }
         try {
-            const res = await api.get("/api/branches");
+            const res = await api.get("/branches");
             setBranches(res.data);
         } catch (error) {
             console.error("Failed to fetch branches", error);
@@ -30,7 +30,7 @@ const BranchList: React.FC = () => {
     const handleDelete = async (id: string) => {
         if (!window.confirm("Are you sure?")) return;
         try {
-            await api.delete(`/api/branches/${id}`);
+            await api.delete(`/branches/${id}`);
             setBranches(branches.filter((b) => b.id !== id));
         } catch (error) {
             console.error("Failed to delete branch", error);

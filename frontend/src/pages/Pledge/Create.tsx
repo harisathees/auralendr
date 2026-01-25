@@ -16,7 +16,7 @@ const Create: React.FC = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await api.post("/api/pledges", fd, {
+      await api.post("/pledges", fd, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -42,7 +42,7 @@ const Create: React.FC = () => {
 
   React.useEffect(() => {
     // Fetch metal rates
-    api.get("/api/metal-rates").then(res => {
+    api.get("/metal-rates").then(res => {
       const rates = res.data;
       const gold = rates.find((r: any) => r.name === 'Gold')?.metal_rate?.rate || "";
       const silver = rates.find((r: any) => r.name === 'Silver')?.metal_rate?.rate || "";

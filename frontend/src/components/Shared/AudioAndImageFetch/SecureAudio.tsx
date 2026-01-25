@@ -28,7 +28,7 @@ const SecureAudio: React.FC<SecureAudioProps> = ({
                 // Strategy 1: If mediaId is present, try secure stream
                 if (mediaId) {
                     try {
-                        const response = await api.get(`/api/media/${mediaId}/stream`, {
+                        const response = await api.get(`/media/${mediaId}/stream`, {
                             responseType: 'blob'
                         });
 

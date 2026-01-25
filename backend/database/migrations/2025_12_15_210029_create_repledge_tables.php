@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('repledge_banks', function (Blueprint $table) {
+        Schema::create('repledge_sources', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->foreignUlid('branch_id')->constrained()->onDelete('cascade');
             $table->string('name');
-            $table->string('code')->nullable();
+            $table->string('description')->nullable();
             $table->string('branch')->nullable();
             $table->decimal('default_interest', 5, 2)->default(0);
             $table->integer('validity_months')->default(0);
@@ -30,7 +29,7 @@ return new class extends Migration
             $table->foreignUlid('loan_id')->nullable()->constrained()->onDelete('set null'); // Optional link to original loan
             $table->string('loan_no'); // Keep string in case loan is deleted or external
             $table->string('re_no');
-            $table->foreignUlid('bank_id')->constrained('repledge_banks')->onDelete('cascade');
+            $table->foreignUlid('repledge_source_id')->constrained('repledge_sources')->onDelete('cascade');
             $table->string('status')->default('active');
             $table->decimal('amount', 15, 2)->default(0);
             $table->decimal('processing_fee', 15, 2)->default(0);
@@ -46,6 +45,15 @@ return new class extends Migration
             $table->decimal('stone_weight', 10, 3)->default(0);
             $table->timestamps();
         });
+
+        Schema::create('branch_repledge_sources', function (Blueprint $table) {
+            $table->id();
+            $table->foreignUlid('branch_id')->constrained()->onDelete('cascade');
+            $table->foreignUlid('repledge_source_id')->constrained('repledge_sources')->onDelete('cascade');
+            $table->timestamps();
+
+            $table->unique(['branch_id', 'repledge_source_id']);
+        });
     }
 
     /**
@@ -53,7 +61,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('branch_repledge_sources');
         Schema::dropIfExists('repledges');
-        Schema::dropIfExists('repledge_banks');
+        Schema::dropIfExists('repledge_sources');
     }
 };

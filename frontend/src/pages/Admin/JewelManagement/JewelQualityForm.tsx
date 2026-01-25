@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../api/apiClient";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import GoldCoinSpinner from "../../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
 
 const JewelQualityForm: React.FC = () => {
-    const { id } = useParams();
+    const location = useLocation();
     const navigate = useNavigate();
+    const id = location.state?.id || useParams().id;
     const isEdit = !!id;
 
     const [name, setName] = useState("");
@@ -16,7 +17,7 @@ const JewelQualityForm: React.FC = () => {
     useEffect(() => {
         if (isEdit) {
             setLoading(true);
-            api.get(`/api/jewel-qualities/${id}`)
+            api.get(`/jewel-qualities/${id}`)
                 .then((res) => {
                     setName(res.data.name);
                 })
@@ -35,9 +36,9 @@ const JewelQualityForm: React.FC = () => {
 
         try {
             if (isEdit) {
-                await api.put(`/api/jewel-qualities/${id}`, { name });
+                await api.put(`/jewel-qualities/${id}`, { name });
             } else {
-                await api.post("/api/jewel-qualities", { name });
+                await api.post("/jewel-qualities", { name });
             }
             navigate("/admin/configs/jewel-qualities");
         } catch (err: any) {

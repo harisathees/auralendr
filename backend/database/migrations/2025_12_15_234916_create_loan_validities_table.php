@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->integer('months'); // e.g. 3, 6, 12
             $table->string('label')->nullable(); // e.g. "3 Months"
+            $table->foreignId('jewel_type_id')->nullable()->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }

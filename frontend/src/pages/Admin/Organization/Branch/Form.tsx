@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../../api/apiClient";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import GoldCoinSpinner from "../../../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
 
 import { useAuth } from "../../../../context/Auth/AuthContext";
 
 const BranchForm: React.FC = () => {
     const { can } = useAuth();
-    const { id } = useParams();
+    const location = useLocation();
     const navigate = useNavigate();
+    const id = location.state?.id || useParams().id;
     const isEdit = !!id;
 
     const [formData, setFormData] = useState({
@@ -23,7 +24,7 @@ const BranchForm: React.FC = () => {
         if (isEdit) {
             if (!can('branch.update')) return; // Dont fetch if no permission
             setLoading(true);
-            api.get(`/api/branches/${id}`)
+            api.get(`/branches/${id}`)
                 .then((res) => {
                     setFormData({
                         branch_name: res.data.branch_name,
@@ -45,9 +46,9 @@ const BranchForm: React.FC = () => {
 
         try {
             if (isEdit) {
-                await api.put(`/api/branches/${id}`, formData);
+                await api.put(`/branches/${id}`, formData);
             } else {
-                await api.post("/api/branches", formData);
+                await api.post("/branches", formData);
             }
             navigate("/admin/configs/branches");
         } catch (err: any) {

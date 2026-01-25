@@ -70,7 +70,7 @@ const ReceiptTemplate: React.FC = () => {
     useEffect(() => {
         const fetchConfig = async () => {
             try {
-                const response = await apiClient.get("api/templates/receipt");
+                const response = await apiClient.get("/templates/receipt");
                 const config = response.data;
                 setValue("type", config.type || "standard");
                 setValue("size", config.size || "A4");

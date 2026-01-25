@@ -61,7 +61,7 @@ const AdminDashboard: React.FC = () => {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const response = await api.get("/api/dashboard/stats", { params: filters });
+      const response = await api.get("/dashboard/stats", { params: filters });
       setStats(response.data);
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);

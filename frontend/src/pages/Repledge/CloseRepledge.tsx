@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import api from '../../api/apiClient';
 import GoldCoinSpinner from '../../components/GoldCoinSpinner';
 import toast from 'react-hot-toast';
@@ -71,8 +71,9 @@ const ErrorState: React.FC<{ error: string, onBack: () => void }> = ({ error, on
 );
 
 const CloseRepledge: React.FC = () => {
-    const { id } = useParams<{ id: string }>(); // repledgeId
+    const location = useLocation();
     const navigate = useNavigate();
+    const id = location.state?.id || useParams().id;
 
     // State
     const [repledgeData, setRepledgeData] = useState<RepledgeData | null>(null);

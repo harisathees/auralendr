@@ -25,7 +25,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isL
 
     const fetchBranches = async () => {
         try {
-            const response = await api.get("/api/branches");
+            const response = await api.get("/branches");
             setBranches(response.data);
         } catch (error) {
             console.error("Error fetching branches:", error);

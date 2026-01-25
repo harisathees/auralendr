@@ -241,6 +241,10 @@ export interface Loan {
     amount_to_be_given: string | number;
     metal_rate: string | number;
     status?: string;
+    customer_loan_track?: {
+        tracking_code: string;
+        expires_at?: string;
+    };
 }
 
 export interface ConfigItem {

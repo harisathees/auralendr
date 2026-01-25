@@ -19,7 +19,7 @@ const UserList: React.FC = () => {
             return;
         }
         try {
-            const res = await api.get("/api/staff");
+            const res = await api.get("/staff");
             setUsers(res.data);
         } catch (error) {
             console.error("Failed to fetch users", error);
@@ -31,7 +31,7 @@ const UserList: React.FC = () => {
     const handleDelete = async (id: string) => {
         if (!window.confirm("Are you sure you want to delete this user?")) return;
         try {
-            await api.delete(`/api/staff/${id}`);
+            await api.delete(`/staff/${id}`);
             setUsers(users.filter((u) => u.id !== id));
         } catch (error) {
             console.error("Failed to delete user", error);

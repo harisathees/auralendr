@@ -32,6 +32,7 @@ return [
         // 'http://localhost:5173',
         // 'http://localhost:5174',
         'https://demo.auralendr.com',
+        'https://auralendr-customer.netlify.app',
     ],
 
     'allowed_origins_patterns' => [],
