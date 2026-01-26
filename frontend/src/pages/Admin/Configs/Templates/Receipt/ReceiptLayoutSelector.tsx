@@ -41,7 +41,7 @@ const ReceiptLayoutSelector: React.FC = () => {
         <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0F172A] p-4 md:p-8 flex items-center justify-center font-outfit">
             <div className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
 
-                {/* Visual Guide / Illustration Area */}
+                {/* Visual Guide / Illustration Areas */}
                 <div className="hidden lg:flex flex-col items-center justify-center space-y-8 animate-in fade-in slide-in-from-left-8 duration-700">
                     <div className="relative">
                         {/* Background glow */}
