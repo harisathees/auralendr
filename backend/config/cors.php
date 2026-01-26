@@ -20,17 +20,13 @@ return [
 
     'paths' => [
         'api/*',
-        'storage/*',
-        'sanctum/csrf-cookie',
-        'login',
-        'logout',
     ],
 
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        // 'http://localhost:5173',
-        // 'http://localhost:5174',
+        'http://localhost:5173',
+        'http://localhost:5174',
         'https://auralendr-app.netlify.app',
         'https://auralendr-customer-app.netlify.app',
     ],

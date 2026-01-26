@@ -247,15 +247,24 @@ const AdminConfigs: React.FC = () => {
             }
         ];
 
-        // Filter const RepledgeSources = lazy(() => import('./RepledgeSources'));
-        return groups.map(group => ({
+        // Filter
+        const isDeveloper = user?.role === 'developer';
+
+        return groups.filter(group => {
+            if (group.title === "Templates" && !isDeveloper) return false;
+            return true;
+        }).map(group => ({
             ...group,
             items: group.items.filter(item => {
                 if (item.title === "Banks to Repledge" && !isAdmin) return false;
+
+                // Developer Restricted Items
+                if ((item.title === "Branches" || item.title === "Brand Kit") && !isDeveloper) return false;
+
                 return true;
             })
         }));
-    }, [isAdmin]);
+    }, [isAdmin, user?.role]);
 
     const renderIcon = (iconName: string, colorClass: string) => {
         if (iconName === 'whatsapp_logo') {

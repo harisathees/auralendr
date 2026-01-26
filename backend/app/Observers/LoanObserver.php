@@ -24,16 +24,18 @@ class LoanObserver
             return;
         }
 
-        // Check Feature Flag
+        // Check Feature Flag - REMOVED to ensure tracking is always created
+    
         $branch = Branch::find($branchId);
         if (!$branch || !$branch->enable_customer_app) {
-            return;
+           return;
         }
+        
 
         // Create Tracking Record
         // Deterministic check: ensuring we don't duplicate if for some reason observer fires twice
         if (!CustomerLoanTrack::where('loan_id', $loan->id)->exists()) {
-             CustomerLoanTrack::create([
+            CustomerLoanTrack::create([
                 'loan_id' => $loan->id,
                 'branch_id' => $branchId,
                 'tracking_code' => Str::random(16),

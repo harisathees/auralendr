@@ -62,9 +62,9 @@ class QrCodeService
         // "3. The QR code must be deterministic and reproducible"
         // This means for the same loan, it should always be the same. 
         // If we store it in DB, reading it back satisfies "deterministic" from the user perspective (always get same QR).
-        
+
         $trackingCode = Str::random(16); // 16 chars random string is sufficient for tracking code
-        
+
         return CustomerLoanTrack::create([
             'loan_id' => $loan->id,
             'branch_id' => $branchId,

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../../api/apiClient";
 import GoldCoinSpinner from "../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
 import { toast } from "react-hot-toast";
@@ -14,7 +15,10 @@ import {
     BarChart3,
     Store,
     ShieldAlert,
-    Shield
+    Shield,
+    Palette,
+    Receipt,
+    GitBranch
 } from "lucide-react";
 
 import type { Role, Permission } from '../../types/models';
@@ -288,6 +292,55 @@ const RolesIndex: React.FC = () => {
 
     return (
         <div className="p-6 pb-24">
+            {/* Developer Configs Section */}
+            {user?.role === 'developer' && (
+                <div className="mb-8">
+                    <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                        <span className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                            <Store className="w-5 h-5" />
+                        </span>
+                        Developer Configurations
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Link to="/admin/configs/branches" className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all group">
+                            <div className="flex items-center gap-4 mb-3">
+                                <div className="p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
+                                    <GitBranch className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-900 dark:text-white">Branches</h3>
+                                    <p className="text-xs text-secondary-text dark:text-gray-400">Manage store locations</p>
+                                </div>
+                            </div>
+                        </Link>
+
+                        <Link to="/admin/configs/brand-kit" className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all group">
+                            <div className="flex items-center gap-4 mb-3">
+                                <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 group-hover:scale-110 transition-transform">
+                                    <Palette className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-900 dark:text-white">Brand Kit</h3>
+                                    <p className="text-xs text-secondary-text dark:text-gray-400">Logos, colors & themes</p>
+                                </div>
+                            </div>
+                        </Link>
+
+                        <Link to="/admin/configs/templates/receipt" className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all group">
+                            <div className="flex items-center gap-4 mb-3">
+                                <div className="p-3 rounded-lg bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform">
+                                    <Receipt className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-900 dark:text-white">Receipt Templates</h3>
+                                    <p className="text-xs text-secondary-text dark:text-gray-400">Customize print layouts</p>
+                                </div>
+                            </div>
+                        </Link>
+                    </div>
+                </div>
+            )}
+
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-2xl font-bold  dark:text-white font-display">

@@ -13,8 +13,19 @@ const CommunicationButtons: React.FC<CommunicationButtonsProps> = ({
 
     const cleanNumber = (num: string | null | undefined) => num?.replace(/\D/g, '') || '';
 
+    const formatForWhatsapp = (num: string | null | undefined) => {
+        const cleaned = cleanNumber(num);
+        // Assuming Indian numbers (10 digits), prepend 91 if missing
+        if (cleaned.length === 10) return `91${cleaned}`;
+        return cleaned;
+    };
+
     const targetMobile = cleanNumber(customer?.mobile_no);
-    const targetWhatsapp = customer?.whatsapp_no ? cleanNumber(customer.whatsapp_no) : targetMobile;
+    const targetWhatsapp = customer?.whatsapp_no ? formatForWhatsapp(customer.whatsapp_no) : formatForWhatsapp(customer?.mobile_no);
+
+    // Detect iOS for SMS body separator
+    const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent || '');
+    const smsSeparator = isIOS ? '&' : '?';
 
     // Construct the formatted message
     const message = useMemo(() => {
@@ -38,9 +49,9 @@ Weight: ${totalWeight}g
 You were Pledge Created Successfully
 
 Track your loan status using the Link:
-${import.meta.env.VITE_CUSTOMER_APP_URL || 'http://localhost:5174'}/track/${loan.customer_loan_track?.tracking_code}
-Your Loan Tracking Code is: ${loan.customer_loan_track?.tracking_code}`;
-    }, [customer, loan, jewels, loan.customer_loan_track]);
+${import.meta.env.VITE_CUSTOMER_APP_URL || 'http://localhost:5174'}/track/${loan?.customer_loan_track?.tracking_code}
+Your Loan Tracking Code is: ${loan?.customer_loan_track?.tracking_code}`;
+    }, [customer, loan, jewels, loan?.customer_loan_track]);
 
     const encodedMessage = encodeURIComponent(message);
 
@@ -61,7 +72,7 @@ Your Loan Tracking Code is: ${loan.customer_loan_track?.tracking_code}`;
 
             {/* SMS Button */}
             <a
-                href={`sms:${targetMobile}?body=${encodedMessage}`}
+                href={`sms:${targetMobile}${smsSeparator}body=${encodedMessage}`}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 text-white rounded-xl font-bold text-sm hover:bg-blue-600 transition-all shadow-md active:scale-95"
             >
                 <span className="material-symbols-outlined text-[20px]">sms</span>

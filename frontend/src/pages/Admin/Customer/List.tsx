@@ -108,15 +108,29 @@ const CustomersList: React.FC = () => {
                     <>
                         <div className="grid gap-3">
                             {customers.map((customer) => (
-                                <div key={customer.id} className="bg-white dark:bg-dark-surface p-4 rounded-xl border border-gray-100 dark:border-[#1f3d2e] shadow-sm hover:shadow-md transition-shadow">
+                                <div key={customer.id}
+                                    onClick={() => setAnalysisModal({ isOpen: true, customerId: customer.id, customerName: customer.name || '' })}
+                                    className="bg-white dark:bg-dark-surface p-4 rounded-xl border border-gray-100 dark:border-[#1f3d2e] shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                                     <div className="flex items-center gap-4">
                                         <div className="h-12 w-12 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg font-bold shrink-0">
                                             {customer.name ? customer.name.charAt(0).toUpperCase() : '?'}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-gray-900 dark:text-white text-base truncate">
-                                                {customer.name || 'Unknown'}
-                                            </h3>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-bold text-gray-900 dark:text-white text-base truncate">
+                                                    {customer.name || 'Unknown'}
+                                                </h3>
+                                                {customer.mobile_no && (
+                                                    <a
+                                                        href={`tel:${customer.mobile_no}`}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="p-1.5 rounded-full bg-green-50 text-green-600 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30 transition-colors"
+                                                        title="Call Customer"
+                                                    >
+                                                        <Phone className="w-3.5 h-3.5" />
+                                                    </a>
+                                                )}
+                                            </div>
                                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-secondary-text dark:text-gray-400">
                                                 <div className="flex items-center gap-1.5">
                                                     <Phone className="w-4 h-4" />
@@ -131,7 +145,10 @@ const CustomersList: React.FC = () => {
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => setAnalysisModal({ isOpen: true, customerId: customer.id, customerName: customer.name || '' })}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setAnalysisModal({ isOpen: true, customerId: customer.id, customerName: customer.name || '' });
+                                            }}
                                             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/5 text-gray-500 dark:text-gray-400 transition-colors"
                                             title="Analysis"
                                         >

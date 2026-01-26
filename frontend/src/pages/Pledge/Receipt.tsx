@@ -507,7 +507,7 @@ const Receipt = () => {
                             {/* QR Code for Customer App - Customer Copy (Bottom) */}
                             {data.qrCode && (
                                 <div style={{
-                                    position: 'absolute', top: '55mm', left: '18mm', width: '18mm', height: '18mm',
+                                    position: 'absolute', top: '100mm', left: '18mm', width: '15mm', height: '15mm',
                                     transform: 'rotate(90deg)', transformOrigin: 'left top', zIndex: 1
                                 }}>
                                     <div

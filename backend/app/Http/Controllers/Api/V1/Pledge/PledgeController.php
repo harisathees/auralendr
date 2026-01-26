@@ -8,7 +8,6 @@ use App\Http\Requests\Pledge\UpdatePledgeRequest;
 use App\Models\Pledge\Pledge;
 use App\Models\Pledge\Loan;
 use App\Models\Pledge\Jewel;
-use App\Models\Pledge\MediaFile;
 use App\Models\Pledge\Customer;
 use App\Models\Admin\MoneySource\MoneySource;
 use Illuminate\Http\Request;
@@ -108,12 +107,12 @@ class PledgeController extends Controller
     {
         // Guard against empty POST (usually file size limit exceeded)
         if (empty($request->all()) && empty($request->allFiles())) {
-             return response()->json([
+            return response()->json([
                 'message' => 'The request payload is empty. This often happens if the uploaded files exceed the server limit (post_max_size).',
                 'error' => 'payload_too_large'
             ], 413);
         }
-        
+
         $user = $request->user();
 
         // Check permission
@@ -230,7 +229,7 @@ class PledgeController extends Controller
                             throw new \Exception("The selected payment method '{$moneySource->name}' is not allowed for outbound transactions.");
                         }
                         if ($moneySource->balance < $loan->amount_to_be_given) {
-                            throw new \Illuminate\Validation\ValidationException(\Illuminate\Support\Facades\Validator::make([], []), new \Illuminate\Support\MessageBag(['loan.payment_method' => ["Insufficient balance in {$moneySource->name}. Available: {$moneySource->balance}"]]));
+                            throw new ValidationException(Validator::make([], []), new \Illuminate\Support\MessageBag(['loan.payment_method' => ["Insufficient balance in {$moneySource->name}. Available: {$moneySource->balance}"]]));
                         }
                         $moneySource->decrement('balance', $loan->amount_to_be_given);
 
@@ -243,7 +242,7 @@ class PledgeController extends Controller
                             'date' => now(), // or $loan->date if strictly following loan date
                             'description' => "Loan Disbursment for Pledge #{$pledge->id} (Cust: {$customer->name})",
                             'category' => 'loan',
-                            'transactionable_type' => \App\Models\Pledge\Loan::class,
+                            'transactionable_type' => Loan::class,
                             'transactionable_id' => $loan->id,
                             'created_by' => $user->id,
                         ]);
@@ -263,11 +262,11 @@ class PledgeController extends Controller
                 $uploadedFiles = $request->file('files');
                 // Ensure it's an array (laravel might return single instance if only one file and not array syntax, but here we expect array)
                 // But handleUploads handles normalization.
-                
+
                 $categories = $request->input('categories', []);
 
                 $this->mediaService->handleUploads(
-                    $uploadedFiles, 
+                    $uploadedFiles,
                     [
                         'customer_id' => $customer->id,
                         'pledge_id' => $pledge->id,
@@ -312,7 +311,7 @@ class PledgeController extends Controller
     {
         $this->authorize('view', $pledge);
         $pledge->load(['customer', 'loan.customer_loan_track', 'jewels', 'media', 'closure']);
-        
+
         // Dynamically append QR Code to the loan object if it exists
         if ($pledge->loan) {
             $pledge->loan->qr_code = $qrService->generateForLoan($pledge->loan);
@@ -461,10 +460,10 @@ class PledgeController extends Controller
                 // We must grab files correctly. $request->file('files') should work for both standard and array notation if configured correctly,
                 // But for form-data with _method=PUT, PHP parsing can be tricky.
                 // Using the unified service which normalizes input.
-                
+
                 $uploadedFiles = $request->file('files');
                 $categories = $request->input('categories', []);
-                
+
                 // Current Loan No
                 $currentLoanNo = $pledge->loan ? $pledge->loan->loan_no : ($data['loan']['loan_no'] ?? 'NoLoan');
 

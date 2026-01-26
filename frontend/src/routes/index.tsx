@@ -1,7 +1,8 @@
 import React, { lazy } from "react";
-import { Routes, Route, Navigate, useParams, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams, useNavigate, Outlet } from "react-router-dom";
 import ProtectedRoute from "../pages/Auth/Guards/ProtectedRoute";
 import PublicRoute from "../pages/Auth/Guards/PublicRoute";
+import RoleGuard from "../pages/Auth/Guards/RoleGuard";
 import Login from "../pages/Auth/Login/Login";
 import DashboardLayout from "../layouts/DashboardLayout";
 import AdminLayout from "../layouts/AdminLayout";
@@ -148,16 +149,25 @@ const AppRoutes: React.FC = () => {
       <Route
         element={
           <ProtectedRoute>
-            <AdminLayout />
+            <RoleGuard allowedRoles={['admin', 'developer', 'superadmin']}>
+              <AdminLayout />
+            </RoleGuard>
           </ProtectedRoute>
         }
       >
         <Route path="/admin/dashboard" element={<Dashboard />} />
-        <Route path="/admin/configs/branches" element={<BranchList />} />
-        <Route path="/admin/configs/branches/create" element={<BranchForm />} />
-
-        <Route path="/admin/configs/branches/edit" element={<BranchForm />} />
-        <Route path="/admin/configs/branches/edit/:id" element={<RedirectWithState to="/admin/configs/branches/edit" param="id" />} />
+        <Route
+          element={
+            <RoleGuard allowedRoles={['developer']}>
+              <Outlet />
+            </RoleGuard>
+          }
+        >
+          <Route path="/admin/configs/branches" element={<BranchList />} />
+          <Route path="/admin/configs/branches/create" element={<BranchForm />} />
+          <Route path="/admin/configs/branches/edit" element={<BranchForm />} />
+          <Route path="/admin/configs/branches/edit/:id" element={<RedirectWithState to="/admin/configs/branches/edit" param="id" />} />
+        </Route>
 
         <Route path="/admin/configs/users" element={<UsersList />} />
         <Route path="/admin/configs/users/create" element={<UserForm />} />
@@ -174,12 +184,28 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/cashflow" element={<TransactionHistory />} />
 
         <Route path="/admin/configs" element={<AdminConfigs />} />
-        <Route path="/admin/configs/brand-kit" element={<BrandKit />} />
+        <Route
+          element={
+            <RoleGuard allowedRoles={['developer']}>
+              <Outlet />
+            </RoleGuard>
+          }
+        >
+          <Route path="/admin/configs/brand-kit" element={<BrandKit />} />
+        </Route>
         <Route path="/admin/configs/money-sources" element={<MoneySources />} />
         <Route path="/admin/configs/metal-rates" element={<MetalRates />} />
-        <Route path="/admin/configs/templates/receipt" element={<ReceiptTemplateList />} />
-        <Route path="/admin/configs/templates/receipt/setup" element={<ReceiptLayoutSelector />} />
-        <Route path="/admin/configs/templates/receipt/designer" element={<ReceiptDesigner />} />
+        <Route
+          element={
+            <RoleGuard allowedRoles={['developer']}>
+              <Outlet />
+            </RoleGuard>
+          }
+        >
+          <Route path="/admin/configs/templates/receipt" element={<ReceiptTemplateList />} />
+          <Route path="/admin/configs/templates/receipt/setup" element={<ReceiptLayoutSelector />} />
+          <Route path="/admin/configs/templates/receipt/designer" element={<ReceiptDesigner />} />
+        </Route>
 
         {/* Transaction Categories */}
         <Route path="/admin/configs/transaction-categories" element={<TransactionCategories />} />

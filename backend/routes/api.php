@@ -49,7 +49,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::get('/roles', [RolePermissionController::class, 'index']);
     Route::get('/permissions', [RolePermissionController::class, 'getPermissions']);
     Route::put('/roles/{role}', [RolePermissionController::class, 'update']);
-    
+
 
     // Developer Routes - For Controll CustomerApp
     Route::get('/developer/settings', [DeveloperSettingsController::class, 'index']);
@@ -69,7 +69,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::apiResource('repledges', RepledgeController::class);
 
     // Permission Controlled Routes
-    Route::apiResource('branches', BranchController::class);
+    Route::apiResource('branches', BranchController::class)->only(['index', 'show']);
     Route::apiResource('staff', StaffController::class);
 
 
@@ -85,6 +85,11 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
         Route::apiResource('payment-methods', PaymentMethodController::class);
         Route::apiResource('transaction-categories', TransactionCategoryController::class);
         Route::post('/processing-fees', [LoanProcessingFeeController::class, 'store']);
+
+        // Customer Routes (Admin Only)
+        Route::get('/customers/search', [CustomerController::class, 'search']);
+        Route::get('/customers/{id}/analysis', [CustomerController::class, 'analysis']);
+        Route::get('/customers', [CustomerController::class, 'index']);
     });
 
     // Shared Routes (Admin + Staff)
@@ -99,7 +104,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::get('/loan-validities', [ValidityMonthController::class, 'index']);
     Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
     Route::get('/processing-fees', [LoanProcessingFeeController::class, 'index']);
-    Route::get('transaction-categories', [TransactionCategoryController::class, 'index']);
+    Route::get('/transaction-categories', [TransactionCategoryController::class, 'index']);
 
     // Loan Schemes
     Route::apiResource('loan-schemes', \App\Http\Controllers\Api\V1\Admin\LoanConfiguration\LoanSchemeController::class);
@@ -109,17 +114,14 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     // Repledge Sources (Shared for read/write as configured in controller)
     Route::apiResource('repledge-sources', RepledgeSourceController::class);
 
-    // Customer Search and List
-    Route::get('/customers/search', [CustomerController::class, 'search']);
-    Route::get('/customers/{id}/analysis', [CustomerController::class, 'analysis']);
-    Route::get('/customers', [CustomerController::class, 'index']);
+
 
     // Metal Rates (Admin write, Staff read - Controller handles specific logic if needed, or route middleware)
     Route::post('/metal-rates', [MetalRateController::class, 'store']);
 
     // Brand Settings
     Route::get('/brand-settings', [BrandSettingsController::class, 'index']);
-    Route::post('/brand-settings', [BrandSettingsController::class, 'update']);
+    Route::post('/brand-settings', [BrandSettingsController::class, 'update'])->middleware('developer');
 
     // Money Sources
     Route::get('/money-sources', [MoneySourceController::class, 'index']);
@@ -136,8 +138,8 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
 
     // Template Routes
     Route::get('/templates/receipt', [App\Http\Controllers\Api\V1\Admin\Configuration\TemplateController::class, 'getReceiptTemplate']);
-    Route::post('/templates/receipt', [App\Http\Controllers\Api\V1\Admin\Configuration\TemplateController::class, 'updateReceiptTemplate']);
-    Route::apiResource('receipt-templates', ReceiptTemplateController::class);
+    Route::post('/templates/receipt', [App\Http\Controllers\Api\V1\Admin\Configuration\TemplateController::class, 'updateReceiptTemplate'])->middleware('developer');
+    Route::apiResource('receipt-templates', ReceiptTemplateController::class)->middleware('developer');
 
     // Staff Task Routes
     Route::get('/my-tasks', [TaskController::class, 'myTasks']);
@@ -145,4 +147,9 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
 
     // Secure Media Serving
     Route::get('/media/{mediaFile}/stream', [App\Http\Controllers\Api\V1\MediaController::class, 'stream']);
+
+    // Developer Only Routes
+    Route::middleware('developer')->group(function () {
+        Route::apiResource('branches', BranchController::class)->only(['store', 'update', 'destroy']);
+    });
 });

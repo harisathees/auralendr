@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, UserCog, Store, Lock } from "lucide-react";
+import { LayoutDashboard, UserCog, Store, Lock, Settings } from "lucide-react";
 
 const DeveloperBottomNavigation: React.FC = () => {
     const location = useLocation();
@@ -40,18 +40,17 @@ const DeveloperBottomNavigation: React.FC = () => {
                     <span className="text-xs font-bold">Users</span>
                 </Link>
 
-                {/* Branch Control */}
+                {/* Configs Control */}
                 <Link
-                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/configs/branches") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                    className={`flex flex-col items-center gap-1 min-w-[3.5rem] transition-colors ${isActive("/admin/configs") && !isActive("/admin/configs/users") && !isActive("/admin/configs/roles") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
                         }`}
-                    to="/admin/configs/branches"
+                    to="/admin/configs"
                 >
-                    <Store
+                    <Settings
                         className="w-7 h-7"
-                        fill={isActive("/admin/configs/branches") ? "currentColor" : "none"}
-                        strokeWidth={isActive("/admin/configs/branches") ? 2.5 : 2}
+                        strokeWidth={isActive("/admin/configs") && !isActive("/admin/configs/users") && !isActive("/admin/configs/roles") ? 2.5 : 2}
                     />
-                    <span className="text-xs font-bold">Branches</span>
+                    <span className="text-xs font-bold">Configs</span>
                 </Link>
 
                 {/* User Privilege */}

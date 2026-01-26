@@ -24,6 +24,9 @@ import {
   User
 } from "lucide-react";
 
+import GoldLoanCalculator from '../../components/Calculators/GoldLoanCalculator';
+import ClosingAmountCalculator from '../../components/Calculators/ClosingAmountCalculator';
+
 const StaffDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
@@ -31,6 +34,11 @@ const StaffDashboard: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>("");
+
+  // Modal States
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [showEstimate, setShowEstimate] = useState(false);
+
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   const fetchTasks = async () => {
@@ -153,13 +161,13 @@ const StaffDashboard: React.FC = () => {
                 <Calendar className="w-5 h-5" />
               </button>
             </div>
-            <button
+            {/* <button
               onClick={() => window.location.href = '/notifications'}
               className="relative flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-transparent text-primary-text dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <Bell className="w-6 h-6" />
               <span className="absolute top-2 right-2 flex size-2.5 rounded-full bg-primary ring-2 ring-background-light dark:ring-background-dark" />
-            </button>
+            </button> */}
           </div>
         </div>
       </header>
@@ -189,10 +197,10 @@ const StaffDashboard: React.FC = () => {
                     {user.branch.branch_name}
                   </p>
                   {/* Cash Balance Display inside Progress Card */}
-                  <div className="ml-2 pl-3 border-l border-[#166534]/20 dark:border-gray-600 flex items-center gap-1.5">
+                  {/* <div className="ml-2 pl-3 border-l border-[#166534]/20 dark:border-gray-600 flex items-center gap-1.5">
                     <Wallet className="w-3.5 h-3.5 text-[#166534]/80 dark:text-gray-400" />
                     <span className="text-[#166534] dark:text-white font-bold text-sm">₹ 2,45,000</span>
-                  </div>
+                  </div> */}
                 </div>
               )}
             </div>
@@ -212,13 +220,17 @@ const StaffDashboard: React.FC = () => {
         {/* 2. Quick Actions (Single Row of Icons) */}
         <div className="flex items-center gap-4 py-2 overflow-x-auto no-scrollbar">
           {[
-            { icon: Calculator, label: "Calculator", color: "purple" },
-            { icon: Scale, label: "Estimate", color: "orange" },
-            { icon: Wallet, label: "Payments", color: "blue" },
-            { icon: Megaphone, label: "Notices", color: "pink" },
-            { icon: History, label: "Activity", color: "slate" },
+            { icon: Calculator, label: "Calculator", color: "purple", action: () => setShowCalculator(true) },
+            { icon: Scale, label: "Estimate", color: "orange", action: () => setShowEstimate(true) },
+            // { icon: Wallet, label: "Payments", color: "blue", action: () => { } }, // Placeholder
+            // { icon: Megaphone, label: "Notices", color: "pink", action: () => { } }, // Placeholder
+            // { icon: History, label: "Activity", color: "slate", action: () => { } }, // Placeholder
           ].map((action, i) => (
-            <button key={i} className="flex flex-col items-center gap-2 group min-w-[70px]">
+            <button
+              key={i}
+              onClick={action.action}
+              className="flex flex-col items-center gap-2 group min-w-[70px]"
+            >
               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 dark:border-gray-700 transition-all group-hover:scale-110 group-active:scale-95 bg-white dark:bg-gray-800`}>
                 <action.icon className={`w-6 h-6 text-${action.color}-500`} />
               </div>
@@ -309,6 +321,11 @@ const StaffDashboard: React.FC = () => {
         </div>
 
       </main>
+
+      {/* Modals */}
+      <GoldLoanCalculator isOpen={showEstimate} onClose={() => setShowEstimate(false)} />
+      <ClosingAmountCalculator isOpen={showCalculator} onClose={() => setShowCalculator(false)} />
+
 
       {/* Logout Confirmation Modal */}
       {showConfirm && (

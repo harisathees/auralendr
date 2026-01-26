@@ -20,10 +20,10 @@ const OverdueNotice = React.forwardRef<HTMLDivElement, NoticeProps>((props, ref)
     return (
         <div ref={ref} className="w-[210mm] min-h-[297mm] p-[20mm] mx-auto bg-white text-black font-serif relative box-border shadow-md">
             <div>
-                <b className="text-xl">NSH Gold Finance</b><br />
+                <b className="text-xl">Auralendr Gold Finance</b><br />
                 <span className="text-sm">
-                    227/E/1,<br /> Meenavar sangam,<br /> Theresapuram,<br />
-                    9600332834
+                    123/address street,<br /> Thoothukudi,<br /> Tamil Nadu,<br />
+                    Phone: 9942153378,8778748399
                 </span>
             </div>
 
@@ -58,7 +58,7 @@ const OverdueNotice = React.forwardRef<HTMLDivElement, NoticeProps>((props, ref)
             </div>
 
             <div style={{ textAlign: 'right', marginTop: '4rem' }}>
-                <b>NSH Gold Finance</b><br />
+                <b>Auralendr Gold Finance</b><br />
                 <div style={{ marginTop: '3rem', borderTop: '1px solid #000', display: 'inline-block', paddingTop: '0.5rem' }}>Authorized Signatory</div>
             </div>
 
