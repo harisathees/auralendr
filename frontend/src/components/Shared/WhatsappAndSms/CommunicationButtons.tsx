@@ -38,19 +38,18 @@ const CommunicationButtons: React.FC<CommunicationButtonsProps> = ({
         const totalWeight = jewels?.reduce((sum: number, j: any) => sum + (parseFloat(j.net_weight) || 0), 0)?.toFixed(2) || "0.00";
 
         return `*AURALENDR GOLD LOAN*
-Your Name: ${customer.name || '-'}
-Mobile No: ${customer.mobile_no || '-'}
-Jewel Type and Quality: ${jewelDetails}
-Loan Number: ${loan.loan_no || '-'}
-Amount: ₹${loan.amount || '0'}
-Date: ${loan.date || '-'}
-Due Date: ${loan.due_date || '-'}
-Weight: ${totalWeight}g
-You were Pledge Created Successfully
-
-Track your loan status using the Link:
-${import.meta.env.VITE_CUSTOMER_APP_URL || 'http://localhost:5174'}/track/${loan?.customer_loan_track?.tracking_code}
-Your Loan Tracking Code is: ${loan?.customer_loan_track?.tracking_code}`;
+            Your Name: ${customer.name || '-'}
+            Mobile No: ${customer.mobile_no || '-'}
+            Jewel Type and Quality: ${jewelDetails}
+            Loan Number: ${loan.loan_no || '-'}
+            Amount: ₹${loan.amount || '0'}
+            Date: ${loan.date || '-'}
+            Due Date: ${loan.due_date || '-'}
+            Weight: ${totalWeight}g
+            You were Pledge Created Successfully
+            Track your loan status using the Link:
+            ${import.meta.env.VITE_CUSTOMER_APP_URL}/track/${loan?.customer_loan_track?.tracking_code}
+            Your Loan Tracking Code is: ${loan?.customer_loan_track?.tracking_code}`;
     }, [customer, loan, jewels, loan?.customer_loan_track]);
 
     const encodedMessage = encodeURIComponent(message);

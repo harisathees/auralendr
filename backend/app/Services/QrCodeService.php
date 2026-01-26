@@ -27,13 +27,23 @@ class QrCodeService
         }
 
         // 2. Check Feature Flag
-        $branch = Branch::find($branchId);
-        if (!$branch || !$branch->enable_customer_app) {
-            return null;
+
+        // 2. Get or Create Tracking Code (ALWAYS generate, regardless of feature flag)
+        $track = $this->getOrCreateTracking($loan, $branchId);
+
+        // Ensure the relation is set on the loan object so it's included in the API response immediately
+        if (!$loan->relationLoaded('customer_loan_track')) {
+            $loan->setRelation('customer_loan_track', $track);
         }
 
-        // 3. Get or Create Tracking Code
-        $track = $this->getOrCreateTracking($loan, $branchId);
+        // 3. Check Feature Flag using Settings model
+        $isEnabled = \App\Models\Settings::where('key', 'enable_customer_app')
+            ->where('branch_id', $branchId)
+            ->value('value');
+
+        if (!$isEnabled || $isEnabled !== '1') {
+            return null;
+        }
 
         // 4. Generate QR Code
         // URL Format: https://customer.example.com/track/{tracking_code}

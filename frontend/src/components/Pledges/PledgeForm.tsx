@@ -640,7 +640,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
             <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Mobile No <span className="text-red-500">*</span></span>
             <div className={`relative flex items-center rounded-lg border bg-white dark:bg-gray-800 transition-all ${mobileError ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300 dark:border-gray-600 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary'
               }`}>
-              <span className="pl-3 pr-2 text-gray-500 dark:text-gray-400 text-sm font-medium border-r border-gray-200 dark:border-gray-700 select-none">+91</span>
+
               <input
                 value={customer.mobile_no}
                 onChange={e => {
@@ -675,7 +675,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
             <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Whatsapp No</span>
             <div className={`relative flex items-center rounded-lg border bg-white dark:bg-gray-800 transition-all ${whatsappError ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300 dark:border-gray-600 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary'
               }`}>
-              <span className="pl-3 pr-2 text-gray-500 dark:text-gray-400 text-sm font-medium border-r border-gray-200 dark:border-gray-700 select-none">+91</span>
+
               <input
                 value={customer.whatsapp_no}
                 onChange={e => {
