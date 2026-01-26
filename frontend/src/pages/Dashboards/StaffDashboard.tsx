@@ -7,7 +7,6 @@ import { useTheme } from "../../context/Theme/ThemeContext";
 import {
   LogOut,
   Calendar,
-  Bell,
   Sun,
   Moon,
   Zap,
@@ -18,7 +17,6 @@ import {
   Wallet,
   Calculator,
   Scale,
-  Megaphone,
   History,
   CheckCircle,
   User

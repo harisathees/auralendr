@@ -25,10 +25,10 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'http://localhost:5173',
-        'http://localhost:5174',
-        'https://auralendr-app.netlify.app',
-        'https://auralendr-customer-app.netlify.app',
+        // 'http://localhost:5173',
+        // 'http://localhost:5174',
+        'https://demo.auralendr.com',
+        'http://customer-app.auralendr.com',
     ],
 
     'allowed_origins_patterns' => [],
