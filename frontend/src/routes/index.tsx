@@ -17,6 +17,7 @@ const Edit = lazy(() => import("../pages/Pledge/Edit"));
 const View = lazy(() => import("../pages/Pledge/View"));
 const Receipt = lazy(() => import("../pages/Pledge/Receipt"));
 const ClosePledge = lazy(() => import("../pages/Pledge/ClosePledge"));
+const ApprovalConfirmation = lazy(() => import("../pages/Pledge/ApprovalConfirmation"));
 const BranchList = lazy(() => import("../pages/Admin/Organization/Branch/List"));
 const BranchForm = lazy(() => import("../pages/Admin/Organization/Branch/Form"));
 const UsersList = lazy(() => import("../pages/Admin/Organization/User/List"));
@@ -94,7 +95,6 @@ const AppRoutes: React.FC = () => {
         element={
           <PublicRoute>
             <Login />
-            <Login />
           </PublicRoute>
         }
       />
@@ -114,6 +114,7 @@ const AppRoutes: React.FC = () => {
 
         {/* Repledge Routes */}
         <Route path="/pledges" element={<List />} />
+        <Route path="/pledges/approval-pending" element={<ApprovalConfirmation />} />
         <Route path="/pledges/create" element={<Create />} />
 
         {/* URL Obfuscation: Generic Routes */}

@@ -17,7 +17,7 @@ interface StaffTopNavigationProps {
     onLogout: () => void;
     selectedDate: string;
     onDateChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    dateInputRef: React.RefObject<HTMLInputElement | null>;
+    dateInputRef: React.RefObject<HTMLInputElement>;
     onDateIconClick: () => void;
 }
 

@@ -25,7 +25,7 @@ const AdminBottomNavigation: React.FC = () => {
 
     useEffect(() => {
         fetchPendingCount();
-        const interval = setInterval(fetchPendingCount, 30000); // Refresh every 30s
+        const interval = setInterval(fetchPendingCount, 60 * 60 * 1000); // Refresh every 1 hour
         return () => clearInterval(interval);
     }, []);
 

@@ -58,12 +58,18 @@ class ApprovalController extends Controller
                 ]);
 
                 // 2. Update Pledge Status
-                $pledge->update(['approval_status' => 'approved']);
+                $pledge->update([
+                    'approval_status' => 'approved',
+                    'status' => 'active'
+                ]);
 
                 // 3. Deduct money if payment source exists
                 if (!empty($loan->payment_method) && !empty($loan->amount_to_be_given)) {
                     $moneySource = MoneySource::where('name', $loan->payment_method)->first();
                     if ($moneySource) {
+                        if (!$moneySource->is_outbound) {
+                            throw new \Exception("The selected payment method '{$moneySource->name}' is not allowed for outbound transactions.");
+                        }
                         if ((float) $moneySource->balance < (float) $loan->amount_to_be_given) {
                             throw new \Exception("Insufficient balance in {$moneySource->name}. Available: {$moneySource->balance}");
                         }
@@ -117,7 +123,9 @@ class ApprovalController extends Controller
             'rejection_reason' => $request->rejection_reason
         ]);
 
-        $pledge->update(['approval_status' => 'rejected']);
+        // Delete the pledge directly.
+        // Cascading deletes in database will handle jewels, loans, and pending_approvals cleanup.
+        $pledge->delete();
 
         $this->activityService->log('reject', "Rejected Pledge #{$pledge->id}: {$request->rejection_reason}", $pledge);
 

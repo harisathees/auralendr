@@ -2,7 +2,7 @@ import { useAuth } from "../../context/Auth/AuthContext";
 import { useTheme } from "../../context/Theme/ThemeContext";
 import DashboardFilters from "../../components/Dashboard/DashboardFilters";
 import { LogOut, Sun, Moon, LayoutDashboard, Repeat, BarChart3, User, Camera, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import LoansDashboard from "./LoansDashboard";
 import RepledgeDashboard from "./RepledgeDashboard";
 import BusinessOverviewDashboard from "./BusinessOverviewDashboard";
