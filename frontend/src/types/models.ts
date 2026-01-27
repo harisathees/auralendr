@@ -179,6 +179,7 @@ export interface RepledgeItem {
     isBankDetailsOpen?: boolean;
     startDate: string;
     endDate: string;
+    jewelTypeId?: number; // Added for fee calculation
 }
 
 export interface Pledge {
@@ -240,6 +241,7 @@ export interface Loan {
     interest_taken?: boolean;
     amount_to_be_given: string | number;
     metal_rate: string | number;
+    balance_amount?: string | number; // Added for partial payment tracking
     status?: string;
     customer_loan_track?: {
         tracking_code: string;

@@ -8,6 +8,8 @@ import CommunicationButtons from "../Shared/WhatsappAndSms/CommunicationButtons"
 
 import type { Pledge } from "../../types/models";
 
+import PartialPaymentModal from "../../components/Loans/PartialPaymentModal";
+
 interface Props {
   pledges: Pledge[];
   searchTerm: string;
@@ -22,6 +24,10 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
   const { can } = useAuth();
   const [expandedPledgeId, setExpandedPledgeId] = useState<number | string | null>(null);
   const { repledgeEntries, fetchRepledgeEntries, loading: repledgeLoading } = useRepledge();
+
+  // Partial Payment State
+  const [selectedLoanForPayment, setSelectedLoanForPayment] = useState<any>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'repledges') {
@@ -68,6 +74,13 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
       return url.replace('http://localhost/', 'http://localhost:8000/');
     }
     return url;
+  };
+
+  const handlePaymentSuccess = () => {
+    // Ideally refetch pledges here.
+    // Assuming parent 'onSearchChange' or search term update triggers refetch effectively or we need a prop to refetch.
+    // For now, triggering a re-search with same term to refresh.
+    onSearchChange(searchTerm);
   };
 
   return (
@@ -195,7 +208,7 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
                                 {p.customer?.name || 'Unknown'}
                               </h3>
                               <span className={`text-sm font-black px-2 py-0.5 rounded-lg border ${getStatusColor(p.status || '')}`}>
-                                ₹{Number(p.loan?.amount || 0).toLocaleString()}
+                                ₹{Number(p.loan?.balance_amount ?? p.loan?.amount ?? 0).toLocaleString()}
                               </span>
                             </div>
 
@@ -234,7 +247,13 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
                                   )
                                 ) : (
                                   <>
-                                    <button className="h-11 flex flex-col items-center justify-center bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 transition-colors border border-blue-100 dark:border-blue-800/50">
+                                    <button
+                                      onClick={() => {
+                                        setSelectedLoanForPayment(p.loan);
+                                        setIsPaymentModalOpen(true);
+                                      }}
+                                      className="h-11 flex flex-col items-center justify-center bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 transition-colors border border-blue-100 dark:border-blue-800/50"
+                                    >
                                       <Banknote size={16} />
                                       <span className="text-[9px] font-black uppercase mt-0.5">Partial</span>
                                     </button>
@@ -351,6 +370,17 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
           </>
         )}
       </div>
+
+      {/* Partial Payment Modal */}
+      <PartialPaymentModal
+        loan={selectedLoanForPayment}
+        isOpen={isPaymentModalOpen}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+          setSelectedLoanForPayment(null);
+        }}
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 };

@@ -60,6 +60,7 @@ class StorePledgeRequest extends FormRequest
             'loan.include_processing_fee' => 'boolean',
             'loan.interest_taken' => 'boolean',
             'loan.amount_to_be_given' => 'nullable|numeric|min:0',
+            'loan.calculation_method' => 'nullable|string|max:255',
             'loan.metal_rate' => 'nullable|numeric|min:0',
 
             // Pledge (optional fields)

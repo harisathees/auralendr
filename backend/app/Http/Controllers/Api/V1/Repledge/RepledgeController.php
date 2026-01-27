@@ -81,6 +81,7 @@ class RepledgeController extends Controller
             'gross_weight' => $grossWeight,
             'net_weight' => $netWeight,
             'stone_weight' => $stoneWeight,
+            'jewels' => $jewels,
         ]);
     }
 

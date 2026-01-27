@@ -82,11 +82,28 @@ const TransactionForm = () => {
 
         setLoading(true);
         try {
-            await api.post('/transactions', formData);
+            // Sanitize payload: valid numbers and null for empty optionals
+            const payload = {
+                ...formData,
+                amount: parseFloat(formData.amount),
+                pledge_id: formData.pledge_id || null, // Convert "" to null
+                category: formData.category || null,   // Convert "" to null
+                to_money_source_id: formData.type === 'transfer' ? formData.to_money_source_id : undefined // Only send if transfer
+            };
+
+            await api.post('/transactions', payload);
             navigate(-1); // Go back to history
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert("Failed to save transaction");
+            const msg = error.response?.data?.message || "Failed to save transaction";
+            const validationErrors = error.response?.data?.errors;
+            if (validationErrors) {
+                // formatting validation errors
+                const details = Object.values(validationErrors).flat().join('\n');
+                alert(`${msg}\n${details}`);
+            } else {
+                alert(msg);
+            }
         } finally {
             setLoading(false);
         }

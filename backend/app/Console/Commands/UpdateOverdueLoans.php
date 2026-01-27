@@ -16,7 +16,7 @@ class UpdateOverdueLoans extends Command
     protected $signature = 'app:update-overdue-loans';
 
     /**
-     * The console command description.
+     * The console command descriptions.
      *
      * @var string
      */

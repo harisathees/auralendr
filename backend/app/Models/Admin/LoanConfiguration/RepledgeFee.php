@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Admin\JewelManagement\JewelType;
 
-class LoanProcessingFee extends Model
+class RepledgeFee extends Model
 {
     use HasFactory;
 
-    protected $table = 'processing_fees';
+    protected $table = 'repledge_fees';
 
     protected $fillable = [
         'jewel_type_id',

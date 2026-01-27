@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\V1\Admin\JewelManagement\JewelNameController;
 use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\InterestRateController;
 use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\LoanController;
 use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\LoanProcessingFeeController;
+use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\RepledgeFeeController;
 use App\Http\Controllers\Api\V1\Admin\LoanConfiguration\ValidityMonthController;
 use App\Http\Controllers\Api\V1\Admin\DashboardController;
 use App\Http\Controllers\Api\V1\Admin\Configuration\BrandSettingsController;
@@ -85,9 +86,9 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
         Route::apiResource('payment-methods', PaymentMethodController::class);
         Route::apiResource('transaction-categories', TransactionCategoryController::class);
         Route::post('/processing-fees', [LoanProcessingFeeController::class, 'store']);
+        Route::post('/repledge-fees', [RepledgeFeeController::class, 'store']);
 
         // Customer Routes (Admin Only)
-        Route::get('/customers/search', [CustomerController::class, 'search']);
         Route::get('/customers/{id}/analysis', [CustomerController::class, 'analysis']);
         Route::get('/customers', [CustomerController::class, 'index']);
     });
@@ -104,7 +105,11 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::get('/loan-validities', [ValidityMonthController::class, 'index']);
     Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
     Route::get('/processing-fees', [LoanProcessingFeeController::class, 'index']);
+    Route::get('/repledge-fees', [RepledgeFeeController::class, 'index']);
     Route::get('/transaction-categories', [TransactionCategoryController::class, 'index']);
+    
+    // Customer Search (Shared)
+    Route::get('/customers/search', [CustomerController::class, 'search']);
 
     // Loan Schemes
     Route::apiResource('loan-schemes', \App\Http\Controllers\Api\V1\Admin\LoanConfiguration\LoanSchemeController::class);
@@ -135,6 +140,9 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::get('/transactions/report', [TransactionController::class, 'report']);
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::post('/transactions', [TransactionController::class, 'store']);
+
+    // Loan Payments
+    Route::post('/loan-payments', [\App\Http\Controllers\Api\V1\Pledge\LoanPaymentController::class, 'store']);
 
     // Template Routes
     Route::get('/templates/receipt', [App\Http\Controllers\Api\V1\Admin\Configuration\TemplateController::class, 'getReceiptTemplate']);

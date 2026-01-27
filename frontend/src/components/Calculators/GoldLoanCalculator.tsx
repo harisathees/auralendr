@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Scale, Loader2 } from 'lucide-react';
+import { X, Loader2, Calculator } from 'lucide-react';
 import api from '../../api/apiClient';
 
 interface Props {
@@ -8,51 +8,72 @@ interface Props {
 }
 
 const GoldLoanCalculator: React.FC<Props> = ({ isOpen, onClose }) => {
-    const [loadingRate, setLoadingRate] = useState(false);
-    const [metalRate, setMetalRate] = useState<number>(0);
+    const [loadingData, setLoadingData] = useState(false);
+
+    // Metadata
+    const [metalRates, setMetalRates] = useState<{ name: string; metal_rate?: { rate: string } }[]>([]);
+    const [interestRates, setInterestRates] = useState<{ id: number; rate: string; estimation_percentage?: string }[]>([]);
 
     // Inputs
+    const [jewelType, setJewelType] = useState<'Gold' | 'Silver'>('Gold');
     const [weight, setWeight] = useState<string>('');
-    const [loanPerGram, setLoanPerGram] = useState<string>('');
+    const [selectedInterestRateId, setSelectedInterestRateId] = useState<string>('');
 
     // Results
     const [estimatedAmount, setEstimatedAmount] = useState<number>(0);
+    const [currentRatePerGram, setCurrentRatePerGram] = useState<number>(0);
+    const [estimationPercent, setEstimationPercent] = useState<number>(0);
 
-    // Fetch Metal Rate on Open
+    // Fetch Data on Open
     useEffect(() => {
         if (isOpen) {
-            setLoadingRate(true);
-            api.get('/metal-rates').then(res => {
-                // Assuming API returns an array or object. Let's try to find the latest rate.
-                // If response is array of rate objects
-                if (Array.isArray(res.data) && res.data.length > 0) {
-                    // Look for active rate or latest
-                    const rate = res.data[0]?.rate_per_gram || res.data[0]?.rate || 0;
-                    setMetalRate(Number(rate));
-                    // Auto-set loan per gram to something like 75% of rate (LTV) just as a hint? 
-                    // Or just use the rate itself if that's what user expects?
-                    // Let's assume Loan Per Gram is manually entered usually, or we default to 75% of rate
-                    if (rate > 0) setLoanPerGram(Math.floor(Number(rate) * 0.75).toString());
-                }
-                // If direct object
-                else if (res.data?.rate) {
-                    setMetalRate(Number(res.data.rate));
-                    setLoanPerGram(Math.floor(Number(res.data.rate) * 0.75).toString());
-                }
-            }).catch(console.error).finally(() => setLoadingRate(false));
+            setLoadingData(true);
+            Promise.all([
+                api.get('/metal-rates'),
+                api.get('/interest-rates')
+            ]).then(([metalRes, interestRes]) => {
+                if (Array.isArray(metalRes.data)) setMetalRates(metalRes.data);
+                if (Array.isArray(interestRes.data)) setInterestRates(interestRes.data);
+            }).catch(console.error).finally(() => setLoadingData(false));
         }
     }, [isOpen]);
 
-    // Calculation
+    // Calculate
     useEffect(() => {
-        const w = parseFloat(weight) || 0;
-        const lpg = parseFloat(loanPerGram) || 0;
+        if (!metalRates.length || !interestRates.length) return;
 
-        // Simple logic: Weight * Loan Per Gram
-        // In real scenarios, purity might affect it (e.g. net weight). 
-        // For now, let's assume 'weight' is net weight eligible for loan.
-        setEstimatedAmount(Math.floor(w * lpg));
-    }, [weight, loanPerGram]);
+        // 1. Get Rate Per Gram
+        const rateObj = metalRates.find(r => r.name.toLowerCase().includes(jewelType.toLowerCase()));
+        // Handle various API structures safely
+        const rateVal = parseFloat(rateObj?.metal_rate?.rate || (rateObj as any)?.rate || "0");
+        setCurrentRatePerGram(rateVal);
+
+        // 2. Get Estimation Percentage
+        const interestStr = selectedInterestRateId;
+        // We store ID in select, so find object
+        const interestObj = interestRates.find(r => String(r.id) === interestStr);
+        const estPercent = parseFloat(interestObj?.estimation_percentage || "0");
+        setEstimationPercent(estPercent);
+
+        // 3. Calculate
+        const w = parseFloat(weight) || 0;
+
+        if (rateVal > 0 && estPercent > 0 && w > 0) {
+            // Estimated Amount = Weight * Rate/gram * (Estimation% / 100)
+            const estimated = w * rateVal * (estPercent / 100);
+            setEstimatedAmount(Math.floor(estimated));
+        } else {
+            setEstimatedAmount(0);
+        }
+
+    }, [weight, jewelType, selectedInterestRateId, metalRates, interestRates]);
+
+    // Auto-select first interest rate if none selected
+    useEffect(() => {
+        if (interestRates.length > 0 && !selectedInterestRateId) {
+            setSelectedInterestRateId(String(interestRates[0].id));
+        }
+    }, [interestRates, selectedInterestRateId]);
 
     if (!isOpen) return null;
 
@@ -66,10 +87,10 @@ const GoldLoanCalculator: React.FC<Props> = ({ isOpen, onClose }) => {
                 <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
                     <div className="flex items-center gap-3">
                         <div className="bg-orange-100 dark:bg-orange-900/30 p-2 rounded-xl text-orange-600 dark:text-orange-400">
-                            <Scale className="w-5 h-5" />
+                            <Calculator className="w-5 h-5" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">Gold Loan Estimate</h3>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">Estimation Calculator</h3>
                             <p className="text-xs text-gray-500 dark:text-gray-400">Calculate loan eligibility</p>
                         </div>
                     </div>
@@ -81,42 +102,67 @@ const GoldLoanCalculator: React.FC<Props> = ({ isOpen, onClose }) => {
                 {/* Content */}
                 <div className="p-5 space-y-5">
 
-                    {/* Metal Rate Banner */}
-                    <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-xl p-3 flex items-center justify-between">
-                        <span className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wide">Current Rate (22K)</span>
-                        {loadingRate ? (
-                            <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
-                        ) : (
-                            <span className="text-sm font-black text-amber-600 dark:text-amber-400">₹{metalRate}/g</span>
-                        )}
+                    {/* Banner Info */}
+                    <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-xl p-3 flex flex-col gap-1">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wide">Market Rate ({jewelType})</span>
+                            {loadingData ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
+                            ) : (
+                                <span className="text-sm font-black text-amber-600 dark:text-amber-400">₹{currentRatePerGram}/g</span>
+                            )}
+                        </div>
+                        <div className="flex items-center justify-between border-t border-amber-200 dark:border-amber-800/30 pt-1 mt-1">
+                            <span className="text-xs font-medium text-amber-700 dark:text-amber-500">Estimation %</span>
+                            <span className="text-xs font-bold text-amber-700 dark:text-amber-500">{estimationPercent}%</span>
+                        </div>
                     </div>
 
                     <div className="space-y-4">
+
+                        {/* Jewel Type Details */}
+                        <div className="grid grid-cols-2 gap-3">
+                            {/* Type Selector */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Metal</label>
+                                <select
+                                    value={jewelType}
+                                    onChange={(e) => setJewelType(e.target.value as 'Gold' | 'Silver')}
+                                    className="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 text-sm font-semibold text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                                >
+                                    <option value="Gold">Gold</option>
+                                    <option value="Silver">Silver</option>
+                                </select>
+                            </div>
+
+                            {/* Interest Scheme Selector */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Interest / Scheme</label>
+                                <select
+                                    value={selectedInterestRateId}
+                                    onChange={(e) => setSelectedInterestRateId(e.target.value)}
+                                    className="w-full h-10 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 text-sm font-semibold text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                                >
+                                    {interestRates.map(ir => (
+                                        <option key={ir.id} value={ir.id}>{parseFloat(ir.rate)}%</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
                         {/* Weight */}
                         <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Net Weight (grams)</label>
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Net Weight (grams)</label>
                             <input
                                 type="number"
                                 value={weight}
                                 onChange={(e) => setWeight(e.target.value)}
-                                className="w-full h-12 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 text-lg font-bold text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                                className="w-full h-12 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 text-lg font-bold text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-gray-300"
                                 placeholder="0.00"
                                 autoFocus
                             />
                         </div>
 
-                        {/* Loan Per Gram */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Loan Amount / Gram</label>
-                            <input
-                                type="number"
-                                value={loanPerGram}
-                                onChange={(e) => setLoanPerGram(e.target.value)}
-                                className="w-full h-11 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none font-bold"
-                                placeholder="0"
-                            />
-                            <p className="text-[10px] text-gray-400">Adjust based on LTV (e.g. 75% of market rate)</p>
-                        </div>
                     </div>
 
                     {/* Results Area */}
@@ -132,6 +178,13 @@ const GoldLoanCalculator: React.FC<Props> = ({ isOpen, onClose }) => {
                             </div>
                         </div>
                     </div>
+
+                    <div className="text-center">
+                        <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                            Calculation: Weight × Rate × (Estimation% / 100)
+                        </p>
+                    </div>
+
                 </div>
             </div>
         </div>

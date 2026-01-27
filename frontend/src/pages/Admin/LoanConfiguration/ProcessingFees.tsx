@@ -2,67 +2,38 @@ import React, { useEffect, useState } from "react";
 import api from "../../../api/apiClient";
 import { Link } from "react-router-dom";
 import { useToast } from "../../../context";
-
-import type { Branch, JewelType, ProcessingFee } from "../../../types/models";
+import type { JewelType, ProcessingFee } from "../../../types/models";
 
 const ProcessingFees: React.FC = () => {
-    const [branches, setBranches] = useState<Branch[]>([]);
     const [jewelTypes, setJewelTypes] = useState<JewelType[]>([]);
     const [processingFees, setProcessingFees] = useState<ProcessingFee[]>([]);
-
-    const [selectedBranchId, setSelectedBranchId] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState<number | null>(null); // storing jewel_type_id being saved
     const { showToast } = useToast();
 
-    // Fetch initial data (Branches and Jewel Types)
+    // Fetch initial data
     useEffect(() => {
-        const fetchInitialData = async () => {
+        const fetchData = async () => {
             try {
-                const [branchesRes, typesRes] = await Promise.all([
-                    api.get("/branches"),
-                    api.get("/jewel-types")
+                const [typesRes, feesRes] = await Promise.all([
+                    api.get("/jewel-types"),
+                    api.get("/processing-fees")
                 ]);
-                setBranches(branchesRes.data);
                 setJewelTypes(typesRes.data);
-
-                // Select first branch by default if available
-                if (branchesRes.data.length > 0) {
-                    setSelectedBranchId(branchesRes.data[0].id.toString());
-                }
+                setProcessingFees(feesRes.data);
             } catch (error) {
-                console.error("Failed to fetch initial data", error);
-                showToast("Failed to load initial data", "error");
+                console.error("Failed to fetch data", error);
+                showToast("Failed to load processing fees", "error");
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchInitialData();
+        fetchData();
     }, []);
 
-    // Fetch processing fees when branch changes
-    useEffect(() => {
-        // if (!selectedBranchId) return; // Allow fetching if we have a strategy for "Global"
-
-        const fetchFees = async () => {
-            try {
-                // Handle "GLOBAL" or empty branch ID
-                const branchParam = selectedBranchId === "GLOBAL" ? "null" : selectedBranchId;
-                const res = await api.get(`/processing-fees?branch_id=${branchParam}`);
-                setProcessingFees(res.data);
-            } catch (error) {
-                console.error("Failed to fetch processing fees", error);
-                showToast("Failed to load processing fees", "error");
-            }
-        };
-
-        fetchFees();
-    }, [selectedBranchId]);
-
     const getFeeForType = (typeId: number) => {
-        const targetBranchId = selectedBranchId === "GLOBAL" ? null : selectedBranchId;
-        const fee = processingFees.find(f => f.jewel_type_id === typeId && f.branch_id === targetBranchId);
+        const fee = processingFees.find(f => f.jewel_type_id === typeId);
         return {
             percentage: fee?.percentage || "",
             max_amount: fee?.max_amount || ""
@@ -70,13 +41,11 @@ const ProcessingFees: React.FC = () => {
     };
 
     const handleSave = async (jewelTypeId: number, percentage: string, maxAmount: string) => {
-        if (!selectedBranchId) return;
         setSaving(jewelTypeId);
 
         try {
             const payload = {
                 jewel_type_id: jewelTypeId,
-                branch_id: selectedBranchId === "GLOBAL" ? null : selectedBranchId,
                 percentage: parseFloat(percentage),
                 max_amount: maxAmount ? parseFloat(maxAmount) : null
             };
@@ -85,8 +54,7 @@ const ProcessingFees: React.FC = () => {
 
             // Update local state
             setProcessingFees(prev => {
-                const targetBranchId = selectedBranchId === "GLOBAL" ? null : selectedBranchId;
-                const existingIndex = prev.findIndex(f => f.jewel_type_id === jewelTypeId && f.branch_id === targetBranchId);
+                const existingIndex = prev.findIndex(f => f.jewel_type_id === jewelTypeId);
                 if (existingIndex >= 0) {
                     const updated = [...prev];
                     updated[existingIndex] = res.data;
@@ -119,29 +87,14 @@ const ProcessingFees: React.FC = () => {
                             Processing Fees
                         </h2>
                     </div>
-                    {/* <p className="text-secondary-text dark:text-gray-400 ml-8">Configure fees per Branch & Jewel Type</p> */}
-                </div>
-
-                {/* Branch Selector */}
-                <div className="flex items-center gap-3">
-                    {/* <span className="text-sm font-medium text-secondary-text dark:text-gray-400">Select Branch:</span> */}
-                    <select
-                        value={selectedBranchId}
-                        onChange={(e) => setSelectedBranchId(e.target.value)}
-                        className="form-select h-10 rounded-lg border-border-green bg-white dark:bg-gray-800 px-4 text-sm text-primary-text dark:text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none shadow-sm"
-                    >
-                        <option value="GLOBAL">All Branches (Global)</option>
-                        {branches.map(b => (
-                            <option key={b.id} value={b.id}>{b.branch_name}</option>
-                        ))}
-                    </select>
+                    <p className="text-secondary-text dark:text-gray-400 ml-8 text-sm">Configure global processing fees per Jewel Type</p>
                 </div>
             </header>
 
             <div className="flex-1 overflow-y-auto">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {jewelTypes.map(type => (
-                        <div key={`${type.id}-${selectedBranchId}`} className="bg-card-light dark:bg-card-dark p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
+                        <div key={type.id} className="bg-card-light dark:bg-card-dark p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                                     <span className="material-symbols-outlined">diamond</span>

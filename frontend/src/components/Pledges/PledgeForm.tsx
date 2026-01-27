@@ -233,6 +233,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
     interest_taken: initial?.loan?.interest_taken ?? false,
     amount_to_be_given: initial?.loan?.amount_to_be_given ?? "",
     metal_rate: initial?.loan?.metal_rate ?? "",
+    calculation_method: initial?.loan?.calculation_method ?? "",
   });
 
   // Jewels (Array)
@@ -289,17 +290,16 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
   const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string; balance: string; show_balance: boolean; is_outbound?: boolean }[]>([]);
   const [metalRates, setMetalRates] = useState<{ name: string; metal_rate?: { rate: string } }[]>([]);
   const [processingFeesConfigs, setProcessingFeesConfigs] = useState<{ jewel_type_id: number; percentage: string; max_amount: string | null }[]>([]);
+  const [loanSchemes, setLoanSchemes] = useState<{ id: number; name: string; slug: string }[]>([]);
 
   // --- Effects ---
 
-  // Fetch processing fees when branch ID is available
+  // Fetch global processing fees
   useEffect(() => {
-    if (user?.branch_id) {
-      api.get(`/processing-fees?branch_id=${user.branch_id}`)
-        .then(res => setProcessingFeesConfigs(res.data))
-        .catch(console.error);
-    }
-  }, [user?.branch_id]);
+    api.get(`/processing-fees`)
+      .then(res => setProcessingFeesConfigs(res.data))
+      .catch(console.error);
+  }, []);
   useEffect(() => {
     // Determine due date (loan date + validity months)
     if (loan.date) {
@@ -479,6 +479,12 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
 
   // Auto-select first payment method if current is invalid
   useEffect(() => {
+    if (loanSchemes.length > 0 && !loan.calculation_method) {
+      setLoan(prev => ({ ...prev, calculation_method: loanSchemes[0].slug }));
+    }
+  }, [loanSchemes, loan.calculation_method]);
+
+  useEffect(() => {
     if (paymentMethods.length > 0) {
       const currentInOptions = paymentMethods.some(p => p.name === loan.payment_method);
       if (!currentInOptions) {
@@ -499,6 +505,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
       }
     }).catch(console.error);
     api.get("/metal-rates").then(res => Array.isArray(res.data) && setMetalRates(res.data)).catch(console.error); // Added this line
+    api.get("/loan-schemes?status=active").then(res => Array.isArray(res.data) && setLoanSchemes(res.data)).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -1035,6 +1042,23 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
               value={loan.processing_fee} onChange={e => setLoan({ ...loan, processing_fee: e.target.value })}
               className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="₹0" type="number"
             />
+          </label>
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Scheme</span>
+            <div className="relative">
+              <select
+                value={loan.calculation_method}
+                onChange={e => setLoan({ ...loan, calculation_method: e.target.value })}
+                className="w-full rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all border-primary ring-1 ring-primary/20 focus:border-primary focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="" disabled>Select Scheme</option>
+                {loanSchemes.map(s => (
+                  <option key={s.id} value={s.slug}>{s.name}</option>
+                ))}
+              </select>
+              <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-primary text-sm">expand_more</span>
+            </div>
           </label>
 
           <div className="grid grid-cols-2 gap-4">

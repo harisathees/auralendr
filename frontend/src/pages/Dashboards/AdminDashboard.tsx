@@ -1,48 +1,21 @@
 import { useAuth } from "../../context/Auth/AuthContext";
 import { useTheme } from "../../context/Theme/ThemeContext";
-import StatsCard from "../../components/Dashboard/StatsCard";
 import DashboardFilters from "../../components/Dashboard/DashboardFilters";
-import ReportCard from "../../components/Dashboard/ReportCard";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
-import { LogOut, Sun, Moon } from "lucide-react";
-import { useState, useEffect } from "react";
-import api from "../../api/apiClient";
-import { toast } from "react-hot-toast";
+import { LogOut, Sun, Moon, LayoutDashboard, Repeat, BarChart3 } from "lucide-react";
+import { useState } from "react";
+import LoansDashboard from "./LoansDashboard";
+import RepledgeDashboard from "./RepledgeDashboard";
+import BusinessOverviewDashboard from "./BusinessOverviewDashboard";
 
-interface DashboardStats {
-  summary: {
-    total_pledges: number;
-    active_pledges: number;
-    closed_pledges: number;
-    total_loan_amount: number;
-    interest_collected: number;
-  };
-  trends: {
-    month: string;
-    total_amount: number;
-    count: number;
-  }[];
-  branch_distribution: {
-    branch_name: string;
-    count: number;
-    total_amount: number;
-  }[];
-  status_distribution: {
-    status: string;
-    count: number;
-  }[];
-}
-
-const COLORS = ['#00E676', '#FFAB00', '#FF5252', '#2979FF', '#AA00FF'];
+type Tab = 'loans' | 'repledge' | 'business';
 
 const AdminDashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
+  const [activeTab, setActiveTab] = useState<Tab>('business');
   const [showMenu, setShowMenu] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [filters, setFilters] = useState<{ branch_id?: number; start_date?: string; end_date?: string }>({});
 
   const handleLogoutClick = () => {
@@ -52,40 +25,6 @@ const AdminDashboard: React.FC = () => {
 
   const confirmLogout = () => {
     logout();
-  };
-
-  useEffect(() => {
-    fetchStats();
-  }, [filters]);
-
-  const fetchStats = async () => {
-    setLoading(true);
-    try {
-      const response = await api.get("/dashboard/stats", { params: filters });
-      setStats(response.data);
-    } catch (error) {
-      console.error("Error fetching dashboard stats:", error);
-      toast.error("Failed to load dashboard statistics");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatCurrency = (amount: number | string) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(Number(amount));
-  };
-
-  // Calculate growth percentage from trends
-  const calculateGrowth = (key: 'total_amount' | 'count') => {
-    if (!stats?.trends || stats.trends.length < 2) return null;
-    const current = stats.trends[stats.trends.length - 1][key];
-    const previous = stats.trends[stats.trends.length - 2][key];
-    if (previous === 0) return current > 0 ? '+100%' : '0%';
-    const growth = ((current - previous) / previous) * 100;
-    return `${growth > 0 ? '+' : ''}${growth.toFixed(1)}%`;
   };
 
   return (
@@ -148,126 +87,55 @@ const AdminDashboard: React.FC = () => {
             >
               {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
-            <DashboardFilters onFilterChange={setFilters} isLoading={loading} />
+            <DashboardFilters onFilterChange={setFilters} isLoading={false} />
           </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex justify-center mb-6">
+        <div className="flex bg-gray-100 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700/50">
+          <button
+            onClick={() => setActiveTab('business')}
+            className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'business'
+                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+          >
+            <BarChart3 className="w-4 h-4" />
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('loans')}
+            className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'loans'
+                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            Loans
+          </button>
+          <button
+            onClick={() => setActiveTab('repledge')}
+            className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'repledge'
+                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+          >
+            <Repeat className="w-4 h-4" />
+            Repledge
+          </button>
         </div>
       </div>
 
       {/* Dashboard Body */}
-      <div className="space-y-8 transition-all duration-500">
-        {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatsCard
-            title="Total Principal"
-            value={stats?.summary ? formatCurrency(stats.summary.total_loan_amount) : "..."}
-            valueColor="text-gray-900 dark:text-white"
-            growth={calculateGrowth('total_amount') || undefined}
-            description="Total lending value"
-            trendColor="#00E676"
-            trendData={stats?.trends?.map(t => ({ value: t.total_amount }))}
-          />
-          <StatsCard
-            title="Interest Collected"
-            value={stats?.summary ? formatCurrency(stats.summary.interest_collected) : "..."}
-            valueColor="text-gray-900 dark:text-white"
-            growth={calculateGrowth('total_amount') || undefined} // Fallback to loan growth for now
-            description="Total revenue earned"
-            trendColor="#2979FF"
-            trendData={stats?.trends?.map(t => ({ value: t.total_amount }))}
-          />
-          <StatsCard
-            title="Total Pledges"
-            value={stats?.summary ? stats.summary.total_pledges.toString() : "..."}
-            valueColor="text-gray-900 dark:text-white"
-            growth={calculateGrowth('count') || undefined}
-            description="Tickets generated"
-            trendColor="#FFAB00"
-            trendData={stats?.trends?.map(t => ({ value: t.count }))}
-          />
-          <StatsCard
-            title="Active Pledges"
-            value={stats?.summary ? stats.summary.active_pledges.toString() : "..."}
-            valueColor="text-gray-900 dark:text-white"
-            growth={calculateGrowth('count') || undefined}
-            description="Current portfolio"
-            trendColor="#00E676"
-            trendData={stats?.trends?.map(t => ({ value: t.count }))}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Report Card */}
-          <div className="lg:col-span-2">
-            <ReportCard
-              title="Lending Report"
-              chartData={stats?.trends || []}
-              chartColor="#AA00FF"
-              summaryStats={[
-                {
-                  label: 'Monthly',
-                  value: stats?.summary ? formatCurrency(stats.summary.total_loan_amount / 12) : '...',
-                  growth: calculateGrowth('total_amount') || '0%',
-                  icon: 'star',
-                  iconBg: 'bg-green-100',
-                  iconColor: 'text-green-600'
-                },
-                {
-                  label: 'Yearly',
-                  value: stats?.summary ? formatCurrency(stats.summary.total_loan_amount) : '...',
-                  growth: calculateGrowth('total_amount') || '0%',
-                  icon: 'military_tech',
-                  iconBg: 'bg-amber-100',
-                  iconColor: 'text-amber-600'
-                }
-              ]}
-              listItems={stats?.branch_distribution?.map(b => ({
-                label: b.branch_name,
-                value: formatCurrency(b.total_amount)
-              })) || []}
-            />
-          </div>
-
-          {/* Secondary Info / Status Distribution */}
-          <div className="space-y-8">
-            <div className="bg-white dark:bg-[#1A1D1F] rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm h-full flex flex-col">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Status Distribution</h3>
-              <div className="flex-1 min-h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={stats?.status_distribution || []}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={80}
-                      outerRadius={100}
-                      paddingAngle={8}
-                      dataKey="count"
-                      nameKey="status"
-                      stroke="none"
-                    >
-                      {stats?.status_distribution?.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mt-6">
-                {stats?.status_distribution?.map((entry, index) => (
-                  <div key={entry.status} className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400 capitalize">{entry.status}</span>
-                    <span className="text-xs font-black text-gray-900 dark:text-white ml-auto">{entry.count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {activeTab === 'business' ? (
+        <BusinessOverviewDashboard filters={filters} />
+      ) : activeTab === 'loans' ? (
+        <LoansDashboard filters={filters} />
+      ) : (
+        <RepledgeDashboard filters={filters} />
+      )}
 
       {/* Logout Confirmation Modal */}
       {showConfirm && (

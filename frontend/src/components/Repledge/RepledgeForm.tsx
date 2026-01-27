@@ -20,21 +20,47 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
     const { fetchLoanDetails } = useRepledge();
     const { showToast } = useToast();
 
-    // Global State - Removed Bank Specifics
+    // Global State
     const [status, setStatus] = useState("active");
     const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 
+    // Fee Configs
+    const [repledgeFees, setRepledgeFees] = useState<any[]>([]);
+    const [jewelTypes, setJewelTypes] = useState<any[]>([]);
+
     useEffect(() => {
-        const fetchPaymentMethods = async () => {
+        const fetchInitialMetadata = async () => {
             try {
-                const res = await api.get('/money-sources');
-                setPaymentMethods(res.data || []);
+                const [pmRes, feesRes, typesRes] = await Promise.all([
+                    api.get('/money-sources'),
+                    api.get('/repledge-fees'),
+                    api.get('/jewel-types')
+                ]);
+                setPaymentMethods(pmRes.data || []);
+                setRepledgeFees(feesRes.data || []);
+                setJewelTypes(typesRes.data || []);
             } catch (e) {
-                console.error("Failed to fetch payment methods", e);
+                console.error("Failed to fetch metadata", e);
             }
         };
-        fetchPaymentMethods();
+        fetchInitialMetadata();
     }, []);
+
+    const calculateFee = (amount: number, typeId?: number) => {
+        if (!typeId) return 0;
+        const config = repledgeFees.find(f => f.jewel_type_id === typeId);
+        if (!config) return 0;
+
+        const percentage = parseFloat(config.percentage);
+        let fee = amount * (percentage / 100);
+
+        if (config.max_amount) {
+            const max = parseFloat(config.max_amount);
+            if (fee > max) fee = max;
+        }
+
+        return Math.round(fee);
+    };
 
     const [items, setItems] = useState<RepledgeItem[]>([{
         id: 'init_1',
@@ -95,19 +121,30 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                     const newItems = [...prev];
                     const item = newItems[index];
 
+                    // Determine Jewel Type ID
+                    let typeId: number | undefined;
+                    const loanObj = loanData.loan as any;
+
+                    // Logic updated for repledge-loans/search structure which has 'jewels' at top level
+                    if (loanObj.jewels && loanObj.jewels.length > 0) {
+                        const typeName = loanObj.jewels[0].jewel_type;
+                        const typeObj = jewelTypes.find(t => t.name.toLowerCase() === typeName.toLowerCase()); // Case insensitive match
+                        if (typeObj) typeId = typeObj.id;
+                    }
+
+                    const amt = Number(loanData.loan.amount);
+                    const fee = calculateFee(amt, typeId);
+
                     newItems[index] = {
                         ...item,
                         loanId: loanData.loan.id.toString(),
                         loanNo: loanData.loan.loan_no,
-                        amount: Number(loanData.loan.amount),
-                        processingFee: Math.round(Math.min(Number(loanData.loan.amount) * 0.0012, 200)),
+                        amount: amt,
+                        processingFee: fee,
                         grossWeight: loanData.totals.gross_weight,
                         netWeight: loanData.totals.net_weight,
                         stoneWeight: loanData.totals.stone_weight,
-                        // Keep existing bank settings if set, otherwise 0?
-                        // Actually, if bank is NOT set, these remain 0.
-                        // If bank IS set, they should persist.
-                        // Since we are spreading ...item, existing values persist.
+                        jewelTypeId: typeId,
                     };
                     return newItems;
                 });
@@ -147,7 +184,6 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
     };
 
     // New Handlers for Item-Specific Bank Logic
-    // New Handlers for Item-Specific Bank Logic
     const handleItemBankChange = (index: number, value: string) => {
         const selectedId = value;
         const source = sources.find(b => b.id.toString() === selectedId);
@@ -156,7 +192,6 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
             const newItems = [...prev];
 
             // If changing the first item, update ALL items for consistency
-            // If changing other items (shouldn't happen with UI hidden, but for safety), just update that one
             const indicesToUpdate = index === 0 ? newItems.map((_, i) => i) : [index];
 
             indicesToUpdate.forEach(idx => {
@@ -182,7 +217,6 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                     newItems[idx] = {
                         ...newItems[idx],
                         repledgeSourceId: "",
-                        // Maybe reset others? keeping usage simple for now
                     };
                 }
             });
@@ -201,9 +235,6 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
 
     useEffect(() => {
         if (initialData && sources.length > 0) {
-            // Note: initialData structure might need adjustment if we assume items have their own sources
-            // For now, mapping root repledge_source_id to items if items don't have it
-
             setStatus(initialData.status || "active");
 
             setItems([{
@@ -237,7 +268,7 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
             const newItems = [...prev];
             if (field === 'amount') {
                 const amt = parseFloat(value) || 0;
-                const fee = Math.round(Math.min(amt * 0.0012, 200));
+                const fee = calculateFee(amt, newItems[index].jewelTypeId);
                 newItems[index] = { ...newItems[index], [field]: value, processingFee: fee };
             } else if (field === 'startDate' || field === 'validityPeriod') {
                 newItems[index] = { ...newItems[index], [field]: value };
@@ -323,10 +354,6 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Assume first item's source is primary if single mode? Or just pass null globally and rely on items?
-        // Backend seems to expect 'repledge_source_id' at top level too.
-        // We can use the first item's source as the "primary" one if strict logical grouping is needed, or just items.
-
         const primarySourceId = items.length > 0 ? items[0].repledgeSourceId : "";
 
         const payload = {
@@ -336,7 +363,7 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                 const d = new Date();
                 d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
                 return d.toISOString().split('T')[0];
-            })(), // Fallback
+            })(),
             end_date: items.length > 0 ? items[0].endDate : "",
             items: items.map(item => ({
                 loan_no: item.loanNo,
@@ -359,8 +386,6 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
 
     return (
         <div className="flex flex-col gap-5 p-2 pb-48 w-full max-w-7xl mx-auto min-h-full overflow-y-auto bg-[#f7f8fc] dark:bg-[#1F1B2E]">
-
-
             {/* Item Details Cards */}
             {items.map((item, index) => (
                 <div key={item.id || index} className="flex flex-col rounded-xl bg-white dark:bg-gray-900 shadow-sm border border-gray-100 dark:border-gray-800 relative group overflow-hidden">
@@ -397,8 +422,6 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
 
                     <div className="p-5 space-y-6">
 
-                        {/* Bank Details Accordion Per Item */}
-                        {/* Bank Details Accordion Per Item */}
                         {/* Bank Details Accordion Per Item - Only for First Item */}
                         {index === 0 && (
                             <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 p-4">
@@ -477,8 +500,6 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                                     value={item.loanNo}
                                     onChange={(e) => handleLoanInputChange(index, e.target.value)}
                                     onBlur={() => {
-                                        // Delay blur to allow click on suggestion (kept for non-suggestion clicks)
-                                        // But if selectingRef is true, we skip via handleLoanBlur
                                         setTimeout(() => {
                                             setActiveSuggestionIndex(null);
                                             handleLoanBlur(index);

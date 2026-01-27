@@ -87,7 +87,7 @@ const ClosingAmountCalculator: React.FC<Props> = ({ isOpen, onClose }) => {
                             <Calculator className="w-5 h-5" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">Closing Calculator</h3>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">Calculator</h3>
                             <p className="text-xs text-gray-500 dark:text-gray-400">Calculate interest & payable amount</p>
                         </div>
                     </div>

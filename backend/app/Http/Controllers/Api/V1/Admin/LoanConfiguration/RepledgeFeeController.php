@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Api\V1\Admin\LoanConfiguration;
 
 use App\Http\Controllers\Api\V1\Controller;
-use App\Models\Admin\LoanConfiguration\LoanProcessingFee;
+use App\Models\Admin\LoanConfiguration\RepledgeFee;
 use Illuminate\Http\Request;
 
-class LoanProcessingFeeController extends Controller
+class RepledgeFeeController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        return response()->json(LoanProcessingFee::all());
+        return response()->json(RepledgeFee::all());
     }
 
     public function store(Request $request)
@@ -21,7 +21,7 @@ class LoanProcessingFeeController extends Controller
             'max_amount' => 'nullable|numeric|min:0',
         ]);
 
-        $fee = LoanProcessingFee::updateOrCreate(
+        $fee = RepledgeFee::updateOrCreate(
             [
                 'jewel_type_id' => $validated['jewel_type_id'],
             ],

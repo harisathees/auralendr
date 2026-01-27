@@ -26,14 +26,20 @@ export const useRepledge = () => {
     }, []);
 
     // Fetch Loan Details by Loan No
-    const fetchLoanDetails = async (loanNo: string): Promise<LoanDetails | null> => {
+    const fetchLoanDetails = async (loanNo: string): Promise<any | null> => {
         setLoading(true);
         setError(null);
         try {
-            const res = await api.get(`/loans/${loanNo}`);
-            // Assuming existing backend structure, might need adjustment
-            // Based on typical Laravel response for detail
-            return res.data;
+            // Using search endpoint as it contains specific validations (like already repledged) and aggregated data
+            const res = await api.get(`/repledge-loans/search?query=${loanNo}`);
+            return {
+                loan: res.data,
+                totals: {
+                    gross_weight: res.data.gross_weight,
+                    net_weight: res.data.net_weight,
+                    stone_weight: res.data.stone_weight
+                }
+            };
         } catch (err: any) {
             console.error("Failed to fetch loan details", err);
             setError(err.response?.data?.message || "Loan not found");

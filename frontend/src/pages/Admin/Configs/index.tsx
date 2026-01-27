@@ -118,7 +118,7 @@ const AdminConfigs: React.FC = () => {
                         link: "/admin/configs/processing-fees"
                     },
                     {
-                        title: "Pledge Closing",
+                        title: "Loan Schemes",
                         description: "Configure closing calculations",
                         icon: "calculate",
                         color: "text-blue-600",
@@ -126,7 +126,7 @@ const AdminConfigs: React.FC = () => {
                         link: "/admin/configs/pledge-closing-calculations"
                     },
                     {
-                        title: "Repledge Closing",
+                        title: "Repledge Schemes",
                         description: "Repledge closing settings",
                         icon: "functions",
                         color: "text-green-600",
@@ -134,7 +134,7 @@ const AdminConfigs: React.FC = () => {
                         link: "/admin/configs/repledge-closing-calculations"
                     },
                     {
-                        title: "Repledge Fees",
+                        title: "Repledge Processing Fees",
                         description: "Repledge processing fees",
                         icon: "request_quote",
                         color: "text-purple-600",
