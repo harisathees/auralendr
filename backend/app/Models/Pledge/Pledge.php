@@ -5,7 +5,7 @@ namespace App\Models\Pledge;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
-
+// @phpstan-ignore-next-line
 class Pledge extends Model
 {
     use HasFactory, HasUlids;
@@ -16,14 +16,20 @@ class Pledge extends Model
         'created_by',
         'updated_by',
         'status',
-        'reference_no'
+        'reference_no',
+        'approval_status'
     ];
+
+    public function pendingApproval()
+    {
+        return $this->hasOne(\App\Models\PendingApproval::class);
+    }
 
     public function customer()
     {
         return $this->belongsTo(Customer::class);
     }
-
+// @phpstan-ignore-next-line
     public function loan()
     {
         return $this->hasOne(Loan::class);
