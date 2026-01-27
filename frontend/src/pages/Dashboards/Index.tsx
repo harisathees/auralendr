@@ -7,7 +7,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <>
-      {user?.role === "admin" ? <AdminDashboard /> : <StaffDashboard />}
+      {user?.role === "admin" || user?.role === "developer" ? <AdminDashboard /> : <StaffDashboard />}
     </>
   );
 };

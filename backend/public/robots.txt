@@ -1,4 +1,4 @@
 User-agent: *
 Disallow:
 
-WELLCOME TO MY WEBSITE             
+WELLCOME TO MY WEBSITE

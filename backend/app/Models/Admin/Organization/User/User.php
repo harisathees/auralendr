@@ -25,6 +25,8 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone_number',
+        'photo',
         'password',
         'role',
         'branch_id',
@@ -43,6 +45,24 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Branch::class);
     }
+
+    public function media()
+    {
+        return $this->hasMany(\App\Models\Pledge\MediaFile::class, 'user_id');
+    }
+
+    public function getPhotoUrlAttribute()
+    {
+        // Prioritize media file (profile_photo or user_photo)
+        $media = $this->media()->whereIn('category', ['user_photo', 'profile_photo'])->latest()->first();
+        if ($media) {
+            return $media->url;
+        }
+
+        return $this->photo ? url('storage/' . $this->photo) : null;
+    }
+
+    protected $appends = ['photo_url'];
 
     public function isAdmin(): bool
     {

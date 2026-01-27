@@ -44,6 +44,7 @@ const RepledgeEdit = lazy(() => import("../pages/Repledge/Edit"));
 const RepledgeView = lazy(() => import("../pages/Repledge/View"));
 const CloseRepledge = lazy(() => import("../pages/Repledge/CloseRepledge"));
 const Privileges = lazy(() => import("../pages/Staff/Privileges/Privileges"));
+const ActivityLog = lazy(() => import("../pages/Staff/Activities/ActivityLog"));
 
 const MetalRates = lazy(() => import("../pages/Admin/Finance/MetalRates"));
 const StaffMetalRates = lazy(() => import("../pages/Staff/Privileges/MetalRates"));
@@ -58,6 +59,8 @@ const InterestRateForm = lazy(() => import("../pages/Admin/LoanConfiguration/Int
 const ValidityPeriodForm = lazy(() => import("../pages/Admin/LoanConfiguration/LoanValidityForm"));
 const RolesIndex = lazy(() => import("../pages/Developer/index"));
 const CustomerAppControl = lazy(() => import("../pages/Developer/CustomerAppControl"));
+const AdminProfile = lazy(() => import("../pages/Admin/Profile/AdminProfile"));
+const AdminApprovals = lazy(() => import("../pages/Admin/Approvals/AdminApprovals"));
 
 // Organization Configurations
 const PledgeClosingCalculations = lazy(() => import("../pages/Admin/LoanConfiguration/Calculations/PledgeClosingCalculations"));
@@ -90,6 +93,7 @@ const AppRoutes: React.FC = () => {
         path="/"
         element={
           <PublicRoute>
+            <Login />
             <Login />
           </PublicRoute>
         }
@@ -143,6 +147,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/privileges" element={<Privileges />} />
         <Route path="/privileges/metal-rates" element={<StaffMetalRates />} />
+        <Route path="/activities" element={<ActivityLog />} />
       </Route>
 
       {/* Admin Routes */}
@@ -156,6 +161,8 @@ const AppRoutes: React.FC = () => {
         }
       >
         <Route path="/admin/dashboard" element={<Dashboard />} />
+        <Route path="/admin/profile" element={<AdminProfile />} />
+        <Route path="/admin/approvals" element={<AdminApprovals />} />
         <Route
           element={
             <RoleGuard allowedRoles={['developer']}>
@@ -248,6 +255,8 @@ const AppRoutes: React.FC = () => {
         {/* Developer - Privileges */}
         <Route path="/admin/configs/roles" element={<RolesIndex />} />
         <Route path="/admin/developer/customer-app" element={<CustomerAppControl />} />
+        <Route path="/admin/activities" element={<ActivityLog />} />
+
 
         {/* Organization - Calculations */}
         <Route path="/admin/configs/pledge-closing-calculations" element={<PledgeClosingCalculations />} />

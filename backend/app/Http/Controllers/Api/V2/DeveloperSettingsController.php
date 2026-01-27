@@ -12,7 +12,8 @@ class DeveloperSettingsController extends Controller
         $branchId = $request->query('branch_id');
 
         // Treat 'null' string as null
-        if ($branchId === 'null') $branchId = null;
+        if ($branchId === 'null')
+            $branchId = null;
 
         $query = \App\Models\Settings::where('key', 'enable_customer_app');
 
@@ -21,7 +22,7 @@ class DeveloperSettingsController extends Controller
         } else {
             $query->whereNull('branch_id');
         }
-        
+
         $setting = $query->first();
 
         return response()->json([

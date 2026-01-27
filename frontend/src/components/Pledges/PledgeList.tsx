@@ -9,6 +9,7 @@ import CommunicationButtons from "../Shared/WhatsappAndSms/CommunicationButtons"
 import type { Pledge } from "../../types/models";
 
 import PartialPaymentModal from "../../components/Loans/PartialPaymentModal";
+import Pagination from "../Shared/UI/Pagination";
 
 interface Props {
   pledges: Pledge[];
@@ -17,13 +18,26 @@ interface Props {
   loading: boolean;
   activeTab: 'loans' | 'repledges';
   onTabChange: (tab: 'loans' | 'repledges') => void;
+  loansPage: number;
+  loansTotalPages: number;
+  onLoansPageChange: (page: number) => void;
 }
 
-const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, loading, activeTab, onTabChange }) => {
+const PledgeList: React.FC<Props> = ({
+  pledges,
+  searchTerm,
+  onSearchChange,
+  loading,
+  activeTab,
+  onTabChange,
+  loansPage,
+  loansTotalPages,
+  onLoansPageChange
+}) => {
   const navigate = useNavigate();
   const { can } = useAuth();
   const [expandedPledgeId, setExpandedPledgeId] = useState<number | string | null>(null);
-  const { repledgeEntries, fetchRepledgeEntries, loading: repledgeLoading } = useRepledge();
+  const { repledgeEntries, fetchRepledgeEntries, loading: repledgeLoading, currentPage: repledgePage, totalPages: repledgeTotalPages, setCurrentPage: setRepledgePage } = useRepledge();
 
   // Partial Payment State
   const [selectedLoanForPayment, setSelectedLoanForPayment] = useState<any>(null);
@@ -31,9 +45,9 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
 
   useEffect(() => {
     if (activeTab === 'repledges') {
-      fetchRepledgeEntries(1, searchTerm);
+      fetchRepledgeEntries(repledgePage, searchTerm);
     }
-  }, [activeTab, fetchRepledgeEntries, searchTerm]);
+  }, [activeTab, fetchRepledgeEntries, searchTerm, repledgePage]);
 
   // Search State
   const [inputValue, setInputValue] = useState(searchTerm);
@@ -93,7 +107,7 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
               Loans
             </h1>
             <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-              {activeTab === 'loans' ? pledges.length : repledgeEntries.length} Records Found
+              {activeTab === 'loans' ? pledges.length : repledgeEntries.length} Records Shown
             </p>
           </div>
         </div>
@@ -143,12 +157,11 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
               {inputValue ? <X className="w-5 h-5" /> : <SlidersHorizontal className="w-5 h-5" />}
             </button>
           </div>
-
         </div>
       </div>
 
       {/* Main Content Area - Independently Scrollable */}
-      <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth p-4">
+      <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth p-4 pb-24">
         {/* Pledges List */}
         {activeTab === 'loans' && (
           <>
@@ -277,6 +290,12 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
                         </div>
                       </div>
                     ))}
+                    {/* Pagination Controls for Loans */}
+                    <Pagination
+                      currentPage={loansPage}
+                      totalPages={loansTotalPages}
+                      onPageChange={onLoansPageChange}
+                    />
                   </div>
                 )}
               </>
@@ -363,6 +382,12 @@ const PledgeList: React.FC<Props> = ({ pledges, searchTerm, onSearchChange, load
                         </div>
                       );
                     })}
+                    {/* Pagination Controls for Repledges */}
+                    <Pagination
+                      currentPage={repledgePage}
+                      totalPages={repledgeTotalPages}
+                      onPageChange={setRepledgePage}
+                    />
                   </div>
                 )}
               </>

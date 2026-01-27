@@ -11,10 +11,10 @@ export const useRepledge = () => {
     const [totalPages, setTotalPages] = useState(1);
 
     // Fetch Repledge Entries
-    const fetchRepledgeEntries = useCallback(async (page = 1, search = "") => {
+    const fetchRepledgeEntries = useCallback(async (page = 1, search = "", perPage = 10) => {
         setLoading(true);
         try {
-            const res = await api.get(`/repledges`, { params: { page, search } });
+            const res = await api.get(`/repledges`, { params: { page, search, per_page: perPage } });
             setRepledgeEntries(res.data.data);
             setTotalPages(res.data.last_page);
             setCurrentPage(res.data.current_page);

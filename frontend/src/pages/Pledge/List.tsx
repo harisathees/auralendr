@@ -8,17 +8,33 @@ const List = () => {
   const initialTab = (location.state as any)?.tab || 'loans';
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<'loans' | 'repledges'>(initialTab);
+  const [page, setPage] = useState(1);
 
-  const { pledges, loading } = usePledges(searchTerm, activeTab === 'loans');
+  const { pledges, loading, totalPages } = usePledges(searchTerm, activeTab === 'loans', page);
+
+  // Reset page when switching tabs or searching
+  const handleTabChange = (tab: 'loans' | 'repledges') => {
+    setActiveTab(tab);
+    setPage(1);
+    setSearchTerm(''); // Optional: clear search on tab switch? User preference. Keeping it simple.
+  };
+
+  const handleSearchChange = (term: string) => {
+    setSearchTerm(term);
+    setPage(1);
+  };
 
   return (
     <PledgeList
       pledges={pledges}
       searchTerm={searchTerm}
-      onSearchChange={setSearchTerm}
+      onSearchChange={handleSearchChange}
       loading={loading}
       activeTab={activeTab}
-      onTabChange={setActiveTab}
+      onTabChange={handleTabChange}
+      loansPage={page}
+      loansTotalPages={totalPages}
+      onLoansPageChange={setPage}
     />
   );
 };

@@ -14,9 +14,10 @@ interface AuthContextType {
   token: string | null;
   user: User | null;
   login: (email: string, password: string) => Promise<User>;
-  logout: () => void;
+  logout: () => Promise<void>;
   can: (permission: string) => boolean;
-  booting: boolean; // Add booting state
+  booting: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -54,10 +55,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const [user, setUser] = useState<User | null>(getUserFromStorage());
 
-  const logout = (): void => {
+  const logout = async (): Promise<void> => {
     // Only call API if we think we have a session
     if (token || user) {
-      api.post("/logout").catch(() => { });
+      try {
+        await api.post("/logout");
+      } catch (e) { /* ignore error */ }
     }
     setToken(null);
     setUser(null);
@@ -78,6 +81,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         id: res.data.user.id,
         name: res.data.user.name,
         email: res.data.user.email,
+        phone_number: res.data.user.phone_number,
+        photo_url: res.data.user.photo_url,
         role: res.data.user.role,
         branch_id: res.data.user.branch_id,
         branch: res.data.user.branch,
@@ -122,6 +127,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         id: res.data.id,
         name: res.data.name,
         email: res.data.email,
+        phone_number: res.data.phone_number,
+        photo_url: res.data.photo_url,
         role: res.data.role,
         branch_id: res.data.branch_id,
         branch: res.data.branch,
@@ -130,7 +137,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
     } catch (error: any) {
-      // If 401, it means our session is actually dead.
       if (error.response?.status === 401) {
         logout();
       }
@@ -168,7 +174,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [token, booting]);
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, can, booting }}>
+    <AuthContext.Provider value={{ token, user, login, logout, can, booting, refreshUser: fetchUser }}>
       {children}
     </AuthContext.Provider>
   );

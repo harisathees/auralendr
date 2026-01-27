@@ -17,14 +17,17 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use App\Services\MediaService;
+use App\Models\PendingApproval;
 
 class PledgeController extends Controller
 {
     protected $mediaService;
+    protected $activityService;
 
-    public function __construct(MediaService $mediaService)
+    public function __construct(MediaService $mediaService, \App\Services\ActivityService $activityService)
     {
         $this->mediaService = $mediaService;
+        $this->activityService = $activityService;
     }
     // Middleware is applied in routes/api.php
 
@@ -94,7 +97,7 @@ class PledgeController extends Controller
             return response()->json(['data' => $results]);
         }
 
-        $perPage = (int) $request->query('per_page', 20);
+        $perPage = (int) $request->query('per_page', 10);
 
         return response()->json($query->orderByDesc('id')->paginate($perPage));
     }
@@ -219,50 +222,68 @@ class PledgeController extends Controller
                 $loanData['pledge_id'] = $pledge->id;
                 Log::info('Creating loan', ['data' => $loanData]);
                 $loan = Loan::create($loanData);
+                $loanCount = Loan::count() + 1;
+                $loan->loan_no = 'LN-' . str_pad($loanCount, 6, '0', STR_PAD_LEFT);
+                $loan->save();
                 Log::info('Loan created', ['id' => $loan->id]);
 
-                // Deduct balance from Money Source
-                if (!empty($loan->payment_method) && !empty($loan->amount_to_be_given)) {
-                    $moneySource = MoneySource::where('name', $loan->payment_method)->first();
-                    if ($moneySource) {
-                        if (!$moneySource->is_outbound) {
-                            throw new \Exception("The selected payment method '{$moneySource->name}' is not allowed for outbound transactions.");
-                        }
-                        if ($moneySource->balance < $loan->amount_to_be_given) {
-                            throw new ValidationException(Validator::make([], []), new \Illuminate\Support\MessageBag(['loan.payment_method' => ["Insufficient balance in {$moneySource->name}. Available: {$moneySource->balance}"]]));
-                        }
-                        $moneySource->decrement('balance', $loan->amount_to_be_given);
+                // Check if approval is required (loan amount > estimated amount)
+                $requiresApproval = (float) $loan->amount > (float) ($loan->estimated_amount ?? 0);
 
-                        // Create Transaction Record
-                        \App\Models\Transaction\Transaction::create([
-                            'branch_id' => $user->branch_id,
-                            'money_source_id' => $moneySource->id,
-                            'type' => 'debit',
-                            'amount' => $loan->amount_to_be_given,
-                            'date' => now(), // or $loan->date if strictly following loan date
-                            'description' => "Loan Disbursment for Pledge #{$pledge->id} (Cust: {$customer->name})",
-                            'category' => 'loan',
-                            'transactionable_type' => Loan::class,
-                            'transactionable_id' => $loan->id,
-                            'created_by' => $user->id,
-                        ]);
+                if ($requiresApproval) {
+                    $pledge->update(['approval_status' => 'pending']);
 
-                        Log::info('Money source balance deducted', [
-                            'source' => $moneySource->name,
-                            'deducted' => $loan->amount_to_be_given,
-                            'new_balance' => $moneySource->balance
-                        ]);
-                    } else {
-                        Log::warning('Money source not found for deduction', ['name' => $loan->payment_method]);
+                    PendingApproval::create([
+                        'pledge_id' => $pledge->id,
+                        'requested_by' => $user->id,
+                        'loan_amount' => $loan->amount,
+                        'estimated_amount' => $loan->estimated_amount,
+                        'status' => 'pending'
+                    ]);
+
+                    Log::info('Pledge submitted for approval', ['pledge_id' => $pledge->id]);
+                } else {
+                    $pledge->update(['approval_status' => 'approved']);
+
+                    // Deduct balance from Money Source ONLY if approved
+                    if (!empty($loan->payment_method) && !empty($loan->amount_to_be_given)) {
+                        $moneySource = MoneySource::where('name', $loan->payment_method)->first();
+                        if ($moneySource) {
+                            if (!$moneySource->is_outbound) {
+                                throw new \Exception("The selected payment method '{$moneySource->name}' is not allowed for outbound transactions.");
+                            }
+                            if ((float) $moneySource->balance < (float) $loan->amount_to_be_given) {
+                                throw \Illuminate\Validation\ValidationException::withMessages(['loan.payment_method' => ["Insufficient balance in {$moneySource->name}. Available: {$moneySource->balance}"]]);
+                            }
+                            $moneySource->decrement('balance', (float) $loan->amount_to_be_given);
+
+                            // Create Transaction Record
+                            \App\Models\Transaction\Transaction::create([
+                                'branch_id' => $user->branch_id,
+                                'money_source_id' => $moneySource->id,
+                                'type' => 'debit',
+                                'amount' => $loan->amount_to_be_given,
+                                'date' => now(),
+                                'description' => "Loan Disbursment for Pledge #{$pledge->id} (Cust: {$customer->name})",
+                                'category' => 'loan',
+                                'transactionable_type' => Loan::class,
+                                'transactionable_id' => $loan->id,
+                                'created_by' => $user->id,
+                            ]);
+
+                            Log::info('Money source balance deducted', [
+                                'source' => $moneySource->name,
+                                'deducted' => $loan->amount_to_be_given,
+                                'new_balance' => $moneySource->balance
+                            ]);
+                        } else {
+                            Log::warning('Money source not found for deduction', ['name' => $loan->payment_method]);
+                        }
                     }
                 }
 
                 // Files - Handle 'files[]' array notation via Service
-                // Retrieve validated files directly from request which respects 'files.*' rules
                 $uploadedFiles = $request->file('files');
-                // Ensure it's an array (laravel might return single instance if only one file and not array syntax, but here we expect array)
-                // But handleUploads handles normalization.
-
                 $categories = $request->input('categories', []);
 
                 $this->mediaService->handleUploads(
@@ -276,8 +297,12 @@ class PledgeController extends Controller
                     $loan->loan_no ?? 'NoLoan'
                 );
 
+                $platform = $request->header('User-Agent') ? (str_contains($request->header('User-Agent'), 'Mobile') ? 'Mobile App' : 'Web') : 'Web';
+                $this->activityService->log('create', "Created Pledge (Loan: {$loan->loan_no})" . ($requiresApproval ? " [REQUIRES APPROVAL]" : "") . " via {$platform}", $pledge);
+
                 return response()->json([
-                    'message' => 'Pledge created successfully',
+                    'message' => $requiresApproval ? 'Pledge submitted for admin approval' : 'Pledge created successfully',
+                    'requires_approval' => $requiresApproval,
                     'data' => $pledge->load(['customer', 'loan.customer_loan_track', 'jewels', 'media']),
                 ], 201);
             }, 5);
@@ -478,6 +503,9 @@ class PledgeController extends Controller
                     $currentLoanNo
                 );
 
+                $loanNo = $pledge->loan ? $pledge->loan->loan_no : 'N/A';
+                $this->activityService->log('update', "Updated Pledge (Loan: {$loanNo})", $pledge);
+
                 return response()->json([
                     'message' => 'Pledge updated successfully',
                     'data' => $pledge->fresh()->load(['customer', 'loan.customer_loan_track', 'jewels', 'media']),
@@ -535,6 +563,11 @@ class PledgeController extends Controller
         // 5. Delete Customer (assuming 1:1 relationship based on store logic)
         if ($pledge->customer) {
             $pledge->customer->delete();
+        }
+
+        try {
+            $this->activityService->log('delete', "Deleted Pledge and associated data", $pledge);
+        } catch (\Exception $e) {
         }
 
         return response()->json(['message' => 'Pledge, Customer, and all associated data deleted successfully']);
@@ -626,6 +659,8 @@ class PledgeController extends Controller
                 if ($pledge->loan) {
                     $pledge->loan->update(['status' => 'closed']);
                 }
+
+                $this->activityService->log('close', "Closed Pledge (Loan: {$pledge->loan->loan_no})", $pledge);
 
                 return response()->json([
                     'message' => 'Pledge closed successfully',

@@ -13,7 +13,7 @@ class MediaService
      * Handle file uploads for a pledge.
      *
      * @param \Illuminate\Http\Request|array $requestOrFiles
-     * @param array $relatedModels ['customer_id' => int, 'pledge_id' => int, 'loan_id' => int]
+     * @param array $relatedModels ['customer_id' => int, 'pledge_id' => int, 'loan_id' => int, 'user_id' => string]
      * @param array $categories
      * @param string $loanNo
      * @return void
@@ -22,11 +22,11 @@ class MediaService
     {
         // Normalize files input to array
         if (!is_array($files)) {
-             // If it's a single UploadedFile, wrap it
+            // If it's a single UploadedFile, wrap it
             if ($files instanceof UploadedFile) {
                 $files = [$files];
             } else {
-                 // If it's something else (null, or random data), just make empty array to be safe
+                // If it's something else (null, or random data), just make empty array to be safe
                 $files = [];
             }
         }
@@ -38,7 +38,7 @@ class MediaService
 
             $timestamp = now()->format('Ymd_His');
             $loanNoSafe = preg_replace('/[^A-Za-z0-9\-]/', '', $loanNo);
-            
+
             // Determine category
             // The frontend sends categories as an array corresponding to files
             // If the files key is discontinuous or associative, we need to ensure we map correctly.
@@ -55,6 +55,7 @@ class MediaService
                     'customer_id' => $relatedModels['customer_id'] ?? null,
                     'pledge_id' => $relatedModels['pledge_id'] ?? null,
                     'loan_id' => $relatedModels['loan_id'] ?? null,
+                    'user_id' => $relatedModels['user_id'] ?? null,
                     'jewel_id' => null, // Explicitly null as generally requested
                     'type' => explode('/', $file->getClientMimeType())[0] ?? 'file',
                     'category' => $category,
@@ -64,7 +65,7 @@ class MediaService
                 ]);
 
                 Log::info('Media file uploaded', [
-                    'path' => $path, 
+                    'path' => $path,
                     'category' => $category,
                     'pledge_id' => $relatedModels['pledge_id'] ?? 'N/A'
                 ]);
@@ -91,7 +92,8 @@ class MediaService
      */
     public function deleteFiles(array $fileIds, int $pledgeId)
     {
-        if (empty($fileIds)) return;
+        if (empty($fileIds))
+            return;
 
         $filesToDelete = MediaFile::whereIn('id', $fileIds)
             ->where('pledge_id', $pledgeId)
@@ -104,8 +106,33 @@ class MediaService
             }
             // Delete record
             $fileRecord->delete();
-            
+
             Log::info('Media file deleted', ['id' => $fileRecord->id, 'path' => $fileRecord->file_path]);
+        }
+    }
+
+    /**
+     * Delete specific media files for a user.
+     *
+     * @param array $fileIds
+     * @param string $userId Security check
+     * @return void
+     */
+    public function deleteUserFiles(array $fileIds, string $userId)
+    {
+        if (empty($fileIds))
+            return;
+
+        $filesToDelete = MediaFile::whereIn('id', $fileIds)
+            ->where('user_id', $userId)
+            ->get();
+
+        foreach ($filesToDelete as $fileRecord) {
+            if ($fileRecord->file_path && Storage::disk('public')->exists($fileRecord->file_path)) {
+                Storage::disk('public')->delete($fileRecord->file_path);
+            }
+            $fileRecord->delete();
+            Log::info('User Media file deleted', ['id' => $fileRecord->id, 'path' => $fileRecord->file_path]);
         }
     }
 }

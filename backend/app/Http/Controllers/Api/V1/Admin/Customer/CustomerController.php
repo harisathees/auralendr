@@ -22,7 +22,8 @@ class CustomerController extends Controller
             });
         }
 
-        $customers = $query->latest()->paginate(15);
+        $perPage = (int) $request->input('per_page', 10);
+        $customers = $query->latest()->paginate($perPage);
 
         return response()->json($customers);
     }

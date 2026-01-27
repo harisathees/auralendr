@@ -14,6 +14,13 @@ use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
+    protected $activityService;
+
+    public function __construct(\App\Services\ActivityService $activityService)
+    {
+        $this->activityService = $activityService;
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -45,7 +52,8 @@ class TransactionController extends Controller
             $query->whereDate('date', '<=', $request->end_date);
         }
 
-        $transactions = $query->paginate(50);
+        $perPage = (int) $request->query('per_page', 10);
+        $transactions = $query->paginate($perPage);
 
         return response()->json($transactions);
     }
@@ -167,6 +175,8 @@ class TransactionController extends Controller
                 $toSource->balance += $amount;
                 $toSource->save();
 
+                $this->activityService->log('create', "Created Transfer: {$amount} from {$fromSource->name} to {$toSource->name}", $debitTransaction);
+
                 return response()->json([
                     'message' => 'Transfer completed successfully',
                     'debit_transaction' => $debitTransaction,
@@ -223,6 +233,8 @@ class TransactionController extends Controller
                     }
                 }
             }
+
+            $this->activityService->log('create', "Created Transaction: {$validated['type']} of {$amount} ({$description})", $transaction);
 
             return response()->json([
                 'message' => 'Transaction created successfully',

@@ -2,20 +2,37 @@
 
 namespace App\Models\Pledge;
 
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Storage;
 
 class MediaFile extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'customer_id','pledge_id','loan_id','jewel_id',
-        'type','category','file_path','mime_type','size'
+        'customer_id',
+        'pledge_id',
+        'loan_id',
+        'jewel_id',
+        'user_id',
+        'type',
+        'category',
+        'file_path',
+        'mime_type',
+        'size',
     ];
 
     protected $appends = ['url'];
+
+    /* =======================
+       Relationships
+    ======================== */
+
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\Admin\Organization\User\User::class);
+    }
 
     public function customer()
     {
@@ -37,9 +54,16 @@ class MediaFile extends Model
         return $this->belongsTo(Jewel::class);
     }
 
+    /* =======================
+       Accessors
+    ======================== */
+
     public function getUrlAttribute(): ?string
     {
-        if (! $this->file_path) return null;
-        return Storage::disk('public')->url($this->file_path);
+        if (!$this->file_path) {
+            return null;
+        }
+
+        return Storage::url($this->file_path);
     }
 }

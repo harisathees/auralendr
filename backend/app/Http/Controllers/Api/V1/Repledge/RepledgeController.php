@@ -13,6 +13,13 @@ use Illuminate\Support\Facades\DB;
 
 class RepledgeController extends Controller
 {
+    protected $activityService;
+
+    public function __construct(\App\Services\ActivityService $activityService)
+    {
+        $this->activityService = $activityService;
+    }
+
     public function searchLoan(Request $request)
     {
         $user = $request->user();
@@ -108,7 +115,8 @@ class RepledgeController extends Controller
             });
         }
 
-        $repledges = $query->latest()->paginate(20);
+        $perPage = (int) $request->query('per_page', 10);
+        $repledges = $query->latest()->paginate($perPage);
         return response()->json($repledges);
     }
 
@@ -182,13 +190,16 @@ class RepledgeController extends Controller
                         }
                     } else {
                         \Illuminate\Support\Facades\Log::warning('Money source not found for repledge increment', [
-                            'name' => $repledge->payment_method,
                             'repledge_id' => $repledge->id
                         ]);
                     }
                 }
             }
         });
+
+        foreach ($createdRepledges as $repledge) {
+            $this->activityService->log('create', "Created Repledge (Loan: {$repledge->loan_no})", $repledge);
+        }
 
         return response()->json($createdRepledges, 201);
     }
@@ -206,12 +217,20 @@ class RepledgeController extends Controller
 
         $repledge->update($validated);
 
+        $this->activityService->log('update', "Updated Repledge (Loan: {$repledge->loan_no})", $repledge);
+
         return response()->json($repledge);
     }
 
     public function destroy(Repledge $repledge)
     {
         $this->authorize('delete', $repledge);
+
+        try {
+            $this->activityService->log('delete', "Deleted Repledge", $repledge);
+        } catch (\Exception $e) {
+        }
+
         $repledge->delete();
         return response()->json(null, 204);
     }
@@ -271,6 +290,8 @@ class RepledgeController extends Controller
 
             // 4. Update Repledge Status
             $repledge->update(['status' => 'closed']);
+
+            $this->activityService->log('close', "Closed Repledge (Loan: {$repledge->loan->loan_no})", $repledge);
 
             return response()->json($closure);
         });

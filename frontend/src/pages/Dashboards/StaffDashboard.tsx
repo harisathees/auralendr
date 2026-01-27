@@ -3,33 +3,32 @@ import { useAuth } from "../../context/Auth/AuthContext";
 import api from '../../api/apiClient';
 import type { Task } from '../../types/models';
 import TaskAccordion from '../../components/Staff/TaskAccordion';
-import { useTheme } from "../../context/Theme/ThemeContext";
 import {
   LogOut,
-  Calendar,
-  Sun,
-  Moon,
   Zap,
   Store,
   Loader2,
   ClipboardList,
   CalendarX,
-  Wallet,
   Calculator,
   Scale,
   History,
-  CheckCircle,
-  User
+  CheckCircle
 } from "lucide-react";
 
 import GoldLoanCalculator from '../../components/Calculators/GoldLoanCalculator';
 import ClosingAmountCalculator from '../../components/Calculators/ClosingAmountCalculator';
+import { ActivityService } from '../../services/ActivityService';
+import type { Activity } from '../../types/Activity';
+
+import StaffTopNavigation from '../../components/Shared/Navigation/StaffNavigation/StaffTopNavigation';
 
 const StaffDashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const [showMenu, setShowMenu] = useState(false);
+  // const [showMenu, setShowMenu] = useState(false); // Moved to StaffTopNavigation
   const [showConfirm, setShowConfirm] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>("");
 
@@ -51,12 +50,24 @@ const StaffDashboard: React.FC = () => {
     }
   };
 
+  const fetchActivities = async () => {
+    if (!user?.id) return;
+    try {
+      const response = await ActivityService.getActivities({ user_id: user.id.toString(), page: 1 });
+      setActivities(response.data.slice(0, 10)); // Top 10 recent
+    } catch (error) {
+      console.error("Error fetching activities:", error);
+    }
+  };
+
   useEffect(() => {
     fetchTasks();
-  }, []);
+    if (user?.id) {
+      fetchActivities();
+    }
+  }, [user?.id]);
 
   const handleLogoutClick = () => {
-    setShowMenu(false);
     setShowConfirm(true);
   };
 
@@ -94,81 +105,13 @@ const StaffDashboard: React.FC = () => {
     <div className="flex flex-col h-full overflow-y-auto bg-background-light dark:bg-background-dark group/design-root font-display scrollbar-hide">
 
       {/* Header - Fixed */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md p-4 pt-6 pb-4 border-b border-gray-100/50 dark:border-gray-800/50 transition-all duration-200">
-        <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto w-full">
-          {/* User Profile */}
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 shrink-0 items-center">
-              <div
-                className="flex items-center justify-center bg-primary/10 rounded-full size-10 cursor-pointer hover:bg-primary/20 transition-colors"
-                onClick={() => setShowMenu(!showMenu)}
-              >
-                <User className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-
-            {/* Avatar Menu */}
-            {showMenu && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute top-16 left-4 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 py-2 z-[60] animate-in fade-in zoom-in-95 duration-200">
-                  <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
-                    <div className="flex items-center justify-center bg-primary/10 rounded-full size-10 shrink-0 border border-gray-200 dark:border-gray-600">
-                      <User className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="overflow-hidden">
-                      <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{user?.name || "Nambirajan"}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Staff Member</p>
-                    </div>
-                  </div>
-                  <button
-                    className="w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-3 transition-colors"
-                    onClick={handleLogoutClick}
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
-                  </button>
-                </div>
-              </>
-            )}
-
-            <div className="flex flex-col">
-              <p className="text-secondary-text dark:text-gray-400 text-sm font-medium leading-tight">Welcome Back!</p>
-              <h2 className="text-primary-text dark:text-gray-100 text-lg font-bold leading-tight tracking-[-0.015em]">
-                {user?.name || "Nambirajan"}
-              </h2>
-            </div>
-          </div>
-
-
-          {/* Controls */}
-          <div className="flex items-center justify-end gap-2">
-            <ThemeToggle />
-            <div className="relative">
-              <input
-                type="date"
-                ref={dateInputRef}
-                onChange={handleDateChange}
-                className="absolute opacity-0 w-0 h-0 top-10 right-0"
-                style={{ visibility: 'hidden', position: 'absolute' }}
-              />
-              <button
-                onClick={handleDateIconClick}
-                className={`flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full ${selectedDate ? 'bg-primary text-white' : 'bg-transparent text-primary-text dark:text-gray-100'} transition-colors hover:bg-gray-100 dark:hover:bg-gray-800`}
-              >
-                <Calendar className="w-5 h-5" />
-              </button>
-            </div>
-            {/* <button
-              onClick={() => window.location.href = '/notifications'}
-              className="relative flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-transparent text-primary-text dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <Bell className="w-6 h-6" />
-              <span className="absolute top-2 right-2 flex size-2.5 rounded-full bg-primary ring-2 ring-background-light dark:ring-background-dark" />
-            </button> */}
-          </div>
-        </div>
-      </header>
+      <StaffTopNavigation
+        onLogout={handleLogoutClick}
+        selectedDate={selectedDate}
+        onDateChange={handleDateChange}
+        dateInputRef={dateInputRef}
+        onDateIconClick={handleDateIconClick}
+      />
 
       {/* Spacer for Fixed Header */}
       <div className="h-[88px] w-full flex-none" />
@@ -292,29 +235,47 @@ const StaffDashboard: React.FC = () => {
             <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <History className="w-4 h-4 text-gray-500" /> Recent Activity
             </h3>
-            <button className="text-xs font-medium text-primary hover:underline">View All</button>
+            <button
+              onClick={() => window.location.href = '/activities'}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              View All
+            </button>
           </div>
           <div className="max-h-[300px] overflow-y-auto no-scrollbar">
-            {[1, 2, 3, 4, 5, 6, 7].map((_, i) => (
-              <div key={i} className="p-4 flex gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${i % 2 === 0 ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
-                  {i % 2 === 0 ? <CheckCircle className="w-5 h-5" /> : <Wallet className="w-5 h-5" />}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">
-                      {i % 2 === 0 ? 'New Pledge Created' : 'Payment Collected'}
-                    </p>
-                    <span className="text-xs text-gray-400">{i === 0 ? 'Just now' : `${i * 15} mins ago`}</span>
+            {activities.length === 0 ? (
+              <div className="p-8 text-center text-gray-400 text-sm">No recent activity</div>
+            ) : (
+              activities.map((activity) => (
+                <div key={activity.id} className="p-4 flex gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 items-center">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${activity.action === 'create' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' :
+                    activity.action === 'update' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' :
+                      activity.action === 'delete' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
+                        'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                    }`}>
+                    {activity.action === 'create' ? <CheckCircle className="w-5 h-5" /> :
+                      activity.action === 'update' ? <ClipboardList className="w-5 h-5" /> :
+                        activity.action === 'delete' ? <LogOut className="w-5 h-5" /> :
+                          <History className="w-5 h-5" />}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                    <span className="font-mono bg-gray-100 dark:bg-gray-700 px-1 rounded">#PL-{10034 + i}</span>
-                    <span>•</span>
-                    <span>{i % 2 === 0 ? 'Approved by Manager' : 'Cash deposit verified'}</span>
-                  </p>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">
+                        {activity.description}
+                      </p>
+                      <span className="text-xs text-gray-400 whitespace-nowrap ml-2">
+                        {new Date(activity.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-0.5">
+                      <span className="capitalize text-xs font-semibold bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{activity.action}</span>
+                      <span>•</span>
+                      <span>{new Date(activity.created_at).toLocaleDateString()}</span>
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -360,17 +321,6 @@ const StaffDashboard: React.FC = () => {
   );
 };
 
-// Extracted Theme Toggle for cleaner code (internal component)
-const ThemeToggle = () => {
-  const { theme, toggleTheme } = useTheme();
-  return (
-    <button
-      onClick={toggleTheme}
-      className="flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-transparent text-primary-text dark:text-gray-100"
-    >
-      {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-    </button>
-  )
-}
+
 
 export default StaffDashboard;
