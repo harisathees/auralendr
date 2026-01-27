@@ -48,7 +48,7 @@ const CommunicationButtons: React.FC<CommunicationButtonsProps> = ({
             Weight: ${totalWeight}g
             You were Pledge Created Successfully
             Track your loan status using the Link:
-            ${import.meta.env.VITE_CUSTOMER_APP_URL}/track/${loan?.customer_loan_track?.tracking_code}
+            ${import.meta.env.VITE_CUSTOMER_APP_URL}
             Your Loan Tracking Code is: ${loan?.customer_loan_track?.tracking_code}`;
     }, [customer, loan, jewels, loan?.customer_loan_track]);
 
