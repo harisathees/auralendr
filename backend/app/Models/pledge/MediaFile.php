@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\pledge;
+namespace App\Models\Pledge;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Model;
