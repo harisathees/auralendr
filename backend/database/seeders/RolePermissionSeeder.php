@@ -17,7 +17,7 @@ class RolePermissionSeeder extends Seeder
             'pledge.update',
             'pledge.delete',
             'loan.view_all_branches', // optional separate permission
-            
+
             'repledge.create',
             'repledge.view',
             'repledge.update',
@@ -39,6 +39,12 @@ class RolePermissionSeeder extends Seeder
 
             'user_privilege.view',
             'user_privilege.update',
+
+            // Task Permissions
+            'task.create',
+            'task.view',
+            'task.update',
+            'task.delete',
         ];
 
         foreach ($perms as $p) {
@@ -53,7 +59,7 @@ class RolePermissionSeeder extends Seeder
         // Assign permissions
         $developer->givePermissionTo(Permission::all());
         $admin->givePermissionTo(Permission::all());
-        $staff->givePermissionTo(['pledge.create','pledge.view','pledge.update']);
+        $staff->givePermissionTo(['pledge.create', 'pledge.view', 'pledge.update']);
 
     }
 }

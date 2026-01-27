@@ -39,9 +39,17 @@ Route::get('/metal-rates', [MetalRateController::class, 'index']);
 // FOR LOGIN
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:8,1');
 
+// Password Reset Routes
+Route::post('/auth/forgot-password', [\App\Http\Controllers\Api\V1\Auth\PasswordResetController::class, 'sendOtp'])->middleware('throttle:3,10'); // 3 requests per 10 mins
+Route::post('/auth/verify-otp', [\App\Http\Controllers\Api\V1\Auth\PasswordResetController::class, 'verifyOtp'])->middleware('throttle:5,1');
+Route::post('/auth/reset-password', [\App\Http\Controllers\Api\V1\Auth\PasswordResetController::class, 'resetPassword'])->middleware('throttle:5,1');
+
 Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/change-password', [\App\Http\Controllers\Api\V1\Auth\PasswordResetController::class, 'changePassword']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/me/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/me/send-otp', [\App\Http\Controllers\Api\V1\Auth\PasswordResetController::class, 'sendOtpForPasswordChange'])->middleware('throttle:3,10');
 
     // Developer Routes - Role & Permissions
     Route::get('/settings', [StaffTimeRestrictionController::class, 'index']);
@@ -49,6 +57,13 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::get('/roles', [RolePermissionController::class, 'index']);
     Route::get('/permissions', [RolePermissionController::class, 'getPermissions']);
     Route::put('/roles/{role}', [RolePermissionController::class, 'update']);
+
+    // Approval Routes
+    Route::middleware(['auth:sanctum', 'role:admin,superadmin,developer'])->group(function () {
+        Route::get('/approvals', [\App\Http\Controllers\Api\V1\Admin\ApprovalController::class, 'index']);
+        Route::post('/approvals/{id}/approve', [\App\Http\Controllers\Api\V1\Admin\ApprovalController::class, 'approve']);
+        Route::post('/approvals/{id}/reject', [\App\Http\Controllers\Api\V1\Admin\ApprovalController::class, 'reject']);
+    });
 
 
     // Developer Routes - For Controll CustomerApp
@@ -90,6 +105,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
         Route::get('/customers/search', [CustomerController::class, 'search']);
         Route::get('/customers/{id}/analysis', [CustomerController::class, 'analysis']);
         Route::get('/customers', [CustomerController::class, 'index']);
+
     });
 
     // Shared Routes (Admin + Staff)
@@ -135,6 +151,9 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::get('/transactions/report', [TransactionController::class, 'report']);
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::post('/transactions', [TransactionController::class, 'store']);
+
+    // Activity Logs (Shared)
+    Route::get('/activities', [\App\Http\Controllers\Api\V1\Admin\Activity\ActivityController::class, 'index']);
 
     // Template Routes
     Route::get('/templates/receipt', [App\Http\Controllers\Api\V1\Admin\Configuration\TemplateController::class, 'getReceiptTemplate']);

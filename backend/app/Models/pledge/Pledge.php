@@ -16,8 +16,14 @@ class Pledge extends Model
         'created_by',
         'updated_by',
         'status',
-        'reference_no'
+        'reference_no',
+        'approval_status'
     ];
+
+    public function pendingApproval()
+    {
+        return $this->hasOne(\App\Models\PendingApproval::class);
+    }
 
     public function customer()
     {

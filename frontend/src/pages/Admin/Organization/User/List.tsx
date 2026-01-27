@@ -20,9 +20,12 @@ const UserList: React.FC = () => {
         }
         try {
             const res = await api.get("/staff");
-            setUsers(res.data);
+            // Handle both array response and object with data property
+            const userData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+            setUsers(userData);
         } catch (error) {
             console.error("Failed to fetch users", error);
+            setUsers([]);
         } finally {
             setLoading(false);
         }
@@ -180,8 +183,12 @@ const UserList: React.FC = () => {
                                 <tr key={user.id} className="group hover:bg-gray-50/50 dark:hover:bg-gray-900/30 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/10 to-primary/30 flex items-center justify-center text-primary font-black border border-primary/20 shrink-0">
-                                                {getInitials(user.name)}
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/10 to-primary/30 flex items-center justify-center text-primary font-black border border-primary/20 shrink-0 overflow-hidden">
+                                                {user.photo_url ? (
+                                                    <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    getInitials(user.name)
+                                                )}
                                             </div>
                                             <div>
                                                 <div className="font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors">{user.name}</div>
@@ -258,8 +265,12 @@ const UserList: React.FC = () => {
                     <div key={user.id} className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
                         <div className="flex items-start justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/10 to-primary/30 flex items-center justify-center text-primary font-black border border-primary/20">
-                                    {getInitials(user.name)}
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/10 to-primary/30 flex items-center justify-center text-primary font-black border border-primary/20 overflow-hidden">
+                                    {user.photo_url ? (
+                                        <img src={user.photo_url} alt={user.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        getInitials(user.name)
+                                    )}
                                 </div>
                                 <div>
                                     <div className="font-bold text-gray-900 dark:text-white">{user.name}</div>

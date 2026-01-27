@@ -186,12 +186,21 @@ const AdminConfigs: React.FC = () => {
                         permission: 'user_privilege.view'
                     },
                     {
+                        title: "Tasks",
+                        description: "Manage and assign system tasks",
+                        icon: "assignment",
+                        color: "text-blue-600",
+                        bg: "bg-blue-100",
+                        link: "/admin/tasks",
+                        permission: 'task.view'
+                    },
+                    {
                         title: "Staff Activities",
-                        description: "Staff Activities",
-                        icon: "people",
-                        color: "text-orange-600",
-                        bg: "bg-orange-100",
-                        link: "/admin/configs/roles",
+                        description: "View staff activity logs",
+                        icon: "history",
+                        color: "text-blue-600",
+                        bg: "bg-blue-100",
+                        link: "/admin/activities",
                         permission: ''
                     },
                 ]

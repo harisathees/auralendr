@@ -18,7 +18,8 @@ import {
     Shield,
     Palette,
     Receipt,
-    GitBranch
+    GitBranch,
+    ClipboardList
 } from "lucide-react";
 
 import type { Role, Permission } from '../../types/models';
@@ -580,6 +581,7 @@ const getIconForGroup = (group: string) => {
         case 'branch': return Store;
         case 'user': return Users;
         case 'user_privilege': return ShieldAlert;
+        case 'task': return ClipboardList;
         default: return Shield;
     }
 };

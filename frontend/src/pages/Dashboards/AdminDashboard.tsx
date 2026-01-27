@@ -4,10 +4,11 @@ import StatsCard from "../../components/Dashboard/StatsCard";
 import DashboardFilters from "../../components/Dashboard/DashboardFilters";
 import ReportCard from "../../components/Dashboard/ReportCard";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
-import { LogOut, Sun, Moon } from "lucide-react";
+import { LogOut, Sun, Moon, User, Camera, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import api from "../../api/apiClient";
 import { toast } from "react-hot-toast";
+import { compressImage } from "../../utils/imageCompression";
 
 interface DashboardStats {
   summary: {
@@ -36,10 +37,11 @@ interface DashboardStats {
 const COLORS = ['#00E676', '#FFAB00', '#FF5252', '#2979FF', '#AA00FF'];
 
 const AdminDashboard: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   const [showMenu, setShowMenu] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -48,6 +50,39 @@ const AdminDashboard: React.FC = () => {
   const handleLogoutClick = () => {
     setShowMenu(false);
     setShowConfirm(true);
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0] || !user) return;
+
+    setIsUploading(true);
+    try {
+      const file = e.target.files[0];
+      const compressed = await compressImage(file);
+
+      const fd = new FormData();
+      // Backend validation requires name and email
+      fd.append('name', user.name);
+      fd.append('email', user.email);
+      if (user.phone_number) {
+        fd.append('phone_number', user.phone_number);
+      }
+
+      fd.append('files[]', compressed);
+      fd.append('categories[]', 'profile_photo');
+
+      await api.post('/me/profile', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      await refreshUser();
+      toast.success("Profile photo updated successfully");
+    } catch (error) {
+      console.error("Profile photo upload failed:", error);
+      toast.error("Failed to upload profile photo");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const confirmLogout = () => {
@@ -95,10 +130,16 @@ const AdminDashboard: React.FC = () => {
         <div className="flex items-center gap-3">
           <div className="relative">
             <div
-              className="w-10 h-10 rounded-full bg-[#FDB931] flex items-center justify-center text-black font-bold border-2 border-white dark:border-[#1A1D1F] overflow-hidden shadow-md cursor-pointer hover:opacity-80 transition-opacity"
+              className="w-10 h-10 rounded-full bg-[#FDB931] flex items-center justify-center text-black font-bold border-2 border-white dark:border-[#1A1D1F] overflow-hidden shadow-md cursor-pointer hover:opacity-80 transition-opacity relative group"
               onClick={() => setShowMenu(!showMenu)}
             >
-              <img src={`https://ui-avatars.com/api/?name=${user?.name || 'Admin'}&background=FDB931&color=000`} alt="Admin" />
+              {isUploading ? (
+                <Loader2 className="w-5 h-5 text-black animate-spin" />
+              ) : user?.photo_url ? (
+                <img src={user.photo_url} alt="Admin" className="w-full h-full object-cover" />
+              ) : (
+                <img src={`https://ui-avatars.com/api/?name=${user?.name || 'Admin'}&background=FDB931&color=000`} alt="Admin" />
+              )}
             </div>
 
             {showMenu && (
@@ -106,14 +147,41 @@ const AdminDashboard: React.FC = () => {
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
                 <div className="absolute top-12 left-0 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-2 z-20 animate-in fade-in zoom-in-95 duration-200">
                   <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#FDB931] flex items-center justify-center text-black font-bold border border-white dark:border-[#1A1D1F] overflow-hidden shrink-0">
-                      <img src={`https://ui-avatars.com/api/?name=${user?.name || 'Admin'}&background=FDB931&color=000`} alt="Admin" />
+                    <div className="w-8 h-8 rounded-full bg-[#FDB931] flex items-center justify-center text-black font-bold border border-white dark:border-[#1A1D1F] overflow-hidden shrink-0 relative group">
+                      {isUploading ? (
+                        <Loader2 className="w-4 h-4 text-black animate-spin" />
+                      ) : user?.photo_url ? (
+                        <img src={user.photo_url} alt="Admin" className="w-full h-full object-cover" />
+                      ) : (
+                        <img src={`https://ui-avatars.com/api/?name=${user?.name || 'Admin'}&background=FDB931&color=000`} alt="Admin" />
+                      )}
+
+                      {/* Camera Overlay */}
+                      {!isUploading && (
+                        <label className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                          <Camera className="w-3 h-3 text-white" />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handlePhotoUpload}
+                            disabled={isUploading}
+                          />
+                        </label>
+                      )}
                     </div>
                     <div className="overflow-hidden">
                       <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{user?.name || "Admin"}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">{user?.role || 'Administrator'}</p>
                     </div>
                   </div>
+                  <button
+                    className="text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 mx-2 rounded-lg transition-colors w-[calc(100%-1rem)]"
+                    onClick={() => window.location.href = '/admin/profile'}
+                  >
+                    <User className="w-5 h-5" />
+                    Profile & Password
+                  </button>
                   <button
                     className="text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2 mx-2 rounded-lg transition-colors w-[calc(100%-1rem)]"
                     onClick={handleLogoutClick}

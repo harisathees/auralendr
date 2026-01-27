@@ -13,6 +13,8 @@ export interface User {
     role: 'admin' | 'staff' | 'developer' | 'superadmin' | string;
     branch_id: string | null;
     branch?: Branch;
+    phone_number?: string | null;
+    photo_url?: string | null;
     permissions?: string[];
     created_at?: string;
     updated_at?: string;

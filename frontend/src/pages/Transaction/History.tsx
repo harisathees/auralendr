@@ -4,6 +4,7 @@ import api from '../../api/apiClient';
 import { useAuth } from '../../context/Auth/AuthContext';
 import { useReactToPrint } from 'react-to-print';
 import StatementTemplate from './components/StatementTemplate';
+import Pagination from '../../components/Shared/UI/Pagination';
 
 import type { Transaction } from '../../types/models';
 
@@ -12,6 +13,8 @@ const TransactionHistory = () => {
     const { user } = useAuth();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
 
     // Filtering State
     const [moneySources, setMoneySources] = useState<{ id: number | string, name: string, balance: number, show_balance: boolean, type: string }[]>([]);
@@ -69,8 +72,13 @@ const TransactionHistory = () => {
     }, [selectedBranchId, user?.role]);
 
     useEffect(() => {
+        setPage(1); // Reset page on filter change
         fetchTransactions();
-    }, [selectedSourceId, selectedBranchId, startDate, endDate]); // Refetch on filter change
+    }, [selectedSourceId, selectedBranchId, startDate, endDate]);
+
+    useEffect(() => {
+        fetchTransactions();
+    }, [page]); // Fetch when page changes
 
     const fetchMoneySources = async (branchId?: string) => {
         try {
@@ -99,9 +107,11 @@ const TransactionHistory = () => {
             if (selectedBranchId) url += `branch_id=${selectedBranchId}&`;
             if (startDate) url += `start_date=${startDate}&`;
             if (endDate) url += `end_date=${endDate}&`;
+            url += `page=${page}&per_page=10`; // Enforce explicit pagination
 
             const response = await api.get(url);
             setTransactions(response.data.data);
+            setTotalPages(response.data.last_page);
         } catch (error) {
             console.error('Failed to fetch transactions', error);
         } finally {
@@ -329,7 +339,7 @@ const TransactionHistory = () => {
                 </div>
             </div>
 
-            <main className="flex-1 min-h-0 px-4 pt-4 overflow-y-auto no-scrollbar">
+            <main className="flex-1 min-h-0 px-4 pt-4 overflow-y-auto no-scrollbar pb-24">
                 {loading ? (
                     <div className="flex justify-center py-10">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -339,77 +349,83 @@ const TransactionHistory = () => {
                         No transactions found.
                     </div>
                 ) : (
-                    Object.entries(groupedTransactions).map(([dateKey, items]) => (
-                        <div key={dateKey} className="mb-6">
-                            <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">{formatDateHeader(dateKey)}</h2>
-                            {items.map((item) => (
-                                <div key={item.id} className="border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl transition-colors -mx-2 px-2">
-                                    <div
-                                        className="flex items-start py-4 cursor-pointer"
-                                        onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                                    >
-                                        <div className="flex-shrink-0 mr-4">
-                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${item.category === 'loan' ? 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400' :
-                                                item.category === 'repledge' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' :
-                                                    item.category === 'transfer' ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400' :
-                                                        'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                                                }`}>
-                                                <span className="material-symbols-outlined">
-                                                    {item.category === 'loan' ? 'local_offer' :
-                                                        item.category === 'repledge' ? 'autorenew' :
-                                                            item.category === 'transfer' ? 'sync_alt' : 'receipt_long'}
-                                                </span>
+                    <>
+                        {Object.entries(groupedTransactions).map(([dateKey, items]) => (
+                            <div key={dateKey} className="mb-6">
+                                <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">{formatDateHeader(dateKey)}</h2>
+                                {items.map((item) => (
+                                    <div key={item.id} className="border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl transition-colors -mx-2 px-2">
+                                        <div
+                                            className="flex items-start py-4 cursor-pointer"
+                                            onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                                        >
+                                            <div className="flex-shrink-0 mr-4">
+                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${item.category === 'loan' ? 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400' :
+                                                    item.category === 'repledge' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' :
+                                                        item.category === 'transfer' ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400' :
+                                                            'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                                    }`}>
+                                                    <span className="material-symbols-outlined">
+                                                        {item.category === 'loan' ? 'local_offer' :
+                                                            item.category === 'repledge' ? 'autorenew' :
+                                                                item.category === 'transfer' ? 'sync_alt' : 'receipt_long'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate pr-2">
+                                                        {item.description}
+                                                    </h3>
+                                                    <span className={`text-sm font-bold whitespace-nowrap ${item.type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'
+                                                        }`}>
+                                                        {item.type === 'credit' ? '+' : ''} ₹{Number(item.amount).toLocaleString('en-IN')}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2 truncate">
+                                                    <span className="material-symbols-outlined text-sm mr-1">account_balance_wallet</span>
+                                                    <span className="truncate">{item.money_source?.name || 'Unknown Source'}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between text-xs font-medium text-gray-700 dark:text-gray-300">
+                                                    <div className="flex items-center">
+                                                        <span className={`font-black italic mr-2 text-[10px] tracking-wider uppercase ${item.category === 'loan' ? 'text-purple-700 dark:text-purple-400' :
+                                                            item.category === 'repledge' ? 'text-blue-700 dark:text-blue-400' :
+                                                                item.category === 'transfer' ? 'text-amber-700 dark:text-amber-400' : 'text-gray-600 dark:text-gray-400'
+                                                            }`}>
+                                                            {item.category}
+                                                        </span>
+                                                        <span className="text-gray-400 text-[10px]">
+                                                            {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start mb-1">
-                                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate pr-2">
-                                                    {item.description}
-                                                </h3>
-                                                <span className={`text-sm font-bold whitespace-nowrap ${item.type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'
-                                                    }`}>
-                                                    {item.type === 'credit' ? '+' : ''} ₹{Number(item.amount).toLocaleString('en-IN')}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2 truncate">
-                                                <span className="material-symbols-outlined text-sm mr-1">account_balance_wallet</span>
-                                                <span className="truncate">{item.money_source?.name || 'Unknown Source'}</span>
-                                            </div>
-                                            <div className="flex items-center justify-between text-xs font-medium text-gray-700 dark:text-gray-300">
-                                                <div className="flex items-center">
-                                                    <span className={`font-black italic mr-2 text-[10px] tracking-wider uppercase ${item.category === 'loan' ? 'text-purple-700 dark:text-purple-400' :
-                                                        item.category === 'repledge' ? 'text-blue-700 dark:text-blue-400' :
-                                                            item.category === 'transfer' ? 'text-amber-700 dark:text-amber-400' : 'text-gray-600 dark:text-gray-400'
-                                                        }`}>
-                                                        {item.category}
-                                                    </span>
-                                                    <span className="text-gray-400 text-[10px]">
-                                                        {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
+
+                                        {/* Expanded Details */}
+                                        <div className={`overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out ${expandedId === item.id ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
+                                            <div className="flex items-center gap-2 pl-[4.5rem] pr-4 pb-4">
+                                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                                                    <span className="material-symbols-outlined text-[12px]">person</span>
+                                                    <span>{item.creator?.name || 'System'}</span>
+                                                </div>
+                                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                                                    <span className="material-symbols-outlined text-[12px]">store</span>
+                                                    <span>{item.creator?.branch?.branch_name || 'Main Office'}</span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Expanded Details */}
-                                    <div className={`overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out ${expandedId === item.id ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
-                                        <div className="flex items-center gap-2 pl-[4.5rem] pr-4 pb-4">
-                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-                                                <span className="material-symbols-outlined text-[12px]">person</span>
-                                                <span>{item.creator?.name || 'System'}</span>
-                                            </div>
-                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-[10px] font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-                                                <span className="material-symbols-outlined text-[12px]">store</span>
-                                                <span>{item.creator?.branch?.branch_name || 'Main Office'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ))
+                                ))}
+                            </div>
+                        ))}
+                        <Pagination
+                            currentPage={page}
+                            totalPages={totalPages}
+                            onPageChange={setPage}
+                        />
+                    </>
                 )}
-                <div className="h-32"></div>
             </main>
 
             {/* Hidden Statement Template for Printing */}

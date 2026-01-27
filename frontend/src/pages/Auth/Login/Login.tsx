@@ -125,7 +125,6 @@ const Login: React.FC = () => {
                 <input className="form-checkbox rounded text-primary border-gray-300 focus:ring-primary w-4 h-4" type="checkbox" />
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Remember me</span>
               </label>
-              <a className="text-sm font-bold text-primary hover:text-primary-dark transition-colors" href="#">Forgot Password?</a>
             </div>
 
             {/* Submit Button */}

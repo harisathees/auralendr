@@ -16,12 +16,17 @@ const Create: React.FC = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await api.post("/pledges", fd, {
+      const response = await api.post("/pledges", fd, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-      toast.success("Pledge created successfully!");
+
+      if (response.data.requires_approval) {
+        toast.success("Pledge submitted for admin approval!");
+      } else {
+        toast.success("Pledge created successfully!");
+      }
       navigate("/pledges");
     } catch (err: any) {
       console.error("Failed to create pledge", err);
