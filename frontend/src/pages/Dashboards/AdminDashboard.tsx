@@ -1,15 +1,11 @@
 import { useAuth } from "../../context/Auth/AuthContext";
 import { useTheme } from "../../context/Theme/ThemeContext";
 import DashboardFilters from "../../components/Dashboard/DashboardFilters";
-import { LogOut, Sun, Moon, LayoutDashboard, Repeat, BarChart3 } from "lucide-react";
-import { useState } from "react";
+import { LogOut, Sun, Moon, LayoutDashboard, Repeat, BarChart3, User, Camera, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import LoansDashboard from "./LoansDashboard";
 import RepledgeDashboard from "./RepledgeDashboard";
 import BusinessOverviewDashboard from "./BusinessOverviewDashboard";
-import ReportCard from "../../components/Dashboard/ReportCard";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
-import { LogOut, Sun, Moon, User, Camera, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
 import api from "../../api/apiClient";
 import { toast } from "react-hot-toast";
 import { compressImage } from "../../utils/imageCompression";
@@ -172,8 +168,8 @@ const AdminDashboard: React.FC = () => {
           <button
             onClick={() => setActiveTab('business')}
             className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'business'
-                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
           >
             <BarChart3 className="w-4 h-4" />
@@ -182,8 +178,8 @@ const AdminDashboard: React.FC = () => {
           <button
             onClick={() => setActiveTab('loans')}
             className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'loans'
-                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
           >
             <LayoutDashboard className="w-4 h-4" />
@@ -192,8 +188,8 @@ const AdminDashboard: React.FC = () => {
           <button
             onClick={() => setActiveTab('repledge')}
             className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'repledge'
-                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
           >
             <Repeat className="w-4 h-4" />
