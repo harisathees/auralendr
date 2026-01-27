@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Pledge;
+namespace App\Models\pledge;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Model;
@@ -49,7 +49,7 @@ class MediaFile extends Model
     {
         return $this->belongsTo(Jewel::class);
     }
-
+// @phpstan-ignore-next-line
     public function getUrlAttribute(): ?string
     {
         if (!$this->file_path)

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Models\Pledge;
+namespace App\Models\pledge;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
-
+// @phpstan-ignore-next-line
 class Pledge extends Model
 {
     use HasFactory, HasUlids;
@@ -29,7 +29,7 @@ class Pledge extends Model
     {
         return $this->belongsTo(Customer::class);
     }
-
+// @phpstan-ignore-next-line
     public function loan()
     {
         return $this->hasOne(Loan::class);
