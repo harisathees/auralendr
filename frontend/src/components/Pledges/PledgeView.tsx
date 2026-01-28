@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import SecureAudio from "../Shared/AudioAndImageFetch/SecureAudio";
 import SecureImage from "../Shared/AudioAndImageFetch/SecureImage";
 import CommunicationButtons from "../Shared/WhatsappAndSms/CommunicationButtons";
+import api from "../../api/apiClient";
 
 // --- Helper Components ---
 
@@ -439,6 +440,25 @@ const PledgeView: React.FC<Props> = ({ data }) => {
                   <span className="material-symbols-outlined text-[20px]">edit_square</span>
                   <span>Edit Pledge Details</span>
                 </button>
+                {can('pledge.delete') && (
+                  <button
+                    onClick={async () => {
+                      if (window.confirm("Are you sure you want to delete this pledge? This action cannot be undone.")) {
+                        try {
+                          await api.delete(`/pledges/${data.id}`);
+                          navigate('/pledges');
+                        } catch (error) {
+                          console.error("Failed to delete pledge", error);
+                          alert("Failed to delete pledge.");
+                        }
+                      }
+                    }}
+                    className="flex w-full items-center justify-center gap-2.5 px-8 py-3 bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-900/10 dark:text-rose-400 dark:border-rose-900/30 rounded-xl font-bold text-sm hover:bg-rose-100 dark:hover:bg-rose-900/20 transition-all"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">delete</span>
+                    <span>Delete Pledge</span>
+                  </button>
+                )}
               </div>
             </div>
           </>

@@ -1,19 +1,11 @@
 import React from "react";
-import StatsCard from "../../components/Dashboard/StatsCard";
 import { TrendingUp, Users, Wallet, Building2 } from "lucide-react";
 
 interface Props {
     filters?: { branch_id?: number; start_date?: string; end_date?: string };
 }
 
-const BusinessOverviewDashboard: React.FC<Props> = ({ filters = {} }) => {
-
-    const formatCurrency = (amount: number | string) => {
-        return new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: 'INR',
-        }).format(Number(amount));
-    };
+const BusinessOverviewDashboard: React.FC<Props> = ({ filters: _filters = {} }) => {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

@@ -23,11 +23,14 @@ const Create: React.FC = () => {
       });
 
       if (response.data.requires_approval) {
-        toast.success("Pledge submitted for admin approval!");
+        toast.info("Pledge submitted for admin approval.");
+        const pledgeId = response.data.data.id;
+        navigate("/pledges/approval-pending", { state: { pledgeId } });
+        return;
       } else {
         toast.success("Pledge created successfully!");
+        navigate("/pledges");
       }
-      navigate("/pledges");
     } catch (err: any) {
       console.error("Failed to create pledge", err);
       if (err.response && err.response.data) {

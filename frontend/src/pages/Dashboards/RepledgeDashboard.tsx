@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api/apiClient";
-import { toast } from "react-hot-toast";
-import { Wallet, CheckCircle2, XCircle, AlertCircle, Building2 } from "lucide-react";
+import { Wallet, CheckCircle2, AlertCircle, Building2 } from "lucide-react";
 
 interface RepledgeStatItem {
     count: number;
@@ -48,7 +47,7 @@ const DetailedRepledgeCard = ({ title, data, icon, color }: { title: string, dat
 }
 
 const RepledgeDashboard: React.FC<Props> = ({ filters = {} }) => {
-    const [loading, setLoading] = useState(true);
+    // const [loading, setLoading] = useState(true); // Unused
     const [stats, setStats] = useState<DashboardStats | null>(null);
 
     useEffect(() => {
@@ -56,15 +55,14 @@ const RepledgeDashboard: React.FC<Props> = ({ filters = {} }) => {
     }, [filters]);
 
     const fetchStats = async () => {
-        setLoading(true);
+        // setLoading(true);
         try {
             const response = await api.get("/dashboard/stats", { params: filters });
             setStats(response.data);
         } catch (error) {
             console.error("Error fetching dashboard stats:", error);
-            // Suppress error toast to allow silent retry or non-intrusive failure
         } finally {
-            setLoading(false);
+            // setLoading(false);
         }
     };
 

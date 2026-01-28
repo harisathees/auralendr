@@ -162,16 +162,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // 💓 Heartbeat: Check session validity every 60s
   useEffect(() => {
-    if (!token || booting) return; // Don't run during boot
+  if (!token || booting) return; // Don't run during boot
 
-    const interval = setInterval(() => {
-      authService.me().catch(() => {
-        // Interceptor or global handler will catch 401
-      });
-    }, 60000000);
+  const interval = setInterval(() => {
+    authService.me().catch(() => {
+      // Interceptor or global handler will catch 401
+    });
+  }, 60 * 60 * 1000); // 1 hour
 
-    return () => clearInterval(interval);
-  }, [token, booting]);
+  return () => clearInterval(interval);
+}, [token, booting]);
+
 
   return (
     <AuthContext.Provider value={{ token, user, login, logout, can, booting, refreshUser: fetchUser }}>

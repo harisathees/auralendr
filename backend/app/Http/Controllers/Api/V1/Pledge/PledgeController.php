@@ -46,9 +46,13 @@ class PledgeController extends Controller
 
         $query = Pledge::with(['customer', 'loan.customer_loan_track', 'jewels', 'media', 'closure']);
 
+
         if (!$user->hasRole('admin')) {
             $query->where('branch_id', $user->branch_id);
         }
+
+        // Hide rejected and pending pledges from the main list
+        $query->whereNotIn('status', ['rejected', 'pending']);
 
 
         // Report Filtering
@@ -237,7 +241,10 @@ class PledgeController extends Controller
                 $requiresApproval = (float) $loan->amount > (float) ($loan->estimated_amount ?? 0);
 
                 if ($requiresApproval) {
-                    $pledge->update(['approval_status' => 'pending']);
+                    $pledge->update([
+                        'approval_status' => 'pending',
+                        'status' => 'pending'
+                    ]);
 
                     PendingApproval::create([
                         'pledge_id' => $pledge->id,
@@ -248,6 +255,14 @@ class PledgeController extends Controller
                     ]);
 
                     Log::info('Pledge submitted for approval', ['pledge_id' => $pledge->id]);
+
+                    // Notify Admins
+                    try {
+                        $admins = \App\Models\Admin\Organization\User\User::role(['admin', 'superadmin'])->get();
+                        \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\PledgePendingApproval($pledge->id, $loan->amount, $loan->loan_no));
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send admin notification: ' . $e->getMessage());
+                    }
                 } else {
                     $pledge->update(['approval_status' => 'approved']);
 

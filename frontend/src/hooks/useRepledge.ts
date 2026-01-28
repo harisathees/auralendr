@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../api/apiClient';
 
-import type { Repledge as RepledgeEntry, LoanDetails, LoanSuggestion } from '../types/models';
+import type { Repledge as RepledgeEntry, LoanSuggestion } from '../types/models';
 
 export const useRepledge = () => {
     const [loading, setLoading] = useState(false);

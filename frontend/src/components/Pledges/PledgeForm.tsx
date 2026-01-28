@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import api from "../../api/apiClient";
-import { AudioRecorder } from "../audiocamera/AudioRecorder";
-import { CameraCapture } from "../audiocamera/CameraCapture";
+import { AudioRecorder } from "../AudioCamera/AudioRecorder";
+import { CameraCapture } from "../AudioCamera/CameraCapture";
 import { useAuth } from "../../context/Auth/AuthContext";
 import { compressImage } from "../../utils/imageCompression";
 import SecureImage from "../Shared/AudioAndImageFetch/SecureImage";
@@ -129,7 +129,7 @@ interface Props {
 }
 
 const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }) => {
-  const { user } = useAuth(); // Get current user (and branch_id)
+  const { user: _user } = useAuth(); // Get current user (and branch_id)
 
   // --- State ---
 

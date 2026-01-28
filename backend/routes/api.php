@@ -58,6 +58,11 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::get('/roles', [RolePermissionController::class, 'index']);
     Route::get('/permissions', [RolePermissionController::class, 'getPermissions']);
     Route::put('/roles/{role}', [RolePermissionController::class, 'update']);
+    
+    // Web Push Notification
+    Route::get('/push/vapid-public-key', [\App\Http\Controllers\Api\V1\PushSubscriptionController::class, 'publicKey']);
+    Route::post('/push/subscribe', [\App\Http\Controllers\Api\V1\PushSubscriptionController::class, 'subscribe']);
+    Route::post('/push/unsubscribe', [\App\Http\Controllers\Api\V1\PushSubscriptionController::class, 'unsubscribe']);
 
     // Approval Routes
     Route::middleware(['auth:sanctum', 'role:admin|superadmin|developer'])->group(function () {
