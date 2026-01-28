@@ -60,7 +60,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::put('/roles/{role}', [RolePermissionController::class, 'update']);
 
     // Approval Routes
-    Route::middleware(['auth:sanctum', 'role:admin,superadmin,developer'])->group(function () {
+    Route::middleware(['auth:sanctum', 'role:admin|superadmin|developer'])->group(function () {
         Route::get('/approvals', [\App\Http\Controllers\Api\V1\Admin\ApprovalController::class, 'index']);
         Route::post('/approvals/{id}/approve', [\App\Http\Controllers\Api\V1\Admin\ApprovalController::class, 'approve']);
         Route::post('/approvals/{id}/reject', [\App\Http\Controllers\Api\V1\Admin\ApprovalController::class, 'reject']);
@@ -78,6 +78,10 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     // Pledge Routes
     Route::post('pledges/{pledge}/close', [PledgeController::class, 'close']);
     Route::apiResource('pledges', PledgeController::class);
+
+    // Loan Routes
+    Route::get('loans/{loan}', [\App\Http\Controllers\Api\V1\Pledge\LoanController::class, 'show']);
+    Route::post('loans/{loan}/add-extra', [\App\Http\Controllers\Api\V1\Pledge\LoanController::class, 'addExtra']);
 
     // Repledge Routes
     Route::post('repledges/{repledge}/close', [RepledgeController::class, 'close']);
@@ -123,7 +127,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::get('/processing-fees', [LoanProcessingFeeController::class, 'index']);
     Route::get('/repledge-fees', [RepledgeFeeController::class, 'index']);
     Route::get('/transaction-categories', [TransactionCategoryController::class, 'index']);
-    
+
     // Customer Search (Shared)
     Route::get('/customers/search', [CustomerController::class, 'search']);
 

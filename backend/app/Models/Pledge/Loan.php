@@ -15,6 +15,7 @@ class Loan extends Model
         'loan_no',
         'date',
         'amount',
+        'balance_amount',
         'interest_percentage',
         'validity_months',
         'due_date',
@@ -31,6 +32,7 @@ class Loan extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'balance_amount' => 'decimal:2',
         'estimated_amount' => 'decimal:2',
         'amount_to_be_given' => 'decimal:2',
         'processing_fee' => 'decimal:2',
@@ -55,5 +57,15 @@ class Loan extends Model
     public function customer_loan_track()
     {
         return $this->hasOne(\App\Models\CustomerApp\CustomerLoanTrack::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(\App\Models\Pledge\LoanPayment::class);
+    }
+
+    public function extras()
+    {
+        return $this->hasMany(\App\Models\Pledge\LoanExtra::class);
     }
 }

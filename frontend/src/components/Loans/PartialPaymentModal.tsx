@@ -14,6 +14,10 @@ const PartialPaymentModal: React.FC<Props> = ({ loan, isOpen, onClose, onSuccess
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
 
+    // Fresh loan data state
+    const [currentLoan, setCurrentLoan] = useState<any>(null);
+    const [fetchingLoan, setFetchingLoan] = useState(false);
+
     // Form State
     const [amount, setAmount] = useState<string>('');
     const [interestComponent, setInterestComponent] = useState<string>('');
@@ -22,6 +26,26 @@ const PartialPaymentModal: React.FC<Props> = ({ loan, isOpen, onClose, onSuccess
     const [paymentMethod, setPaymentMethod] = useState<string>("");
     const [notes, setNotes] = useState<string>("");
     const [moneySources, setMoneySources] = useState<any[]>([]);
+
+    // Fetch fresh loan data when modal opens
+    useEffect(() => {
+        if (isOpen && loan?.id) {
+            setFetchingLoan(true);
+            api.get(`/loans/${loan.id}`)
+                .then(res => {
+                    setCurrentLoan(res.data);
+                })
+                .catch(err => {
+                    console.error("Failed to fetch fresh loan data", err);
+                    // Fallback to prop data if fetch fails
+                    setCurrentLoan(loan);
+                })
+                .finally(() => setFetchingLoan(false));
+        } else if (!isOpen) {
+            // Reset when modal closes
+            setCurrentLoan(null);
+        }
+    }, [isOpen, loan?.id]);
 
     // Fetch Money Sources
     useEffect(() => {
@@ -49,7 +73,8 @@ const PartialPaymentModal: React.FC<Props> = ({ loan, isOpen, onClose, onSuccess
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!loan) return;
+        const activeLoan = currentLoan || loan;
+        if (!activeLoan) return;
 
         if (!amount || parseFloat(amount) <= 0) {
             showToast("Please enter a valid amount", "error");
@@ -64,7 +89,7 @@ const PartialPaymentModal: React.FC<Props> = ({ loan, isOpen, onClose, onSuccess
         setLoading(true);
         try {
             await api.post('/loan-payments', {
-                loan_id: loan.id,
+                loan_id: activeLoan.id,
                 amount: parseFloat(amount),
                 interest_component: parseFloat(interestComponent) || 0,
                 principal_component: parseFloat(principalComponent) || 0,
@@ -100,7 +125,11 @@ const PartialPaymentModal: React.FC<Props> = ({ loan, isOpen, onClose, onSuccess
                             Partial Payment
                         </h2>
                         <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-0.5">
-                            Loan #{loan?.loan_no} • Bal: ₹{Number(loan?.balance_amount || loan?.amount).toLocaleString()}
+                            Loan #{(currentLoan || loan)?.loan_no} • Bal: {fetchingLoan ? (
+                                <span className="animate-pulse">Loading...</span>
+                            ) : (
+                                `₹${Number((currentLoan || loan)?.balance_amount || (currentLoan || loan)?.amount).toLocaleString()}`
+                            )}
                         </p>
                     </div>
                     <button

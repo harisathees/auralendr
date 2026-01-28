@@ -9,6 +9,7 @@ import CommunicationButtons from "../Shared/WhatsappAndSms/CommunicationButtons"
 import type { Pledge } from "../../types/models";
 
 import PartialPaymentModal from "../../components/Loans/PartialPaymentModal";
+import ExtraLoanModal from "../../components/Loans/ExtraLoanModal";
 import Pagination from "../Shared/UI/Pagination";
 
 interface Props {
@@ -42,6 +43,10 @@ const PledgeList: React.FC<Props> = ({
   // Partial Payment State
   const [selectedLoanForPayment, setSelectedLoanForPayment] = useState<any>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  // Extra Loan State
+  const [selectedLoanForExtra, setSelectedLoanForExtra] = useState<any>(null);
+  const [isExtraModalOpen, setIsExtraModalOpen] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'repledges') {
@@ -270,9 +275,15 @@ const PledgeList: React.FC<Props> = ({
                                       <Banknote size={16} />
                                       <span className="text-[9px] font-black uppercase mt-0.5">Partial</span>
                                     </button>
-                                    <button className="h-11 flex flex-col items-center justify-center bg-amber-50 dark:bg-amber-900/10 text-amber-600 dark:text-amber-400 rounded-xl hover:bg-amber-100 transition-colors border border-amber-100 dark:border-amber-800/50">
+                                    <button
+                                      onClick={() => {
+                                        setSelectedLoanForExtra(p.loan);
+                                        setIsExtraModalOpen(true);
+                                      }}
+                                      className="h-11 flex flex-col items-center justify-center bg-amber-50 dark:bg-amber-900/10 text-amber-600 dark:text-amber-400 rounded-xl hover:bg-amber-100 transition-colors border border-amber-100 dark:border-amber-800/50"
+                                    >
                                       <PlusCircle size={16} />
-                                      <span className="text-[9px] font-black uppercase mt-0.5">Top-up</span>
+                                      <span className="text-[9px] font-black uppercase mt-0.5">Extra</span>
                                     </button>
                                     <button
                                       onClick={() => navigate(`/pledges/${p.id}/close`)}
@@ -403,6 +414,17 @@ const PledgeList: React.FC<Props> = ({
         onClose={() => {
           setIsPaymentModalOpen(false);
           setSelectedLoanForPayment(null);
+        }}
+        onSuccess={handlePaymentSuccess}
+      />
+
+      {/* Extra Loan Modal */}
+      <ExtraLoanModal
+        loan={selectedLoanForExtra}
+        isOpen={isExtraModalOpen}
+        onClose={() => {
+          setIsExtraModalOpen(false);
+          setSelectedLoanForExtra(null);
         }}
         onSuccess={handlePaymentSuccess}
       />

@@ -84,6 +84,7 @@ interface Props {
   data: any;
 }
 
+import PledgeQuickStats from './PledgeQuickStats';
 import { useAuth } from "../../context/Auth/AuthContext";
 
 const PledgeView: React.FC<Props> = ({ data }) => {
@@ -178,6 +179,9 @@ const PledgeView: React.FC<Props> = ({ data }) => {
           </div>
         ) : (
           <>
+            {/* Quick Stats Overview */}
+            <PledgeQuickStats loan={loan} jewels={jewels} />
+
             {/* Closure Details Section - Only visible if closed */}
             {data.closure && (
               <section className="bg-rose-50 dark:bg-rose-900/10 rounded-xl p-5 shadow-sm border border-rose-200 dark:border-rose-800/30">
@@ -216,6 +220,83 @@ const PledgeView: React.FC<Props> = ({ data }) => {
                       <ReadOnlyField label="Addt. Reduction (₹)" value={data.closure.additional_reduction} />
                     </>
                   )}
+                </div>
+              </section>
+            )}
+
+            {/* Extra Loan Details Section */}
+            {loan.extras && loan.extras.length > 0 && (
+              <section className="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-5 shadow-sm border border-amber-200 dark:border-amber-800/30">
+                <div className="flex items-center gap-3 mb-5 border-b border-amber-200 dark:border-amber-800/30 pb-3">
+                  <span className="material-symbols-outlined text-amber-600 dark:text-amber-500">add_circle</span>
+                  <h3 className="text-amber-800 dark:text-amber-400 text-xl font-bold">Extra Loan Details</h3>
+                  <div className="ml-auto px-3 py-1 bg-amber-100 dark:bg-amber-900/40 rounded-full text-amber-700 dark:text-amber-300 text-xs font-bold uppercase tracking-wider">
+                    {loan.extras.length} Record{loan.extras.length > 1 ? 's' : ''}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {loan.extras.sort((a: any, b: any) => new Date(b.disbursement_date).getTime() - new Date(a.disbursement_date).getTime()).map((extra: any, index: number, arr: any[]) => (
+                    <div key={extra.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-amber-100 dark:border-amber-800/50 shadow-sm relative pt-6 md:pt-4">
+
+                      <div className="absolute -left-2 -top-2 w-8 h-8 rounded-full bg-amber-600 text-white flex items-center justify-center text-xs font-bold shadow-md z-10 border-2 border-white dark:border-gray-900">
+                        {arr.length - index}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <ReadOnlyField label="Disbursement Date" value={extra.disbursement_date} />
+                        <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-300">
+                          <ReadOnlyField label="Extra Amount (₹)" value={extra.extra_amount} />
+                        </div>
+                        <ReadOnlyField label="Payment Method" value={extra.payment_method} />
+
+                        {extra.notes && <ReadOnlyField label="Notes" value={extra.notes} isTextArea />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Partial Payments Section */}
+            {loan.payments && loan.payments.length > 0 && (
+              <section className="bg-indigo-50 dark:bg-indigo-900/10 rounded-xl p-5 shadow-sm border border-indigo-200 dark:border-indigo-800/30">
+                <div className="flex items-center gap-3 mb-5 border-b border-indigo-200 dark:border-indigo-800/30 pb-3">
+                  <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-500">payments</span>
+                  <h3 className="text-indigo-800 dark:text-indigo-400 text-xl font-bold">Partial Payment Details</h3>
+                  <div className="ml-auto px-3 py-1 bg-indigo-100 dark:bg-indigo-900/40 rounded-full text-indigo-700 dark:text-indigo-300 text-xs font-bold uppercase tracking-wider">
+                    {loan.payments.length} Transaction{loan.payments.length > 1 ? 's' : ''}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {loan.payments.sort((a: any, b: any) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()).map((payment: any, index: number, arr: any[]) => (
+                    <div key={payment.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-indigo-100 dark:border-indigo-800/50 shadow-sm relative pt-6 md:pt-4">
+                      {/* Badge for chronological order (Reverse index since we sorted Descending, or just standard numbers) */}
+                      {/* Let's show #1 for the oldest, implying sequence. Since we sort Desc (newest first), the index is reversed logic if we want #1 to be first payment. */}
+                      {/* Actually, just showing just the raw index from map (0..n) might be confusing if sorted. Let's just show 'Payment' label or simple bullet. */}
+                      <div className="absolute -left-2 -top-2 w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow-md z-10 border-2 border-white dark:border-gray-900">
+                        {arr.length - index}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <ReadOnlyField label="Payment Date" value={payment.payment_date} />
+                        <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-700 dark:text-indigo-300">
+                          <ReadOnlyField label="Total Paid (₹)" value={payment.total_paid_amount} />
+                        </div>
+                        <ReadOnlyField label="Payment Method" value={payment.payment_method} />
+
+                        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                          <ReadOnlyField label="Principal Paid (₹)" value={payment.principal_amount} />
+                        </div>
+                        <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                          <ReadOnlyField label="Interest Paid (₹)" value={payment.interest_amount} />
+                        </div>
+
+                        {payment.notes && <ReadOnlyField label="Notes" value={payment.notes} isTextArea />}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </section>
             )}

@@ -224,6 +224,12 @@ class PledgeController extends Controller
                 $loan = Loan::create($loanData);
                 $loanCount = Loan::count() + 1;
                 $loan->loan_no = 'LN-' . str_pad($loanCount, 6, '0', STR_PAD_LEFT);
+
+                // Initialize balance_amount to the loan amount if not set
+                if (!isset($loan->balance_amount) || $loan->balance_amount === null) {
+                    $loan->balance_amount = $loan->amount;
+                }
+
                 $loan->save();
                 Log::info('Loan created', ['id' => $loan->id]);
 
@@ -335,7 +341,7 @@ class PledgeController extends Controller
     public function show(Pledge $pledge, Request $request, \App\Services\QrCodeService $qrService)
     {
         $this->authorize('view', $pledge);
-        $pledge->load(['customer', 'loan.customer_loan_track', 'jewels', 'media', 'closure']);
+        $pledge->load(['customer', 'loan.customer_loan_track', 'loan.payments', 'loan.extras', 'jewels', 'media', 'closure']);
 
         // Dynamically append QR Code to the loan object if it exists
         if ($pledge->loan) {

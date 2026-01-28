@@ -1,5 +1,18 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api/apiClient";
+import {
+    format,
+    subDays,
+    startOfMonth,
+    endOfMonth,
+    subMonths,
+    startOfYear,
+    endOfYear
+} from "date-fns";
+import { DayPicker } from "react-day-picker";
+import type { DateRange } from "react-day-picker";
+import "react-day-picker/dist/style.css";
+import { Calendar as CalendarIcon } from "lucide-react";
 
 interface Branch {
     id: number;
@@ -15,9 +28,9 @@ interface DashboardFiltersProps {
 const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isLoading }) => {
     const [branches, setBranches] = useState<Branch[]>([]);
     const [selectedBranch, setSelectedBranch] = useState<number | ''>('');
-    const [startDate, setStartDate] = useState<string>('');
-    const [endDate, setEndDate] = useState<string>('');
+    const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [isOpen, setIsOpen] = useState(false);
+    const [activePreset, setActivePreset] = useState<string>('');
 
     useEffect(() => {
         fetchBranches();
@@ -35,24 +48,62 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isL
     const handleApply = () => {
         onFilterChange({
             branch_id: selectedBranch === '' ? undefined : selectedBranch,
-            start_date: startDate || undefined,
-            end_date: endDate || undefined,
+            start_date: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
+            end_date: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
         });
         setIsOpen(false);
     };
 
     const handleClear = () => {
         setSelectedBranch('');
-        setStartDate('');
-        setEndDate('');
+        setDateRange(undefined);
+        setActivePreset('');
         onFilterChange({});
         setIsOpen(false);
     };
 
+    const applyPreset = (type: string) => {
+        const today = new Date();
+        let range: DateRange | undefined;
+
+        switch (type) {
+            case 'today':
+                range = { from: today, to: today };
+                break;
+            case 'yesterday':
+                const yest = subDays(today, 1);
+                range = { from: yest, to: yest };
+                break;
+            case 'last_7_days':
+                range = { from: subDays(today, 6), to: today };
+                break;
+            case 'this_month':
+                range = { from: startOfMonth(today), to: endOfMonth(today) };
+                break;
+            case 'last_month':
+                const lastMonth = subMonths(today, 1);
+                range = { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) };
+                break;
+            case 'this_year':
+                range = { from: startOfYear(today), to: endOfYear(today) };
+                break;
+            default:
+                range = undefined;
+        }
+
+        setDateRange(range);
+        setActivePreset(type);
+    };
+
+    useEffect(() => {
+        if (!dateRange) {
+            setActivePreset('');
+        }
+    }, [dateRange]);
+
     return (
         <div className="flex items-center gap-3 relative">
-            {/* Branch Selector - Sleek Version */}
-            <div className="flex-1 max-w-xs relative group">
+            <div className="flex-1 max-w-xs relative group hidden md:block">
                 <select
                     value={selectedBranch}
                     onChange={(e) => {
@@ -60,8 +111,8 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isL
                         setSelectedBranch(val);
                         onFilterChange({
                             branch_id: val === '' ? undefined : val,
-                            start_date: startDate || undefined,
-                            end_date: endDate || undefined,
+                            start_date: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
+                            end_date: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
                         });
                     }}
                     className="w-full h-11 bg-white dark:bg-[#1A1D1F] border border-gray-100 dark:border-gray-800 rounded-2xl px-5 pr-10 text-sm font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-600/20 transition-all appearance-none cursor-pointer shadow-sm hover:shadow-md"
@@ -78,66 +129,109 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isL
                 </span>
             </div>
 
-            {/* Filter Toggle Icon */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all shadow-sm hover:shadow-md relative ${isOpen ? 'bg-purple-600 text-white' : 'bg-white dark:bg-[#1A1D1F] text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-gray-800'}`}
+                className={`h-11 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-sm hover:shadow-md border ${isOpen || dateRange?.from
+                        ? 'bg-purple-600 text-white border-purple-600'
+                        : 'bg-white dark:bg-[#1A1D1F] text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-800'
+                    }`}
             >
                 {isLoading ? (
                     <span className="material-symbols-outlined text-xl animate-spin">sync</span>
                 ) : (
-                    <span className="material-symbols-outlined text-xl">tune</span>
+                    <CalendarIcon className="w-5 h-5" />
                 )}
-                {!isOpen && (startDate || endDate) && !isLoading && (
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-purple-600 rounded-full border-2 border-white dark:border-[#1A1D1F]"></span>
-                )}
+                <span className="text-sm font-bold hidden sm:inline">
+                    {dateRange?.from ? (
+                        <>
+                            {format(dateRange.from, 'MMM dd')}
+                            {dateRange.to && ` - ${format(dateRange.to, 'MMM dd')}`}
+                        </>
+                    ) : (
+                        "Select Dates"
+                    )}
+                </span>
             </button>
 
-            {/* Advanced Filters Popover */}
             {isOpen && (
                 <>
                     <div className="fixed inset-0 z-[60]" onClick={() => setIsOpen(false)} />
-                    <div className="absolute top-14 right-0 w-80 bg-white dark:bg-[#1A1D1F] rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 p-6 z-[70] animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">Date Range</h3>
-                            {(startDate || endDate) && (
-                                <button onClick={handleClear} className="text-[10px] font-black text-red-500 uppercase hover:underline">Reset</button>
-                            )}
+                    <div className="absolute top-14 right-0 bg-white dark:bg-[#1A1D1F] rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 p-0 z-[70] animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col md:flex-row w-[320px] md:w-auto">
+
+                        <div className="bg-gray-50 dark:bg-[#202428] p-4 flex flex-col gap-2 min-w-[160px] border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-700">
+                            <h3 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2 px-1">Presets</h3>
+                            {[
+                                { label: 'Today', value: 'today' },
+                                { label: 'Yesterday', value: 'yesterday' },
+                                { label: 'Last 7 Days', value: 'last_7_days' },
+                                { label: 'This Month', value: 'this_month' },
+                                { label: 'Last Month', value: 'last_month' },
+                                { label: 'This Year', value: 'this_year' },
+                            ].map((preset) => (
+                                <button
+                                    key={preset.value}
+                                    onClick={() => applyPreset(preset.value)}
+                                    className={`px-4 py-2.5 rounded-xl text-xs font-bold text-left transition-all ${activePreset === preset.value
+                                            ? 'bg-purple-600 text-white shadow-purple-600/20 shadow-lg'
+                                            : 'text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm'
+                                        }`}
+                                >
+                                    {preset.label}
+                                </button>
+                            ))}
                         </div>
 
-                        <div className="space-y-4 mb-8">
-                            <div>
-                                <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest block mb-2 px-1">From Date</label>
-                                <input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full h-11 bg-gray-50 dark:bg-[#272B30] border border-gray-100 dark:border-gray-800 rounded-xl px-4 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-600/20 transition-all font-bold"
+                        <div className="p-4 md:p-6">
+                            <div className="mb-4">
+                                <DayPicker
+                                    mode="range"
+                                    selected={dateRange}
+                                    onSelect={(range) => {
+                                        setDateRange(range);
+                                        setActivePreset('');
+                                    }}
+                                    numberOfMonths={1}
+                                    showOutsideDays
+                                    className="border-0 p-0 m-0"
+                                    classNames={{
+                                        caption: "flex justify-center relative items-center pt-1 mb-4",
+                                        caption_label: "text-sm font-bold text-gray-900 dark:text-white",
+                                        nav: "space-x-1 flex items-center",
+                                        nav_button: "h-7 w-7 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg flex items-center justify-center transition-colors text-gray-500",
+                                        nav_button_previous: "absolute left-1",
+                                        nav_button_next: "absolute right-1",
+                                        table: "w-full border-collapse space-y-1",
+                                        head_row: "flex mb-2",
+                                        head_cell: "text-gray-400 rounded-md w-9 font-bold text-[0.8rem]",
+                                        row: "flex w-full mt-2",
+                                        cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-purple-50 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 dark:[&:has([aria-selected])]:bg-purple-900/20",
+                                        day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-700 dark:text-gray-300 font-medium text-sm",
+                                        day_selected: "bg-purple-600 text-white hover:bg-purple-600 hover:text-white focus:bg-purple-600 focus:text-white rounded-lg shadow-md",
+                                        day_today: "bg-gray-100 dark:bg-gray-800 text-purple-600 font-bold",
+                                        day_outside: "text-gray-300 opacity-50 dark:text-gray-600",
+                                        day_disabled: "text-gray-300 opacity-50 dark:text-gray-600",
+                                        day_range_middle: "aria-selected:bg-purple-50 dark:aria-selected:bg-purple-900/20 aria-selected:text-purple-700 dark:aria-selected:text-purple-300 rounded-none",
+                                        day_hidden: "invisible",
+                                    }}
                                 />
                             </div>
-                            <div>
-                                <label className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest block mb-2 px-1">To Date</label>
-                                <input
-                                    type="date"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    className="w-full h-11 bg-gray-50 dark:bg-[#272B30] border border-gray-100 dark:border-gray-800 rounded-xl px-4 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-600/20 transition-all font-bold"
-                                />
+
+                            <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                                <button
+                                    onClick={handleClear}
+                                    className="text-xs font-bold text-gray-500 hover:text-red-500 transition-colors px-2 py-2"
+                                >
+                                    Reset
+                                </button>
+                                <button
+                                    onClick={handleApply}
+                                    disabled={isLoading || !dateRange?.from}
+                                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed text-white text-sm font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-purple-600/20 transition-all active:scale-95"
+                                >
+                                    Apply Range
+                                </button>
                             </div>
                         </div>
-
-                        <button
-                            onClick={handleApply}
-                            disabled={isLoading}
-                            className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-black h-12 rounded-2xl shadow-xl shadow-purple-600/20 transition-all flex items-center justify-center gap-2 group"
-                        >
-                            {isLoading ? (
-                                <span className="material-symbols-outlined text-xl animate-spin">sync</span>
-                            ) : (
-                                <span className="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">check</span>
-                            )}
-                            {isLoading ? 'Applying...' : 'Apply Filter'}
-                        </button>
                     </div>
                 </>
             )}

@@ -29,6 +29,13 @@ class LoanPaymentController extends Controller
         ]);
 
         $loan = Loan::findOrFail($validated['loan_id']);
+
+        // Initialize balance_amount if not set (for backward compatibility)
+        if ($loan->balance_amount === null) {
+            $loan->balance_amount = $loan->amount;
+            $loan->save();
+        }
+
         $totalAmount = $validated['amount'];
         $interestComp = $validated['interest_component'];
         $principalComp = $validated['principal_component'];
@@ -40,7 +47,9 @@ class LoanPaymentController extends Controller
 
         // 2. Validate Principal against Balance
         if ($principalComp > $loan->balance_amount) {
-            return response()->json(['message' => "Principal component cannot exceed current loan balance ({$loan->balance_amount})"], 422);
+            return response()->json([
+                'message' => "Principal component ({$principalComp}) cannot exceed current loan balance ({$loan->balance_amount})"
+            ], 422);
         }
 
         try {
@@ -63,6 +72,7 @@ class LoanPaymentController extends Controller
                 // 2. Handle Principal Reduction
                 if ($principalComp > 0) {
                     $loan->decrement('balance_amount', $principalComp);
+                    $loan->refresh(); // Refresh to get updated balance_amount
                 }
 
                 // 3. Handle Money Source (Income)
@@ -73,7 +83,7 @@ class LoanPaymentController extends Controller
                 // For simplicity and Dashboard Reporting, let's create ONE transaction linked to the Payment.
                 // If dashboard needs split, it can query LoanPayment details.
                 // However, transaction category might be useful.
-                
+
                 Transaction::create([
                     'branch_id' => $request->user()->branch_id, // Ensure user has branch_id
                     'money_source_id' => $moneySource->id,
@@ -85,6 +95,17 @@ class LoanPaymentController extends Controller
                     'transactionable_type' => LoanPayment::class,
                     'transactionable_id' => $payment->id,
                     'created_by' => $request->user()->id,
+                ]);
+
+                // Create Activity Log
+                \App\Models\Activity::create([
+                    'user_id' => $request->user()->id,
+                    'action' => 'partial_payment',
+                    'subject_type' => Loan::class,
+                    'subject_id' => $loan->id,
+                    'description' => "Recorded partial payment of ₹{$totalAmount} (Principal: ₹{$principalComp}, Interest: ₹{$interestComp}) for Loan #{$loan->loan_no}",
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
                 ]);
 
                 return response()->json([

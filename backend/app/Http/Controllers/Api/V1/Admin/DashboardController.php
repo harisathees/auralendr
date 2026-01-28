@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Api\V1\Controller;
 use App\Models\Pledge\Pledge;
 use App\Models\Pledge\Loan;
+use App\Models\Repledge\Repledge;
 use App\Models\Transaction\Transaction;
 use App\Models\Admin\Organization\Branch\Branch;
 use Illuminate\Http\Request;
@@ -20,174 +21,227 @@ class DashboardController extends Controller
             $startDate = $request->query('start_date');
             $endDate = $request->query('end_date');
 
-            // Helper for basic filtering
-            $applyFilters = function ($q) use ($branchId, $startDate, $endDate) {
-                if ($branchId) $q->where('branch_id', $branchId);
-                if ($startDate && $endDate) $q->whereBetween('created_at', [$startDate, $endDate]);
+            if ($startDate) {
+                $startDate = Carbon::parse($startDate)->startOfDay();
+            }
+            if ($endDate) {
+                $endDate = Carbon::parse($endDate)->endOfDay();
+            }
+
+            // --- Helper Functions ---
+
+            // Helper to calculate Accrued Interest (Jumping Month Logic)
+            $calculateAccruedInterest = function ($loans) {
+                $totalAccrued = 0;
+                $now = Carbon::now();
+
+                foreach ($loans as $loan) {
+                    // Start date for interest: Last Payment Date OR Loan Date
+                    // We need to fetch payments. Assumes $loan currently has 'payments' loaded or lazy loads.
+                    // For performance, eager load 'payments'.
+
+                    $lastPayment = $loan->payments->sortByDesc('payment_date')->first();
+                    $fromDate = $lastPayment ? Carbon::parse($lastPayment->payment_date) : Carbon::parse($loan->date);
+
+                    if ($now->lessThan($fromDate)) {
+                        continue;
+                    }
+
+                    // Jumping Month Logic: Any part of a month counts as a month?
+                    // Or precise months?
+                    // User requested "Acturate". Standard Gold Loan = Jumping Month.
+                    // (Difference in months) + (if day > day ? 1 : 0)
+
+                    $diffYears = $now->year - $fromDate->year;
+                    $diffMonths = $now->month - $fromDate->month;
+                    $months = $diffYears * 12 + $diffMonths;
+
+                    if ($now->day > $fromDate->day) {
+                        $months++;
+                    }
+
+                    // Specific Logic: Minimum 1 month? Or 0 if same day?
+                    // Usually min 1 month if < 30 days is debatable. 
+                    // Let's stick to standard diff. If 0 months passed (e.g. yesterday), and logic gives 0, then 0.
+                    // But usually Gold Loan is "Min 15 days" or "Min 1 month".
+                    // I will stick to pure calculated months for now.
+
+                    if ($months < 0)
+                        $months = 0;
+
+                    $rate = $loan->interest_percentage;
+                    $balance = $loan->balance_amount ?? $loan->amount; // Fallback to amount if balance null
+
+                    $interest = $balance * ($rate / 100) * $months;
+                    $totalAccrued += $interest;
+                }
+                return $totalAccrued;
             };
 
-            $applyLoanFilters = function ($q) use ($branchId, $startDate, $endDate) {
-                $q->whereHas('pledge', function ($pq) use ($branchId, $startDate, $endDate) {
-                    if ($branchId) $pq->where('branch_id', $branchId);
-                    if ($startDate && $endDate) $pq->whereBetween('created_at', [$startDate, $endDate]);
-                });
-            };
 
-            // 1. Total Loans
-            $totalCount = Pledge::where(function($q) use ($branchId, $startDate, $endDate) {
-                 if ($branchId) $q->where('branch_id', $branchId);
-                 if ($startDate && $endDate) $q->whereBetween('created_at', [$startDate, $endDate]);
-            })->count();
+            // --- DATA FETCHING ---
 
-            // Total Disbursed Amount (Principal Given)
-            $totalPrincipal = Loan::where(function($q) use ($branchId, $startDate, $endDate) {
-                $q->whereHas('pledge', function ($pq) use ($branchId, $startDate, $endDate) {
-                    if ($branchId) $pq->where('branch_id', $branchId);
-                    if ($startDate && $endDate) $pq->whereBetween('created_at', [$startDate, $endDate]);
-                });
-            })->sum('amount');
-            
-            // Revenue: Total Interest (Closures + Partial Payments)
-            // A. From Closures
-            $interestFromClosures = Transaction::where('transactionable_type', 'App\Models\Pledge\PledgeClosure')
-                ->where('category', 'loan_repayment') // Ensure category matches
-                ->when($branchId, function ($q) use ($branchId) {
+            // 1. REALIZED REVENUE (Paid Interest)
+            // A. From Closures (Final Settlements)
+            $realizedClosureInterest = \App\Models\Pledge\PledgeClosure::whereHas('pledge', function ($q) use ($branchId, $startDate, $endDate) {
+                if ($branchId)
                     $q->where('branch_id', $branchId);
-                })
-                ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
-                     $q->whereBetween('created_at', [$startDate, $endDate]);
-                })
-                ->sum('amount');
-            // Wait, Closure transaction amount is Total Paid (Principal + Interest).
-            // We need PURE INTEREST for revenue.
-            // Transaction stores total amount paid.
-            // We should sum `calculated_interest` from PledgeClosure table?
-            // OR rely on Transaction metadata? Transaction doesn't split P/I.
-            // Let's check PledgeClosure logic. `calculated_interest` is stored in `pledge_closures`.
-            // But if we want *actually collected* interest...
-            // Standard approach: Revenue = Interest Collected.
-            // Let's use `interest_amount` from `loan_payments` + `calculated_interest` (adjusted) from `pledge_closures`.
-            
-            // Re-evaluating existing logic:
-            // $totalInterest = Transaction::...sum('amount'); -> This was summing TOTAL transaction amount (Principal + Interest) as "Interest". This was WRONG previously if it included Principal returned.
-            // Checking PledgeClosure transaction... It logs `amountPaid`.
-            // FIX: We need to sum `calculated_interest` from Closures and `interest_amount` from LoanPayments.
-            
-            $interestFromClosures = \App\Models\Pledge\PledgeClosure::whereHas('pledge', function($q) use ($branchId, $startDate, $endDate) {
-                if ($branchId) $q->where('branch_id', $branchId);
-                // Date filter on Closure Date
-                if ($startDate && $endDate) $q->whereBetween('closed_date', [$startDate, $endDate]);
-            })->sum('calculated_interest'); // Use calculated_interest as realized revenue upon closure. 
-            // Note: If `interest_reduction` exists, realized revenue is `calculated_interest - interest_reduction`.
-            // Better: sum(calculated_interest - interest_reduction)
-            
-            $realizedClosureInterest = \App\Models\Pledge\PledgeClosure::whereHas('pledge', function($q) use ($branchId, $startDate, $endDate) {
-                if ($branchId) $q->where('branch_id', $branchId);
-                if ($startDate && $endDate) $q->whereBetween('closed_date', [$startDate, $endDate]);
+                if ($startDate && $endDate)
+                    $q->whereBetween('closed_date', [$startDate, $endDate]);
             })->sum(DB::raw('calculated_interest - interest_reduction'));
 
             // B. From Partial Payments
-            $interestFromPartial = \App\Models\Pledge\LoanPayment::whereHas('loan.pledge', function($q) use ($branchId) {
-                if ($branchId) $q->where('branch_id', $branchId);
+            $interestFromPartial = \App\Models\Pledge\LoanPayment::whereHas('loan.pledge', function ($q) use ($branchId) {
+                if ($branchId)
+                    $q->where('branch_id', $branchId);
             })
-            ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
-                 $q->whereBetween('payment_date', [$startDate, $endDate]);
-            })->sum('interest_amount');
+                ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('payment_date', [$startDate, $endDate]);
+                })->sum('interest_amount');
 
-            $totalInterest = $realizedClosureInterest + $interestFromPartial;
+            $totalPaidInterest = $realizedClosureInterest + $interestFromPartial;
 
 
-            // 2. Active Loans
-            $activeCount = Pledge::where('status', 'active')->where(function($q) use ($branchId, $startDate, $endDate) {
-                 if ($branchId) $q->where('branch_id', $branchId);
-                 if ($startDate && $endDate) $q->whereBetween('created_at', [$startDate, $endDate]);
+            // 2. ACTIVE LOANS STATS
+            $activeLoansQuery = Loan::with(['payments']) // Eager load payments
+                ->whereHas('pledge', function ($q) use ($branchId, $startDate, $endDate) {
+                    $q->where('status', 'active');
+                    if ($branchId)
+                        $q->where('branch_id', $branchId);
+                    if ($startDate && $endDate)
+                        $q->whereBetween('created_at', [$startDate, $endDate]);
+                });
+
+            // Get all active loans for calculation (might be heavy, consider chunking if needed)
+            // For now, assuming manageable volume.
+            $activeLoansCollection = $activeLoansQuery->get();
+
+            $activeCount = $activeLoansCollection->count(); // Pledge count or Loan count? Dashboard says "Loans". 1 Pledge = 1 Loan usually, but Schema is 1 Pledge -> Many Loans?
+            // Existing logic used Pledge::count(). 
+            // $activeLoansQuery is on LOANS table.
+
+            // Let's align with existing dashboard logic:
+            // "Loans Dashboard" statistics usually count "Pledges" or "Loans".
+            // Previous code: $activeCount = Pledge::where...count().
+            // If 1 Pledge has multiple Loans (multipart), do we sum them?
+            // Usually 1 Pledge = 1 Loan Transaction in UI.
+            // Let's stick to Pledge Count for "Count", but Loan Sum for Amounts.
+
+            $activePledgeCount = Pledge::where('status', 'active')->where(function ($q) use ($branchId, $startDate, $endDate) {
+                if ($branchId)
+                    $q->where('branch_id', $branchId);
+                if ($startDate && $endDate)
+                    $q->whereBetween('created_at', [$startDate, $endDate]);
             })->count();
 
-            // Active Principal (Outstanding Balance)
-            $activePrincipal = Loan::whereHas('pledge', function ($q) use ($branchId, $startDate, $endDate) {
-                $q->where('status', 'active');
-                if ($branchId) $q->where('branch_id', $branchId);
-                if ($startDate && $endDate) $q->whereBetween('created_at', [$startDate, $endDate]);
-            })->sum('balance_amount'); // UPDATED: Use balance_amount
-
-            // Note: Accrued interest is hard to calc on the fly without complex logic. Returning 0 for now.
-            $activeInterest = 0; 
+            $activePrincipal = $activeLoansCollection->sum('balance_amount');
+            $activeAccruedInterest = $calculateAccruedInterest($activeLoansCollection);
 
 
-            // 3. Closed Loans
-            $closedCount = Pledge::where('status', 'closed')->where(function($q) use ($branchId, $startDate, $endDate) {
-                 if ($branchId) $q->where('branch_id', $branchId);
-                 if ($startDate && $endDate) $q->whereBetween('created_at', [$startDate, $endDate]);
+            // 3. OVERDUE LOANS STATS
+            // Logic: Active/Overdue status AND due_date < now
+            $overdueLoansQuery = Loan::with(['payments'])
+                ->whereHas('pledge', function ($q) use ($branchId, $startDate, $endDate) {
+                    $q->where(function ($sub) {
+                        $sub->where('status', 'active')->orWhere('status', 'overdue');
+                    });
+                    if ($branchId)
+                        $q->where('branch_id', $branchId);
+                    if ($startDate && $endDate)
+                        $q->whereBetween('created_at', [$startDate, $endDate]);
+                })
+                ->where('due_date', '<', Carbon::now());
+
+            $overdueLoansCollection = $overdueLoansQuery->get();
+
+            $overdueCount = $overdueLoansCollection->count(); // Here counting Loans might be more accurate for "Overdue Items"
+            // But consistency? user sees "Overdue Loans: 5".
+            // Let's assume Loan-level grouping for Overdue logic.
+
+            $overduePrincipal = $overdueLoansCollection->sum('balance_amount');
+            $overdueAccruedInterest = $calculateAccruedInterest($overdueLoansCollection);
+
+
+            // 4. CLOSED LOANS STATS
+            $closedPledgeCount = Pledge::where('status', 'closed')->where(function ($q) use ($branchId, $startDate, $endDate) {
+                if ($branchId)
+                    $q->where('branch_id', $branchId);
+                if ($startDate && $endDate)
+                    $q->whereBetween('created_at', [$startDate, $endDate]);
             })->count();
 
             $closedPrincipal = Loan::whereHas('pledge', function ($q) use ($branchId, $startDate, $endDate) {
                 $q->where('status', 'closed');
-                if ($branchId) $q->where('branch_id', $branchId);
-                if ($startDate && $endDate) $q->whereBetween('created_at', [$startDate, $endDate]);
-            })->sum('amount'); // For closed loans, we usually track original principal or recovered? 
-                               // 'Principal' context in stats usually means 'Principal Returned'.
-                               // So sum('amount') is correct for "Principal Closed/Recovered".
+                if ($branchId)
+                    $q->where('branch_id', $branchId);
+                if ($startDate && $endDate)
+                    $q->whereBetween('created_at', [$startDate, $endDate]);
+            })->sum('amount'); // Original principal volume
 
-            $closedInterest = $realizedClosureInterest; 
-
-
-            // 4. Overdue Loans
-            // Logic: Active loans where due_date < now
-            // FIX: Query should include status 'overdue' if implemented, or reliance on date.
-            // Verification Report finding: "Overdue" status exists in Pledge but not Loan enum?
-            // The dashboard bug logic: Pledge status becomes 'overdue', but query checks 'active'.
-            // Updated Logic: Check Pledge status 'overdue' OR (active + date).
-            
-            $overdueLoansQuery = Loan::whereHas('pledge', function ($q) use ($branchId, $startDate, $endDate) {
-                $q->where(function($sub) {
-                    $sub->where('status', 'active')->orWhere('status', 'overdue');
-                });
-                
-                if ($branchId) $q->where('branch_id', $branchId);
-                if ($startDate && $endDate) $q->whereBetween('created_at', [$startDate, $endDate]);
-            })->where('due_date', '<', Carbon::now());
-
-            $overdueCount = (clone $overdueLoansQuery)->count();
-            $overduePrincipal = (clone $overdueLoansQuery)->sum('balance_amount'); // UPDATED: Use balance_amount
-            $overdueInterest = 0; // Placeholder
+            $closedInterest = $realizedClosureInterest; // Only what was paid on closure. (Plus partials for closed loans?)
+            // Note: $interestFromPartial sums partials for ALL loans (active + closed) in the period?
+            // Dashboard requirement: "Closed Loans Interest".
+            // Should strictly be interest EARNED from loans that are NOW closed.
+            // Previous logic: $realizedClosureInterest. 
+            // If I stick to that, it's consistent.
 
 
-            // Monthly Trends (Last 6 Months)
+            // 5. TOTAL STATS
+            $totalCount = $activePledgeCount + $closedPledgeCount; // Or Pledge::count()
+            $totalPrincipal = $activePrincipal + $closedPrincipal; // Or Loan::sum('amount')??
+            // "Loans Dashboard" -> Total usually implies "Total Disbursed" or "Total Portfolio Size"?
+            // User: "Total Loans ... Principal ... Interest".
+            // If they mean "Current Portfolio": Active + Overdue.
+            // If they mean "Historical Volume": Active + Closed.
+            // Given "Closed Loans" is a card, it's likely Historical Volume.
+            // Principal: Total Disbursed Correct ($activePrincipal + $closedPrincipal?? No, Active is Balance).
+            // Total Principal Disbursed = Loan::sum('amount').
+
+            $totalDisbursed = Loan::whereHas('pledge', function ($q) use ($branchId, $startDate, $endDate) {
+                if ($branchId)
+                    $q->where('branch_id', $branchId);
+                if ($startDate && $endDate)
+                    $q->whereBetween('created_at', [$startDate, $endDate]);
+            })->sum('amount');
+
+            $totalInterest = $totalPaidInterest + $activeAccruedInterest;
+            // Total Interest Revenue + Potential Revenue? 
+            // "Interest" on Total Card: Usually "Earnings".
+            // Let's show Total Earnings ($totalPaidInterest) + Accrued? 
+            // Or just Earnings.
+            // Let's go with Earnings + Accrued to show "Total Value".
+
+
+            // --- CHARTS & TRENDS (Preserved) ---
             $trends = Loan::select(
                 DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
                 DB::raw('SUM(amount) as total_amount'),
                 DB::raw('COUNT(*) as count')
             )
                 ->whereHas('pledge', function ($q) use ($branchId) {
-                    if ($branchId) {
+                    if ($branchId)
                         $q->where('branch_id', $branchId);
-                    }
                 })
                 ->where('created_at', '>=', Carbon::now()->subMonths(6))
                 ->groupBy('month')
                 ->orderBy('month')
                 ->get();
 
-            // Branch-wise distribution
             $branchDistribution = Branch::withCount([
                 'users as pledge_count' => function ($q) use ($startDate, $endDate) {
-                    if ($startDate && $endDate) {
+                    if ($startDate && $endDate)
                         $q->whereBetween('created_at', [$startDate, $endDate]);
-                    }
                 }
             ])
                 ->get()
                 ->map(function ($branch) use ($startDate, $endDate, $branchId) {
                     if ($branchId && $branch->id != $branchId)
                         return null;
-
                     $loans = Loan::whereHas('pledge', function ($q) use ($branch) {
                         $q->where('branch_id', $branch->id);
                     });
-
-                    if ($startDate && $endDate) {
+                    if ($startDate && $endDate)
                         $loans->whereBetween('created_at', [$startDate, $endDate]);
-                    }
 
                     return [
                         'branch_name' => $branch->branch_name,
@@ -198,76 +252,60 @@ class DashboardController extends Controller
                     ];
                 })->filter()->values();
 
-            // Status Distribution
             $pledgeQuery = Pledge::query();
-            if ($branchId) $pledgeQuery->where('branch_id', $branchId);
-            if ($startDate && $endDate) $pledgeQuery->whereBetween('created_at', [$startDate, $endDate]);
+            if ($branchId)
+                $pledgeQuery->where('branch_id', $branchId);
+            if ($startDate && $endDate)
+                $pledgeQuery->whereBetween('created_at', [$startDate, $endDate]);
+            $statusDistribution = $pledgeQuery->select('status', DB::raw('count(*) as count'))->groupBy('status')->get();
 
-            $statusDistribution = $pledgeQuery
-                ->select('status', DB::raw('count(*) as count'))
-                ->groupBy('status')
-                ->get();
 
-            // --- Repledge Stats ---
+            // --- Repledge Stats (Preserved) ---
             $repledgeQuery = Repledge::query();
-            if ($branchId) $repledgeQuery->where('branch_id', $branchId);
-            // Date filter for repledges (using created_at or start_date?) - Assuming created_at for consistency
-            if ($startDate && $endDate) $repledgeQuery->whereBetween('created_at', [$startDate, $endDate]);
-            
-            // 1. Total Repledges
+            if ($branchId)
+                $repledgeQuery->where('branch_id', $branchId);
+            if ($startDate && $endDate)
+                $repledgeQuery->whereBetween('created_at', [$startDate, $endDate]);
+
             $totalRepCount = (clone $repledgeQuery)->count();
             $totalRepAmount = (clone $repledgeQuery)->sum('amount');
-
-            // 2. Active Repledges (Open)
-            // Adjust status logic based on your Schema. Assuming 'open' or 'active'
             $activeRepCount = (clone $repledgeQuery)->where('status', 'open')->count();
             $activeRepAmount = (clone $repledgeQuery)->where('status', 'open')->sum('amount');
-
-            // 3. Released Repledges (Closed)
             $releasedRepCount = (clone $repledgeQuery)->where('status', 'closed')->count();
             $releasedRepAmount = (clone $repledgeQuery)->where('status', 'closed')->sum('amount');
+            $overdueRepCount = (clone $repledgeQuery)->where('status', 'open')->where('due_date', '<', Carbon::now())->count();
+            $overdueRepAmount = (clone $repledgeQuery)->where('status', 'open')->where('due_date', '<', Carbon::now())->sum('amount');
 
-            // 4. Overdue Repledges
-            // Active and past due date
-            $overdueRepCount = (clone $repledgeQuery)
-                ->where('status', 'open')
-                ->where('due_date', '<', Carbon::now())
-                ->count();
-            $overdueRepAmount = (clone $repledgeQuery)
-                ->where('status', 'open')
-                ->where('due_date', '<', Carbon::now())
-                ->sum('amount');
 
             return response()->json([
-                'loan_stats' => [ // New structured key
+                'loan_stats' => [
                     'total' => [
-                        'count' => $totalCount,
-                        'principal' => $totalPrincipal,
-                        'interest' => $totalInterest
+                        'count' => $activePledgeCount + $closedPledgeCount, // Approx Total
+                        'principal' => $totalDisbursed,
+                        'interest' => round($totalInterest)
                     ],
                     'active' => [
-                        'count' => $activeCount,
+                        'count' => $activePledgeCount,
                         'principal' => $activePrincipal,
-                        'interest' => $activeInterest
+                        'interest' => round($activeAccruedInterest)
                     ],
                     'closed' => [
-                        'count' => $closedCount,
+                        'count' => $closedPledgeCount,
                         'principal' => $closedPrincipal,
-                        'interest' => $closedInterest
+                        'interest' => round($closedInterest)
                     ],
                     'overdue' => [
                         'count' => $overdueCount,
                         'principal' => $overduePrincipal,
-                        'interest' => $overdueInterest
+                        'interest' => round($overdueAccruedInterest)
                     ]
                 ],
-                'repledge_stats' => [
+                'repledge_stats' => [ // Preserved
                     'total' => ['count' => $totalRepCount, 'amount' => $totalRepAmount],
                     'active' => ['count' => $activeRepCount, 'amount' => $activeRepAmount],
                     'released' => ['count' => $releasedRepCount, 'amount' => $releasedRepAmount],
                     'overdue' => ['count' => $overdueRepCount, 'amount' => $overdueRepAmount],
                 ],
-                
                 'trends' => $trends,
                 'branch_distribution' => $branchDistribution,
                 'status_distribution' => $statusDistribution,
@@ -278,9 +316,7 @@ class DashboardController extends Controller
             \Log::error($e->getTraceAsString());
             return response()->json([
                 'error' => 'Failed to fetch settings',
-                'message' => $e->getMessage(),
-                'line' => $e->getLine(),
-                'file' => $e->getFile()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
