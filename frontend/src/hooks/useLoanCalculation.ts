@@ -11,6 +11,8 @@ interface LoanData {
     status: string;
     interest_taken: boolean;
     jewels: any[]; // Include jewels array
+    customer: any;
+    customer_loan_track: any;
 }
 
 export const useLoanCalculation = (loanId: string | null) => {
@@ -63,6 +65,8 @@ export const useLoanCalculation = (loanId: string | null) => {
                     status: pledge.status,
                     interest_taken: false, // Default or fetch if available
                     jewels: pledge.jewels || [],
+                    customer: pledge.customer,
+                    customer_loan_track: loan.customer_loan_track,
                 });
             } catch (err: any) {
                 console.error("Error fetching loan data:", err);

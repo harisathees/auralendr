@@ -23,6 +23,7 @@ const BranchForm = lazy(() => import("../pages/Admin/Organization/Branch/Form"))
 const UsersList = lazy(() => import("../pages/Admin/Organization/User/List"));
 const UserForm = lazy(() => import("../pages/Admin/Organization/User/Form"));
 const CustomersList = lazy(() => import("../pages/Admin/Customer/List"));
+const CustomerLoans = lazy(() => import("../pages/Admin/Customer/CustomerLoans"));
 const TasksList = lazy(() => import("../pages/Admin/Task/List"));
 const LoansList = lazy(() => import("../pages/Admin/LoanConfiguration/LoanList"));
 const AdminConfigs = lazy(() => import("../pages/Admin/Configs"));
@@ -186,6 +187,7 @@ const AppRoutes: React.FC = () => {
 
         <Route path="/admin/loans" element={<LoansList />} />
         <Route path="/admin/customers" element={<CustomersList />} />
+        <Route path="/admin/customers/:id/loans" element={<CustomerLoans />} />
 
         <Route path="/admin/pledges/view" element={<View />} />
         <Route path="/admin/pledges/:id" element={<RedirectWithState to="/admin/pledges/view" param="id" />} />

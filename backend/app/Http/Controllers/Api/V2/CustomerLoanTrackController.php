@@ -65,4 +65,53 @@ class CustomerLoanTrackController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Return all pledges for the customer associated with the tracking code.
+     * Auth: last 4 digits of mobile number.
+     */
+    public function allPledges(\Illuminate\Http\Request $request, $tracking_code)
+    {
+        $request->validate([
+            'last_4_digits' => 'required|digits:4',
+        ]);
+
+        $track = \App\Models\CustomerApp\CustomerLoanTrack::with(['loan.pledge.customer'])
+            ->where('tracking_code', $tracking_code)
+            ->first();
+
+        if (!$track) {
+            abort(404);
+        }
+
+        $customer = $track->loan->pledge->customer ?? null;
+
+        // Security Check
+        if (!$customer || substr($customer->mobile_no, -4) !== $request->last_4_digits) {
+            abort(404);
+        }
+
+        // Fetch all pledges for this customer
+        $pledges = \App\Models\Pledge::with('loan')
+            ->where('customer_id', $customer->id)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($pledge) {
+                return [
+                    'id' => $pledge->id,
+                    'loan_no' => $pledge->loan->loan_no ?? 'N/A',
+                    'amount' => $pledge->loan->amount ?? 0,
+                    'date' => $pledge->loan->date ?? null,
+                    'status' => $pledge->status,
+                    'tracking_code' => $pledge->loan->customerLoanTrack->tracking_code ?? null,
+                ];
+            });
+
+        return response()->json([
+            'status' => 'success',
+            'customer_name' => $customer->name,
+            'data' => $pledges,
+        ]);
+    }
+
 }

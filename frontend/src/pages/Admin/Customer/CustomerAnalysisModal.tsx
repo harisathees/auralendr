@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { X, TrendingUp, IndianRupee, Briefcase, Archive, Scale, AlertTriangle, Calendar, Award } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, TrendingUp, IndianRupee, Briefcase, Archive, Scale, AlertTriangle, Calendar, Award, ExternalLink, ArrowLeft } from 'lucide-react';
 import api from '../../../api/apiClient';
 import GoldCoinSpinner from '../../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner';
 
@@ -28,17 +29,29 @@ const CustomerAnalysisModal: React.FC<CustomerAnalysisModalProps> = ({
     customerId,
     customerName,
 }) => {
+    const navigate = useNavigate();
+    const [view, setView] = useState<'analysis' | 'loans'>('analysis');
     const [data, setData] = useState<AnalysisData | null>(null);
+    const [loans, setLoans] = useState<any[]>([]); // Using any[] for now, or define Pledge interface
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (isOpen && customerId) {
+            setView('analysis'); // Reset view on open
             fetchAnalysis();
         } else {
             setData(null);
+            setLoans([]);
             setLoading(true);
         }
     }, [isOpen, customerId]);
+
+    // Fetch loans when switching to loans view
+    useEffect(() => {
+        if (isOpen && customerId && view === 'loans' && loans.length === 0) {
+            fetchLoans();
+        }
+    }, [view, isOpen, customerId]);
 
     const fetchAnalysis = async () => {
         setLoading(true);
@@ -47,6 +60,20 @@ const CustomerAnalysisModal: React.FC<CustomerAnalysisModalProps> = ({
             setData(response.data);
         } catch (error) {
             console.error("Error fetching analysis:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchLoans = async () => {
+        setLoading(true);
+        try {
+            const response = await api.get(`/pledges`, {
+                params: { customer_id: customerId, per_page: 100 }
+            });
+            setLoans(response.data.data);
+        } catch (error) {
+            console.error("Error fetching loans:", error);
         } finally {
             setLoading(false);
         }
@@ -62,9 +89,9 @@ const CustomerAnalysisModal: React.FC<CustomerAnalysisModalProps> = ({
                     <div>
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                             <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl shadow-lg shadow-indigo-500/20 text-white">
-                                <TrendingUp className="w-5 h-5" />
+                                {view === 'analysis' ? <TrendingUp className="w-5 h-5" /> : <Briefcase className="w-5 h-5" />}
                             </div>
-                            Customer Intelligence
+                            {view === 'analysis' ? 'Customer Intelligence' : 'Loan History'}
                         </h2>
                         <div className="flex items-center gap-2 mt-2">
                             <span className="text-sm font-medium text-gray-400">Analysis for</span>
@@ -73,12 +100,31 @@ const CustomerAnalysisModal: React.FC<CustomerAnalysisModalProps> = ({
                             </span>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/5 transition-all text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {view === 'analysis' ? (
+                            <button
+                                onClick={() => setView('loans')}
+                                className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl text-sm font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+                            >
+                                <ExternalLink className="w-4 h-4" />
+                                <span>View All Loans</span>
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => setView('analysis')}
+                                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 rounded-xl text-sm font-semibold hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                <span>Back to Analysis</span>
+                            </button>
+                        )}
+                        <button
+                            onClick={onClose}
+                            className="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/5 transition-all text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Content */}
@@ -87,7 +133,7 @@ const CustomerAnalysisModal: React.FC<CustomerAnalysisModalProps> = ({
                         <div className="flex h-full items-center justify-center min-h-[400px]">
                             <GoldCoinSpinner />
                         </div>
-                    ) : data ? (
+                    ) : view === 'analysis' && data ? (
                         <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
 
                             {/* Current Portfolio Section */}
@@ -211,10 +257,51 @@ const CustomerAnalysisModal: React.FC<CustomerAnalysisModalProps> = ({
                             </section>
 
                         </div>
+                    ) : view === 'loans' && loans.length > 0 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in slide-in-from-right-4 duration-300">
+                            {loans.map((loan) => (
+                                <div
+                                    key={loan.id}
+                                    onClick={() => navigate(`/admin/pledges/${loan.id}`)}
+                                    className={`flex flex-col items-center justify-center p-6 rounded-2xl border transition-all cursor-pointer group relative overflow-hidden
+                                    ${loan.status === 'closed'
+                                            ? 'bg-gray-50 border-gray-100 text-gray-500 hover:bg-white hover:shadow-md dark:bg-white/5 dark:border-white/5 dark:text-gray-400'
+                                            : loan.status === 'overdue'
+                                                ? 'bg-red-50/50 border-red-100 text-red-700 hover:bg-red-50 hover:shadow-md hover:shadow-red-500/10 dark:bg-red-900/10 dark:border-red-900/30'
+                                                : 'bg-white border-gray-100 text-gray-900 hover:shadow-md hover:border-indigo-100 dark:bg-dark-surface dark:border-white/5 dark:text-white'
+                                        }`}
+                                >
+                                    <div className={`p-4 rounded-full mb-3 transform group-hover:scale-110 transition-transform duration-300
+                                    ${loan.status === 'closed'
+                                            ? 'bg-gray-100 text-gray-400 dark:bg-white/10 dark:text-gray-500'
+                                            : loan.status === 'overdue'
+                                                ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                                                : 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400'
+                                        }`}>
+                                        <Briefcase className="w-6 h-6" strokeWidth={2.5} />
+                                    </div>
+                                    <span className="font-bold text-lg tracking-tight mb-1 text-center">{loan.loan?.loan_no || loan.loan_no || 'N/A'}</span>
+                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${loan.status === 'closed' ? 'bg-gray-200 text-gray-600 dark:bg-white/10 dark:text-gray-400' :
+                                        loan.status === 'overdue' ? 'bg-red-200/50 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
+                                            'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
+                                        }`}>
+                                        ₹{Number(loan.loan?.amount || loan.amount || 0).toLocaleString()}
+                                    </span>
+
+                                    {/* Status Indicator */}
+                                    {loan.status === 'overdue' && (
+                                        <div className="absolute top-3 right-3">
+                                            <AlertTriangle className="w-4 h-4 text-red-500" />
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+
+                        </div>
                     ) : (
                         <div className="flex items-center justify-center h-64 text-gray-500">
                             <div className="text-center">
-                                <p className="text-lg">No data available</p>
+                                <p className="text-lg">No data available for this view</p>
                             </div>
                         </div>
                     )}

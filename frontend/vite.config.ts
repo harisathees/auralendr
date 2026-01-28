@@ -8,14 +8,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      strategies: 'injectManifest',
-      srcDir: 'src',
-      injectManifest: {
-        swSrc: 'src/service-worker.ts',
-      },
+      strategies: 'generateSW', // ✅ change here
       registerType: 'autoUpdate',
 
-      // ✅ disable in dev unless testing PWA
       devOptions: {
         enabled: false,
       },
@@ -31,21 +26,17 @@ export default defineConfig({
           {
             src: '/assets/auralendr/auralendr.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
           },
           {
             src: '/assets/auralendr/auralendr.png',
             sizes: '512x512',
-            type: 'image/png'
-          }
-        ]
-      }
-    })
+            type: 'image/png',
+          },
+        ],
+      },
+    }),
   ],
-
-  build: {
-    // Vite automatically uses index.html from project root
-  },
 
   resolve: {
     dedupe: ['react', 'react-dom'],
@@ -60,7 +51,7 @@ export default defineConfig({
       '/sanctum': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-      }
-    }
-  }
+      },
+    },
+  },
 })

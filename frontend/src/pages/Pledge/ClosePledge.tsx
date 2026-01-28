@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useLoanCalculation } from "../../hooks/useLoanCalculation";
 import GoldCoinSpinner from '../../components/GoldCoinSpinner';
+import CommunicationButtons from '../../components/Shared/WhatsappAndSms/CommunicationButtons';
 
 // --- Text/Label Component ---
 const InfoRow = ({ label, value, valueClass = 'text-primary-text dark:text-gray-200' }: { label: string, value: React.ReactNode, valueClass?: string }) => (
@@ -29,14 +30,33 @@ const LoadingState: React.FC<{ text?: string }> = ({ text = 'Loading...' }) => (
     </div>
 );
 
-const SuccessState: React.FC = () => (
+const SuccessState: React.FC<{ pledge?: any; closureData?: any; onContinue?: () => void }> = ({ pledge, closureData, onContinue }) => (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm p-6 animate-in fade-in duration-300">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center transform scale-100 transition-all">
             <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="material-symbols-outlined text-5xl text-green-600 dark:text-green-400">check_circle</span>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Pledge Closed!</h2>
-            <p className="text-gray-500 dark:text-gray-400">Successfully closed the loan. Redirecting...</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">Successfully closed the loan.</p>
+
+            {pledge && (
+                <div className="mb-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Send confirmation to customer:</p>
+                    <CommunicationButtons
+                        pledge={pledge}
+                        templateType="close"
+                        closureData={closureData}
+                    />
+                </div>
+            )}
+
+            <button
+                onClick={onContinue}
+                className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-xl font-medium transition-colors"
+            >
+                <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                Continue
+            </button>
         </div>
     </div>
 );
@@ -188,7 +208,16 @@ const ClosePledge: React.FC = () => {
 
     // EARLY RETURN CHECKS (Must be AFTER all Hooks)
     if (loading) return <LoadingState text="Fetching Loan Details..." />;
-    if (showSuccessMessage) return <SuccessState />;
+    if (showSuccessMessage) return (
+        <SuccessState
+            pledge={loanData ? { customer: loanData.customer, loan: loanData, jewels: loanData.jewels } : undefined}
+            closureData={{
+                settledAmount: calculationResult?.totalAmount || 0,
+                closedDate: toDate
+            }}
+            onContinue={() => navigate('/pledges')}
+        />
+    );
     if (error || !loanData) return <ErrorState error={error || 'Loan data not found.'} onBack={() => navigate('/pledges')} />;
 
     // Use calculationResult for display

@@ -81,7 +81,7 @@ export default function TrackLoanPagePassword() {
             const data = res.data.data;
             toast.success("Identity Verified");
             // Navigate to view page with data
-            navigate('/view', { state: { data } });
+            navigate('/view', { state: { data, last_4_digits: last4Digits } });
         } catch (err: any) {
             console.error(err);
             setError("We could not find a loan record matching these details.");
@@ -93,7 +93,7 @@ export default function TrackLoanPagePassword() {
 
     return (
         <div className="min-h-screen w-full bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
-            <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden p-8">
+            <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden p-6 md:p-8">
                 <div className="text-center mb-8">
                     <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 dark:text-blue-300">
                         <ShieldCheck className="w-8 h-8" />
@@ -109,13 +109,13 @@ export default function TrackLoanPagePassword() {
                             maxLength={4}
                             value={last4Digits}
                             onChange={(e) => setLast4Digits(e.target.value.replace(/\D/g, ''))}
-                            placeholder="e.g. 4589"
-                            className="w-full text-center text-3xl tracking-[1em] font-mono py-3 border-b-2 border-gray-300 focus:border-blue-500 bg-transparent outline-none transition-colors dark:text-white dark:border-gray-600"
+                            placeholder="••••"
+                            className="w-full text-center text-4xl tracking-[0.5em] font-mono py-4 border-b-2 border-gray-300 focus:border-blue-500 bg-transparent outline-none transition-colors dark:text-white dark:border-gray-600 placeholder-gray-300 dark:placeholder-gray-700"
                         />
                     </div>
 
                     {error && (
-                        <div className="p-3 bg-red-50 text-red-600 text-xs rounded-lg text-center">
+                        <div className="p-3 bg-red-50 text-red-600 text-xs rounded-lg text-center animate-pulse">
                             {error}
                         </div>
                     )}
@@ -123,7 +123,7 @@ export default function TrackLoanPagePassword() {
                     <button
                         type="submit"
                         disabled={loading || last4Digits.length !== 4}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-blue-500/30"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-blue-500/30 active:scale-95 text-lg"
                     >
                         {loading ? 'Verifying...' : 'View Status'}
                     </button>

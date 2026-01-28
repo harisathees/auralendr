@@ -570,9 +570,17 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
     const fd = new FormData();
 
     // Customer
-    // Customer
     if (customerId) fd.append("customer_id", customerId);
-    Object.entries(customer).forEach(([k, v]) => fd.append(`customer[${k}]`, String(v ?? "")));
+    Object.entries(customer).forEach(([k, v]) => {
+      let value = String(v ?? "");
+
+      // Auto-append +91 for mobile and whatsapp numbers
+      if ((k === 'mobile_no' || k === 'whatsapp_no') && value.length === 10 && /^\d{10}$/.test(value)) {
+        value = `+91${value}`;
+      }
+
+      fd.append(`customer[${k}]`, value);
+    });
 
     // Loan
     Object.entries(loan).forEach(([k, v]) => {

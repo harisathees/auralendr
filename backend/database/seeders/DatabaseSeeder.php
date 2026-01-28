@@ -9,14 +9,14 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RolePermissionSeeder::class,
-            AdminSeeder::class,
-            JewelNameSeeder::class,
-            JewelQualitySeeder::class,
-            JewelTypeSeeder::class,
-            MoneySourceTypeSeeder::class,
-            LoanSchemeSeeder::class,
-            
+            // RolePermissionSeeder::class,
+            // AdminSeeder::class,
+            // JewelNameSeeder::class,
+            // JewelQualitySeeder::class,
+            // JewelTypeSeeder::class,
+            // MoneySourceTypeSeeder::class,
+            // LoanSchemeSeeder::class,
+            SnapshotSeeder::class,
         ]); 
     }
 }

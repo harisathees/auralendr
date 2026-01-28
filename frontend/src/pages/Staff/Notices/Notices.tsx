@@ -10,6 +10,7 @@ import { FaArrowLeft } from 'react-icons/fa';
 // Import Notice Components
 import OverdueNotice from '../../../components/Notice/OverdueNotice/OverdueNotice';
 import AnnualNotice from '../../../components/Notice/AnnualNotice/AnnualNotice';
+import CommunicationButtons from '../../../components/Shared/WhatsappAndSms/CommunicationButtons';
 
 import type { Pledge, Jewel } from '../../../types/models';
 
@@ -315,6 +316,13 @@ export default function Notices() {
                                                     Print Notice
                                                 </button>
                                             </div>
+                                        </div>
+                                        {/* Send Reminder Buttons */}
+                                        <div className="mt-3 pt-3 border-t border-slate-100">
+                                            <CommunicationButtons
+                                                pledge={pledge}
+                                                templateType="overdue"
+                                            />
                                         </div>
                                     </div>
                                 ))}

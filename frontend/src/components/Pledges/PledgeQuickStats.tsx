@@ -1,13 +1,4 @@
 import React, { useMemo } from 'react';
-import {
-    Hourglass,
-    TrendingUp,
-    Wallet,
-    Scale,
-    AlertCircle,
-    ArrowUpRight,
-    CalendarClock
-} from 'lucide-react';
 import { differenceInDays, parseISO, addMonths, isAfter } from 'date-fns';
 
 interface Props {
