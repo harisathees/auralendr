@@ -161,11 +161,11 @@ const StaffDashboard: React.FC = () => {
         {/* 2. Quick Actions (Single Row of Icons) */}
         <div className="flex items-center gap-4 py-2 overflow-x-auto no-scrollbar">
           {[
-            { icon: Calculator, label: "Calculator", color: "purple", action: () => setShowCalculator(true) },
-            { icon: Scale, label: "Estimate", color: "orange", action: () => setShowEstimate(true) },
-            // { icon: Wallet, label: "Payments", color: "blue", action: () => { } }, // Placeholder
-            // { icon: Megaphone, label: "Notices", color: "pink", action: () => { } }, // Placeholder
-            // { icon: History, label: "Activity", color: "slate", action: () => { } }, // Placeholder
+            { icon: Calculator, label: "Calculator", iconColor: "text-green-600 dark:text-green-400", action: () => setShowCalculator(true) },
+            { icon: Scale, label: "Estimate", iconColor: "text-orange-500 dark:text-orange-400", action: () => setShowEstimate(true) },
+            // { icon: Wallet, label: "Payments", iconColor: "text-blue-500 dark:text-blue-400", action: () => { } }, // Placeholder
+            // { icon: Megaphone, label: "Notices", iconColor: "text-pink-500 dark:text-pink-400", action: () => { } }, // Placeholder
+            // { icon: History, label: "Activity", iconColor: "text-slate-500 dark:text-slate-400", action: () => { } }, // Placeholder
           ].map((action, i) => (
             <button
               key={i}
@@ -173,7 +173,7 @@ const StaffDashboard: React.FC = () => {
               className="flex flex-col items-center gap-2 group min-w-[70px]"
             >
               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 dark:border-gray-700 transition-all group-hover:scale-110 group-active:scale-95 bg-white dark:bg-gray-800`}>
-                <action.icon className={`w-6 h-6 text-${action.color}-500`} />
+                <action.icon className={`w-6 h-6 ${action.iconColor}`} />
               </div>
               <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">
                 {action.label}

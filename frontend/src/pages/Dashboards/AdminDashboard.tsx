@@ -22,6 +22,14 @@ const AdminDashboard: React.FC = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [filters, setFilters] = useState<{ branch_id?: number; start_date?: string; end_date?: string }>({});
 
+  const getStorageUrl = (url: string | null) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    // Assuming VITE_API_BASE_URL includes '/api', we strip it to get root
+    const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/?$/, '') || '';
+    return `${baseUrl}${url}`;
+  };
+
   const handleLogoutClick = () => {
     setShowMenu(false);
     setShowConfirm(true);
@@ -77,7 +85,7 @@ const AdminDashboard: React.FC = () => {
               {isUploading ? (
                 <Loader2 className="w-5 h-5 text-black animate-spin" />
               ) : user?.photo_url ? (
-                <img src={user.photo_url} alt="Admin" className="w-full h-full object-cover" />
+                <img src={getStorageUrl(user.photo_url)} alt="Admin" className="w-full h-full object-cover" />
               ) : (
                 <img src={`https://ui-avatars.com/api/?name=${user?.name || 'Admin'}&background=FDB931&color=000`} alt="Admin" />
               )}
@@ -92,7 +100,7 @@ const AdminDashboard: React.FC = () => {
                       {isUploading ? (
                         <Loader2 className="w-4 h-4 text-black animate-spin" />
                       ) : user?.photo_url ? (
-                        <img src={user.photo_url} alt="Admin" className="w-full h-full object-cover" />
+                        <img src={getStorageUrl(user.photo_url)} alt="Admin" className="w-full h-full object-cover" />
                       ) : (
                         <img src={`https://ui-avatars.com/api/?name=${user?.name || 'Admin'}&background=FDB931&color=000`} alt="Admin" />
                       )}

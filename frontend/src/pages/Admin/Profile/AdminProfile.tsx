@@ -71,6 +71,13 @@ const AdminProfile = () => {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
+    const getStorageUrl = (url: string | null) => {
+        if (!url) return '';
+        if (url.startsWith('http') || url.startsWith('blob:')) return url;
+        const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/?$/, '') || '';
+        return `${baseUrl}${url}`;
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
@@ -80,6 +87,7 @@ const AdminProfile = () => {
     };
 
     const handleProfileUpdate = async (e: React.FormEvent) => {
+        // ... existing code ...
         e.preventDefault();
         setLoadingProfile(true);
         setMessage(null);
@@ -203,7 +211,7 @@ const AdminProfile = () => {
                             <div className="relative group">
                                 <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 flex items-center justify-center">
                                     {photoPreview ? (
-                                        <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
+                                        <img src={getStorageUrl(photoPreview)} alt="Profile" className="w-full h-full object-cover" />
                                     ) : (
                                         <User className="w-10 h-10 text-gray-400" />
                                     )}

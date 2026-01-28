@@ -269,12 +269,12 @@ class DashboardController extends Controller
 
             $totalRepCount = (clone $repledgeQuery)->count();
             $totalRepAmount = (clone $repledgeQuery)->sum('amount');
-            $activeRepCount = (clone $repledgeQuery)->where('status', 'open')->count();
-            $activeRepAmount = (clone $repledgeQuery)->where('status', 'open')->sum('amount');
+            $activeRepCount = (clone $repledgeQuery)->where('status', 'active')->count();
+            $activeRepAmount = (clone $repledgeQuery)->where('status', 'active')->sum('amount');
             $releasedRepCount = (clone $repledgeQuery)->where('status', 'closed')->count();
             $releasedRepAmount = (clone $repledgeQuery)->where('status', 'closed')->sum('amount');
-            $overdueRepCount = (clone $repledgeQuery)->where('status', 'open')->where('due_date', '<', Carbon::now())->count();
-            $overdueRepAmount = (clone $repledgeQuery)->where('status', 'open')->where('due_date', '<', Carbon::now())->sum('amount');
+            $overdueRepCount = (clone $repledgeQuery)->where('status', 'active')->where('due_date', '<', Carbon::now())->count();
+            $overdueRepAmount = (clone $repledgeQuery)->where('status', 'active')->where('due_date', '<', Carbon::now())->sum('amount');
 
 
             return response()->json([
@@ -300,11 +300,18 @@ class DashboardController extends Controller
                         'interest' => round($overdueAccruedInterest)
                     ]
                 ],
-                'repledge_stats' => [ // Preserved
+                'repledge_stats' => [ // Preserved & Fixed
                     'total' => ['count' => $totalRepCount, 'amount' => $totalRepAmount],
                     'active' => ['count' => $activeRepCount, 'amount' => $activeRepAmount],
                     'released' => ['count' => $releasedRepCount, 'amount' => $releasedRepAmount],
                     'overdue' => ['count' => $overdueRepCount, 'amount' => $overdueRepAmount],
+                ],
+                // NEW: Business Business Overview Stats
+                'business_stats' => [
+                    'turnover' => $totalDisbursed, // Total Principal Disbursed
+                    'net_profit' => round($totalInterest), // Realized + Accrued
+                    'customers' => \App\Models\Pledge\Pledge::distinct('customer_id')->count('customer_id'),
+                    'assets_value' => $this->calculateAssetValue()
                 ],
                 'trends' => $trends,
                 'branch_distribution' => $branchDistribution,
@@ -318,6 +325,58 @@ class DashboardController extends Controller
                 'error' => 'Failed to fetch settings',
                 'message' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Calculate Total Asset Value based on Current Metal Rates
+     * Returns: ['total_value' => X, 'gold' => ['weight' => Y, 'value' => Z], 'silver' => ...]
+     */
+    private function calculateAssetValue()
+    {
+        try {
+            $rates = \App\Models\Admin\Finance\MetalRate::with('jewelType')->get();
+
+            $stats = [
+                'total_value' => 0,
+                'gold' => ['weight' => 0, 'value' => 0],
+                'silver' => ['weight' => 0, 'value' => 0]
+            ];
+
+            foreach ($rates as $rateObj) {
+                if (!$rateObj->jewelType || !$rateObj->rate)
+                    continue;
+
+                $typeName = strtolower($rateObj->jewelType->name);
+                $ratePerGram = $rateObj->rate;
+
+                $metalKey = null;
+                if (str_contains($typeName, 'gold'))
+                    $metalKey = 'gold';
+                elseif (str_contains($typeName, 'silver'))
+                    $metalKey = 'silver';
+
+                $weight = \App\Models\Pledge\Jewel::where('jewel_type', 'LIKE', "%{$typeName}%")
+                    ->sum('net_weight');
+
+                $value = $weight * $ratePerGram;
+
+                if ($metalKey) {
+                    $stats[$metalKey]['weight'] += $weight;
+                    $stats[$metalKey]['value'] += $value;
+                }
+
+                $stats['total_value'] += $value;
+            }
+
+            return $stats;
+        } catch (\Exception $e) {
+            \Log::error("Asset Value Calc Error: " . $e->getMessage());
+            return [
+                'total_value' => 0,
+                'gold' => ['weight' => 0, 'value' => 0],
+                'silver' => ['weight' => 0, 'value' => 0]
+            ];
         }
     }
 }
