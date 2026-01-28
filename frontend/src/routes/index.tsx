@@ -31,6 +31,7 @@ const InterestSettings = lazy(() => import("../pages/Admin/LoanConfiguration/Int
 const ValidityPeriods = lazy(() => import("../pages/Admin/LoanConfiguration/LoanValidities"));
 const ProcessingFees = lazy(() => import("../pages/Admin/LoanConfiguration/ProcessingFees"));
 const BrandKit = lazy(() => import("../pages/Admin/Configs/BrandKit"));
+const StoragePage = lazy(() => import("../pages/Admin/Configs/Storage"));
 const RepledgeSources = lazy(() => import("../pages/Admin/Finance/RepledgeSources"));
 
 // Repledge Pages
@@ -257,6 +258,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/configs/roles" element={<RolesIndex />} />
         <Route path="/admin/developer/customer-app" element={<CustomerAppControl />} />
         <Route path="/admin/activities" element={<ActivityLog />} />
+        <Route path="/admin/configs/storage" element={<StoragePage />} />
 
 
         {/* Organization - Calculations */}

@@ -203,6 +203,14 @@ const AdminConfigs: React.FC = () => {
                         link: "/admin/activities",
                         permission: ''
                     },
+                    {
+                        title: "Storage",
+                        description: "View loan storage per branch",
+                        icon: "hard_drive",
+                        color: "text-cyan-600",
+                        bg: "bg-cyan-100",
+                        link: "/admin/configs/storage"
+                    },
                 ]
             },
             {
