@@ -44,6 +44,10 @@ class StaffController extends Controller
             $query->where('branch_id', $request->branch_id);
         }
 
+        if ($request->has('all')) {
+            return response()->json($query->orderByDesc('created_at')->get());
+        }
+
         return response()->json($query->orderByDesc('created_at')->paginate(10));
     }
 

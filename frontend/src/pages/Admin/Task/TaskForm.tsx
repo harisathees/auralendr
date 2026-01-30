@@ -22,7 +22,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ task, onSuccess, onCancel }) => {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await api.get('/staff');
+                const response = await api.get('/staff?all=true');
                 setUsers(response.data);
             } catch (error) {
                 console.error("Error fetching users:", error);

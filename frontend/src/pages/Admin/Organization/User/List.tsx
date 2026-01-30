@@ -19,7 +19,7 @@ const UserList: React.FC = () => {
             return;
         }
         try {
-            const res = await api.get("/staff");
+            const res = await api.get("/staff?all=true");
             // Handle both array response and object with data property
             const userData = Array.isArray(res.data) ? res.data : (res.data?.data || []);
             setUsers(userData);
