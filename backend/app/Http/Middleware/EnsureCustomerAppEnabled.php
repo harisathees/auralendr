@@ -24,23 +24,14 @@ class EnsureCustomerAppEnabled
             abort(404);
         }
 
-        $track = \App\Models\CustomerApp\CustomerLoanTrack::where('tracking_code', $trackingCode)->first();
+        $track = \App\Models\CustomerApp\CustomerLoanTrack::with('branch')->where('tracking_code', $trackingCode)->first();
 
         if (!$track) {
             abort(404);
         }
 
-        // Check Branch Settings
-        $isEnabled = \App\Models\Settings::where('branch_id', $track->branch_id)
-            ->where('key', 'enable_customer_app')
-            ->value('value');
-            
-        // Fallback to global if not found
-        if ($isEnabled === null) {
-            $isEnabled = \App\Models\Settings::whereNull('branch_id')
-                ->where('key', 'enable_customer_app')
-                ->value('value');
-        }
+        // Check Branch Settings directly from the branch relationship
+        $isEnabled = $track->branch ? $track->branch->enable_customer_app : false;
 
         // Check if value is truthy (1, "1", true, "true")
         if (!filter_var($isEnabled, FILTER_VALIDATE_BOOLEAN)) {
