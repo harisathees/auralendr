@@ -12,8 +12,10 @@ import {
 
 
 
+import { useAuth } from "../../../../context/Auth/AuthContext";
+
 const BottomNavigation: React.FC = () => {
-    // const { logout } = useAuth();
+    const { enableTransactions, enableBankPledge } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [fabOpen, setFabOpen] = useState(false);
@@ -117,25 +119,33 @@ const BottomNavigation: React.FC = () => {
                                     </span>
                                 </button>
 
-                                {/* Create Repledge */}
-                                <button
-                                    onClick={() => {
-                                        navigate("/re-pledge/create");
-                                        closeFab();
-                                    }}
-                                    className="flex flex-col items-center gap-2 group/btn">
-                                    <div className="h-14 w-14 rounded-full bg-white dark:bg-gray-800 text-purple-600 border border-gray-100 dark:border-gray-700 flex items-center justify-center shadow-lg group-hover/btn:bg-purple-600 group-hover/btn:text-white transition-colors">
-                                        <RotateCw className="w-6 h-6" />
-                                    </div>
-                                    <span className="text-xs font-bold text-primary-text dark:text-white bg-card-light dark:bg-gray-800 px-2 py-1 rounded-md shadow-sm whitespace-nowrap">
-                                        Create Repledge
-                                    </span>
-                                </button>
+                                {/* Create Bank Pledge */}
+                                {enableBankPledge && (
+                                    <button
+                                        onClick={() => {
+                                            navigate("/re-pledge/create");
+                                            closeFab();
+                                        }}
+                                        className="flex flex-col items-center gap-2 group/btn">
+                                        <div className="h-14 w-14 rounded-full bg-white dark:bg-gray-800 text-purple-600 border border-gray-100 dark:border-gray-700 flex items-center justify-center shadow-lg group-hover/btn:bg-purple-600 group-hover/btn:text-white transition-colors">
+                                            <RotateCw className="w-6 h-6" />
+                                        </div>
+                                        <span className="text-xs font-bold text-primary-text dark:text-white bg-card-light dark:bg-gray-800 px-2 py-1 rounded-md shadow-sm whitespace-nowrap">
+                                            Create Bank Pledge
+                                        </span>
+                                    </button>
+                                )}
                             </div>
 
                             {/* FAB Button */}
                             <button
-                                onClick={toggleFab}
+                                onClick={() => {
+                                    if (!enableBankPledge) {
+                                        navigate("/pledges/create");
+                                    } else {
+                                        toggleFab();
+                                    }
+                                }}
                                 className="h-14 w-14 rounded-full bg-primary text-white flex items-center justify-center transition-transform hover:scale-105 active:scale-95 shadow-[0_8px_20px_rgba(0,200,83,0.4)]"
                             >
                                 <Plus
@@ -146,17 +156,19 @@ const BottomNavigation: React.FC = () => {
                         </div>
 
                         {/* Transactions */}
-                        <Link
-                            className={`flex flex-col items-center gap-1 transition-colors ${isActive("/transactions") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
-                                }`}
-                            to="/transactions"
-                        >
-                            <Receipt
-                                className="w-6 h-6"
-                            // fill={isActive("/transactions") ? "currentColor" : "none"}
-                            />
-                            <span className="text-xs font-bold">Transactions</span>
-                        </Link>
+                        {enableTransactions && (
+                            <Link
+                                className={`flex flex-col items-center gap-1 transition-colors ${isActive("/transactions") ? "text-primary" : "text-secondary-text dark:text-gray-400 hover:text-primary"
+                                    }`}
+                                to="/transactions"
+                            >
+                                <Receipt
+                                    className="w-6 h-6"
+                                // fill={isActive("/transactions") ? "currentColor" : "none"}
+                                />
+                                <span className="text-xs font-bold">Transactions</span>
+                            </Link>
+                        )}
 
                         {/* Privileges (Includes Notice printing link) */}
                         <Link

@@ -58,7 +58,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::get('/roles', [RolePermissionController::class, 'index']);
     Route::get('/permissions', [RolePermissionController::class, 'getPermissions']);
     Route::put('/roles/{role}', [RolePermissionController::class, 'update']);
-    
+
     // Web Push Notification
     Route::get('/push/vapid-public-key', [\App\Http\Controllers\Api\V1\PushSubscriptionController::class, 'publicKey']);
     Route::post('/push/subscribe', [\App\Http\Controllers\Api\V1\PushSubscriptionController::class, 'subscribe']);
@@ -73,6 +73,7 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
 
 
     // Developer Routes - For Controll CustomerApp
+    Route::get('/developer/settings/resolve', [DeveloperSettingsController::class, 'resolve']);
     Route::get('/developer/settings', [DeveloperSettingsController::class, 'index']);
     Route::post('/developer/settings', [DeveloperSettingsController::class, 'update']);
 

@@ -3,6 +3,7 @@ import api from "../../../api/apiClient";
 import { useNavigate } from "react-router-dom";
 import { Search, X, SlidersHorizontal, Store, User as UserIcon } from "lucide-react";
 import { useRepledge } from "../../../hooks/useRepledge";
+import { useAuth } from "../../../context/Auth/AuthContext";
 
 interface Loan {
     id: number;
@@ -141,6 +142,7 @@ const LoansList: React.FC = () => {
 
     // Repledge State (from hook)
     const { repledgeEntries, fetchRepledgeEntries, loading: repledgeLoading } = useRepledge();
+    const { enableBankPledge } = useAuth();
 
     // 1. Fetch Data when tab, page, statusFilter, or searchTerm changes
     useEffect(() => {
@@ -205,7 +207,7 @@ const LoansList: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex flex-col">
                         <h1 className="text-xl font-black text-gray-900 dark:text-white leading-tight uppercase tracking-tight">
-                            {activeTab === 'loans' ? 'All Loans' : 'Repledges'}
+                            {activeTab === 'loans' ? 'All Loans' : 'Bank Pledges'}
                         </h1>
                         <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                             {activeTab === 'loans' ? loans.length : repledgeEntries.length} Visible
@@ -224,15 +226,17 @@ const LoansList: React.FC = () => {
                     >
                         Loans
                     </button>
-                    <button
-                        onClick={() => setActiveTab('repledges')}
-                        className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${activeTab === 'repledges'
-                            ? 'bg-white dark:bg-gray-800 text-purple-600 shadow-sm ring-1 ring-black/5'
-                            : 'text-gray-400 dark:text-gray-500 hover:text-gray-600'
-                            }`}
-                    >
-                        Repledges
-                    </button>
+                    {enableBankPledge && (
+                        <button
+                            onClick={() => setActiveTab('repledges')}
+                            className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${activeTab === 'repledges'
+                                ? 'bg-white dark:bg-gray-800 text-purple-600 shadow-sm ring-1 ring-black/5'
+                                : 'text-gray-400 dark:text-gray-500 hover:text-gray-600'
+                                }`}
+                        >
+                            Bank Pledges
+                        </button>
+                    )}
                 </div>
 
                 {/* Search & Filter */}
@@ -241,7 +245,7 @@ const LoansList: React.FC = () => {
                         <Search className="absolute left-4 text-gray-400 group-focus-within:text-primary transition-colors w-5 h-5" />
                         <input
                             type="text"
-                            placeholder={activeTab === 'loans' ? "Search loans, customers..." : "Search re-no, sources..."}
+                            placeholder={activeTab === 'loans' ? "Search loans, customers..." : "Search bank pledges, sources..."}
                             className="w-full h-12 pl-12 pr-12 text-sm bg-gray-50 dark:bg-[#1A1D1F] border border-gray-100 dark:border-gray-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-gray-900 dark:text-white placeholder-gray-400 font-bold"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -334,12 +338,12 @@ const LoansList: React.FC = () => {
                         {repledgeLoading ? (
                             <div className="flex flex-col items-center justify-center py-20 gap-3 opacity-60">
                                 <span className="material-symbols-outlined animate-spin text-3xl text-purple-600">progress_activity</span>
-                                <p className="text-sm font-medium text-gray-500">Loading repledges...</p>
+                                <p className="text-sm font-medium text-gray-500">Loading bank pledges...</p>
                             </div>
                         ) : repledgeEntries.length === 0 ? (
                             <div className="text-center text-gray-500 py-16">
                                 <span className="material-symbols-outlined text-6xl opacity-10 mb-2">autorenew</span>
-                                <p className="font-bold">No repledges recorded</p>
+                                <p className="font-bold">No bank pledges recorded</p>
                             </div>
                         ) : (
                             repledgeEntries.map((item, index) => {

@@ -32,7 +32,7 @@ const DetailedRepledgeCard = ({ title, data, icon, color }: { title: string, dat
                 </div>
                 <div>
                     <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">{title}</p>
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{data?.count || 0} <span className="text-sm font-normal text-gray-500">Repledges</span></h3>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{data?.count || 0} <span className="text-sm font-normal text-gray-500">Bank Pledges</span></h3>
                 </div>
             </div>
 
@@ -71,7 +71,7 @@ const RepledgeDashboard: React.FC<Props> = ({ filters = {} }) => {
             {/* Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <DetailedRepledgeCard
-                    title="Total Repledged"
+                    title="Total Bank Pledged"
                     data={stats?.repledge_stats?.total}
                     icon={<Wallet className="w-6 h-6 text-purple-600" />}
                     color="bg-purple-50 dark:bg-purple-900/20"

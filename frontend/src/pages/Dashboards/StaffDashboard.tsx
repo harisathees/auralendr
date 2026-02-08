@@ -24,7 +24,7 @@ import type { Activity } from '../../types/Activity';
 import StaffTopNavigation from '../../components/Shared/Navigation/StaffNavigation/StaffTopNavigation';
 
 const StaffDashboard: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, enableTasks } = useAuth();
   // const [showMenu, setShowMenu] = useState(false); // Moved to StaffTopNavigation
   const [showConfirm, setShowConfirm] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -61,11 +61,13 @@ const StaffDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchTasks();
+    if (enableTasks) {
+      fetchTasks();
+    }
     if (user?.id) {
       fetchActivities();
     }
-  }, [user?.id]);
+  }, [user?.id, enableTasks]);
 
   const handleLogoutClick = () => {
     setShowConfirm(true);
@@ -122,41 +124,43 @@ const StaffDashboard: React.FC = () => {
       <main className="flex-1 px-4 pb-4 space-y-6">
 
         {/* 1. Progress Card (with Cash Balance) */}
-        <div className="flex flex-col gap-3 rounded-xl bg-gradient-to-br from-[#E8F5E9] to-[#F1F8E9] dark:from-gray-800 dark:to-gray-900 p-5 relative overflow-hidden">
+        {enableTasks && (
+          <div className="flex flex-col gap-3 rounded-xl bg-gradient-to-br from-[#E8F5E9] to-[#F1F8E9] dark:from-gray-800 dark:to-gray-900 p-5 relative overflow-hidden">
 
 
-          <div className="flex items-center justify-between relative z-10">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-[#166534] dark:text-primary" />
-                <p className="text-[#166534] dark:text-gray-200 text-base font-bold leading-normal">Daily Progress</p>
-              </div>
-              {user?.branch && (
-                <div className="flex items-center gap-1.5 ml-0.5">
-                  <Store className="w-4 h-4 text-[#166534]/70 dark:text-gray-400" />
-                  <p className="text-[#166534]/80 dark:text-gray-400 text-sm font-medium">
-                    {user.branch.branch_name}
-                  </p>
-                  {/* Cash Balance Display inside Progress Card */}
-                  {/* <div className="ml-2 pl-3 border-l border-[#166534]/20 dark:border-gray-600 flex items-center gap-1.5">
+            <div className="flex items-center justify-between relative z-10">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-[#166534] dark:text-primary" />
+                  <p className="text-[#166534] dark:text-gray-200 text-base font-bold leading-normal">Daily Progress</p>
+                </div>
+                {user?.branch && (
+                  <div className="flex items-center gap-1.5 ml-0.5">
+                    <Store className="w-4 h-4 text-[#166534]/70 dark:text-gray-400" />
+                    <p className="text-[#166534]/80 dark:text-gray-400 text-sm font-medium">
+                      {user.branch.branch_name}
+                    </p>
+                    {/* Cash Balance Display inside Progress Card */}
+                    {/* <div className="ml-2 pl-3 border-l border-[#166534]/20 dark:border-gray-600 flex items-center gap-1.5">
                     <Wallet className="w-3.5 h-3.5 text-[#166534]/80 dark:text-gray-400" />
                     <span className="text-[#166534] dark:text-white font-bold text-sm">₹ 2,45,000</span>
                   </div> */}
+                  </div>
+                )}
+              </div>
+              <div className="relative flex items-center justify-center size-20">
+                <svg className="size-full -rotate-90" viewBox="0 0 36 36">
+                  <path className="text-green-200 dark:text-gray-700" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3" />
+                  <path className="text-primary transition-all duration-1000 ease-out" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${progressPercentage}, 100`} strokeLinecap="round" strokeWidth="3" />
+                </svg>
+                <div className="absolute flex flex-col items-center justify-center">
+                  <span className="text-primary text-xl font-bold">{completedTasks}/{totalTasks}</span>
+                  <span className="text-secondary-text dark:text-gray-400 text-xs">Done</span>
                 </div>
-              )}
-            </div>
-            <div className="relative flex items-center justify-center size-20">
-              <svg className="size-full -rotate-90" viewBox="0 0 36 36">
-                <path className="text-green-200 dark:text-gray-700" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3" />
-                <path className="text-primary transition-all duration-1000 ease-out" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${progressPercentage}, 100`} strokeLinecap="round" strokeWidth="3" />
-              </svg>
-              <div className="absolute flex flex-col items-center justify-center">
-                <span className="text-primary text-xl font-bold">{completedTasks}/{totalTasks}</span>
-                <span className="text-secondary-text dark:text-gray-400 text-xs">Done</span>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* 2. Quick Actions (Single Row of Icons) */}
         <div className="flex items-center gap-4 py-2 overflow-x-auto no-scrollbar">
@@ -183,51 +187,53 @@ const StaffDashboard: React.FC = () => {
         </div>
 
         {/* 3. Task List */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-primary-text dark:text-white">
-              {selectedDate ? `Tasks for ${new Date(selectedDate).toLocaleDateString()}` : "Assigned Tasks"}
-            </h3>
-            <div className="flex items-center gap-2">
-              {selectedDate && (
-                <button
-                  onClick={clearDateFilter}
-                  className="text-xs font-medium text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-md transition-colors"
-                >
-                  Clear
-                </button>
-              )}
+        {enableTasks && (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-primary-text dark:text-white">
+                {selectedDate ? `Tasks for ${new Date(selectedDate).toLocaleDateString()}` : "Assigned Tasks"}
+              </h3>
+              <div className="flex items-center gap-2">
+                {selectedDate && (
+                  <button
+                    onClick={clearDateFilter}
+                    className="text-xs font-medium text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-md transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
 
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-60">
-              <Loader2 className="w-8 h-8 text-primary animate-spin" />
-              <p className="text-sm font-medium text-gray-500">Loading tasks...</p>
-            </div>
-          ) : filteredTasks.length === 0 ? (
-            selectedDate ? (
-              <div className="flex flex-col items-center justify-center py-8 gap-2 opacity-60 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
-                <CalendarX className="w-8 h-8 text-gray-300" />
-                <p className="text-sm font-medium text-gray-500">No tasks found</p>
               </div>
+            </div>
+
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-60">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <p className="text-sm font-medium text-gray-500">Loading tasks...</p>
+              </div>
+            ) : filteredTasks.length === 0 ? (
+              selectedDate ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-2 opacity-60 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                  <CalendarX className="w-8 h-8 text-gray-300" />
+                  <p className="text-sm font-medium text-gray-500">No tasks found</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 gap-2 opacity-60 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                  <ClipboardList className="w-8 h-8 text-gray-300" />
+                  <p className="text-sm font-medium text-gray-500">All caught up!</p>
+                </div>
+              )
             ) : (
-              <div className="flex flex-col items-center justify-center py-8 gap-2 opacity-60 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
-                <ClipboardList className="w-8 h-8 text-gray-300" />
-                <p className="text-sm font-medium text-gray-500">All caught up!</p>
-              </div>
-            )
-          ) : (
-            filteredTasks.map((task) => (
-              <TaskAccordion
-                key={task.id}
-                task={task}
-                onUpdate={fetchTasks}
-              />
-            ))
-          )}
-        </div>
+              filteredTasks.map((task) => (
+                <TaskAccordion
+                  key={task.id}
+                  task={task}
+                  onUpdate={fetchTasks}
+                />
+              ))
+            )}
+          </div>
+        )}
 
         {/* Recent Activity (Expanded Row) */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">

@@ -56,7 +56,7 @@ class MediaService
                     'pledge_id' => $relatedModels['pledge_id'] ?? null,
                     'loan_id' => $relatedModels['loan_id'] ?? null,
                     'user_id' => $relatedModels['user_id'] ?? null,
-                    'jewel_id' => null, // Explicitly null as generally requested
+                    'jewel_id' => $relatedModels['jewel_id'] ?? null,
                     'type' => explode('/', $file->getClientMimeType())[0] ?? 'file',
                     'category' => $category,
                     'file_path' => $path,

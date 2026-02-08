@@ -2,14 +2,17 @@ import React, { useEffect, useState } from "react";
 import api from "../../../api/apiClient";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import GoldCoinSpinner from "../../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
+import { useAuth } from "../../../context/Auth/AuthContext";
 
 const InterestRateForm: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { enableEstimatedAmount } = useAuth();
     const id = location.state?.id || useParams().id;
     const isEdit = !!id;
 
     const [rate, setRate] = useState("");
+    const [postValidityRate, setPostValidityRate] = useState("");
     const [estimationPercentage, setEstimationPercentage] = useState("");
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -29,6 +32,7 @@ const InterestRateForm: React.FC = () => {
                 if (isEdit) {
                     const res = await api.get(`/interest-rates/${id}`);
                     setRate(res.data.rate);
+                    setPostValidityRate(res.data.post_validity_rate || "");
                     setEstimationPercentage(res.data.estimation_percentage);
                     setJewelTypeId(res.data.jewel_type_id ? String(res.data.jewel_type_id) : "");
                 }
@@ -48,11 +52,16 @@ const InterestRateForm: React.FC = () => {
         setError("");
 
         try {
-            const payload = {
+            const payload: any = {
                 rate,
-                estimation_percentage: estimationPercentage,
+                post_validity_rate: postValidityRate,
                 jewel_type_id: jewelTypeId || null
             };
+
+            // Only include estimation_percentage if the toggle is enabled
+            if (enableEstimatedAmount) {
+                payload.estimation_percentage = estimationPercentage;
+            }
 
             if (isEdit) {
                 await api.put(`/interest-rates/${id}`, payload);
@@ -105,19 +114,37 @@ const InterestRateForm: React.FC = () => {
                         />
                     </div>
 
+                    {enableEstimatedAmount && (
+                        <div>
+                            <label className="block text-sm font-medium text-secondary-text dark:text-gray-300 mb-1">
+                                Estimation Percentage (%) <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={estimationPercentage}
+                                onChange={(e) => setEstimationPercentage(e.target.value)}
+                                className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                required={enableEstimatedAmount}
+                                placeholder="e.g. 75.00"
+                            />
+                        </div>
+                    )}
+
                     <div>
                         <label className="block text-sm font-medium text-secondary-text dark:text-gray-300 mb-1">
-                            Estimation Percentage (%) <span className="text-red-500">*</span>
+                            Post Validity Interest (%) <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="number"
                             step="0.01"
-                            value={estimationPercentage}
-                            onChange={(e) => setEstimationPercentage(e.target.value)}
+                            value={postValidityRate}
+                            onChange={(e) => setPostValidityRate(e.target.value)}
                             className="w-full h-11 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             required
-                            placeholder="e.g. 75.00"
+                            placeholder="e.g. 2.00"
                         />
+                        <p className="text-xs text-secondary-text mt-1">Interest rate applied after validity period expires</p>
                     </div>
 
                     <div>

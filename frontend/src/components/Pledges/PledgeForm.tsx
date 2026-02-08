@@ -1,11 +1,13 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+﻿import React, { useState, useRef, useEffect, useMemo } from "react";
 import api from "../../api/apiClient";
-import { AudioRecorder } from "../AudioCamera/AudioRecorder";
-import { CameraCapture } from "../AudioCamera/CameraCapture";
+import { AudioRecorder } from "../audiocamera/AudioRecorder";
+import { CameraCapture } from "../audiocamera/CameraCapture";
 import { useAuth } from "../../context/Auth/AuthContext";
 import { compressImage } from "../../utils/imageCompression";
 import SecureImage from "../Shared/AudioAndImageFetch/SecureImage";
 import SecureAudio from "../Shared/AudioAndImageFetch/SecureAudio";
+import ConfirmationModal from "../Shared/ConfirmationModal";
+import CustomDropdown from "../Shared/CustomDropdown";
 
 // --- UI Components from Create.tsx ---
 
@@ -129,7 +131,23 @@ interface Props {
 }
 
 const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }) => {
-  const { user: _user } = useAuth(); // Get current user (and branch_id)
+  const { user: _user, enableEstimatedAmount } = useAuth(); // Get current user (and branch_id)
+
+  const [branches, setBranches] = useState<any[]>([]);
+  const [selectedBranchId, setSelectedBranchId] = useState<string>("");
+
+  useEffect(() => {
+    if (_user?.role === 'admin' || _user?.role === 'superadmin' || _user?.role === 'developer') {
+      api.get('/branches').then(res => {
+        setBranches(res.data);
+        if (initial?.branch_id) {
+          setSelectedBranchId(String(initial.branch_id));
+        } else if (_user.branch_id) {
+          setSelectedBranchId(String(_user.branch_id));
+        }
+      });
+    }
+  }, [_user, initial]);
 
   // --- State ---
 
@@ -139,8 +157,53 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
   const [activeSlot, setActiveSlot] = useState<'doc' | 'jewel' | 'evidence' | 'customer_image' | null>(null);
 
   // Handlers for Modals
-  const openCamera = (slot: 'doc' | 'jewel' | 'customer_image') => {
+  const [expandedJewelIndex, setExpandedJewelIndex] = useState<number>(0);
+  const [currentJewelIndex, setCurrentJewelIndex] = useState<number | null>(null);
+
+  // Delete Confirmation State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [jewelToDelete, setJewelToDelete] = useState<number | null>(null);
+
+  const handleDeleteJewelClick = (index: number) => {
+    setJewelToDelete(index);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteJewel = () => {
+    if (jewelToDelete === null) return;
+
+    const updated = [...jewels];
+    updated.splice(jewelToDelete, 1);
+    setJewels(updated);
+
+    // Adjust expanded index if needed
+    if (expandedJewelIndex === jewelToDelete) {
+      setExpandedJewelIndex(Math.max(0, jewelToDelete - 1));
+    } else if (expandedJewelIndex > jewelToDelete) {
+      setExpandedJewelIndex(expandedJewelIndex - 1);
+    }
+
+    // Remove jewel file if exists
+    const newFiles = { ...jewelFiles };
+    if (newFiles[jewelToDelete]) {
+      delete newFiles[jewelToDelete];
+      setJewelFiles(newFiles);
+    }
+
+    // Handle existing file removal if needed (logic from original delete)
+    const existing = existingFiles.find(f => f.jewel_id === jewels[jewelToDelete].id);
+    if (existing) {
+      removeExistingFile(existing.id);
+    }
+
+
+    setIsDeleteModalOpen(false);
+    setJewelToDelete(null);
+  };
+
+  const openCamera = (slot: 'doc' | 'jewel' | 'customer_image', index?: number) => {
     setActiveSlot(slot);
+    if (index !== undefined) setCurrentJewelIndex(index);
     setIsCameraOpen(true);
   };
 
@@ -151,7 +214,9 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
 
   const handleCapture = (file: File) => {
     if (activeSlot === 'doc') setDocFile(file);
-    if (activeSlot === 'jewel') setJewelFile(file);
+    if (activeSlot === 'jewel' && currentJewelIndex !== null) {
+      setJewelFiles(prev => ({ ...prev, [currentJewelIndex]: file }));
+    }
     if (activeSlot === 'evidence') setEvidenceFile(file);
     if (activeSlot === 'customer_image') setCustomerImageFile(file);
 
@@ -224,6 +289,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
     })(),
     amount: initial?.loan?.amount ?? "",
     interest_percentage: initial?.loan?.interest_percentage ?? "1.5%",
+    post_validity_interest: initial?.loan?.post_validity_interest ?? "2%",
     validity_months: initial?.loan?.validity_months ?? "3",
     due_date: initial?.loan?.due_date ?? "",
     payment_method: initial?.loan?.payment_method ?? "Cash",
@@ -239,12 +305,14 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
   // Jewels (Array)
   // We strictly initialize with at least one item if empty
   const [jewels, setJewels] = useState<any[]>(initial?.jewels?.length ? initial.jewels : [{
-    jewel_type: "", quality: "", description: "", pieces: 1, weight: "", stone_weight: "", net_weight: "", faults: ""
+    jewel_type: "", quality: "", description: "", pieces: 1, weight: "", stone_weight: "", weight_reduction: "", net_weight: "", faults: ""
   }]);
 
   // Files - 3 Distinct Slots
+  // Files - 3 Distinct Slots
   const [docFile, setDocFile] = useState<File | null>(null);
-  const [jewelFile, setJewelFile] = useState<File | null>(null);
+  // Replaced single jewelFile with Map for per-jewel files
+  const [jewelFiles, setJewelFiles] = useState<{ [key: number]: File }>({});
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
 
   const [customerImageFile, setCustomerImageFile] = useState<File | null>(null);
@@ -259,7 +327,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
 
   // Derived state for specific slots
   const existingDoc = useMemo(() => existingFiles.find(f => f.category === 'customer_document'), [existingFiles]);
-  const existingJewelImage = useMemo(() => existingFiles.find(f => f.category === 'jewel_image'), [existingFiles]);
+
   const existingEvidence = useMemo(() => existingFiles.find(f => f.category === 'evidence_media'), [existingFiles]);
   const existingCustomerImage = useMemo(() => existingFiles.find(f => f.category === 'customer_image'), [existingFiles]);
 
@@ -267,6 +335,18 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
   const remainingFiles = useMemo(() => existingFiles.filter(f =>
     !['customer_document', 'jewel_image', 'evidence_media', 'customer_image'].includes(f.category)
   ), [existingFiles]);
+
+  // Metadata Options
+  const jewelSummary = useMemo(() => {
+    if (jewels.length <= 1) return null;
+    return jewels.reduce((acc, j) => ({
+      totalWeight: acc.totalWeight + (parseFloat(j.weight) || 0),
+      totalPieces: acc.totalPieces + (parseInt(j.pieces) || 0),
+      totalStoneWeight: acc.totalStoneWeight + (parseFloat(j.stone_weight) || 0),
+      totalWeightReduction: acc.totalWeightReduction + (parseFloat(j.weight_reduction) || 0),
+      totalNetWeight: acc.totalNetWeight + (parseFloat(j.net_weight) || 0),
+    }), { totalWeight: 0, totalPieces: 0, totalStoneWeight: 0, totalWeightReduction: 0, totalNetWeight: 0 });
+  }, [jewels]);
 
   // Metadata Options
   // Metadata Options
@@ -285,12 +365,13 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
   const customerImageInputRef = useRef<HTMLInputElement>(null);
 
   // Loan Configs
-  const [interestRates, setInterestRates] = useState<{ id: number; rate: string; jewel_type_id?: number | null; estimation_percentage?: string }[]>([]);
+  const [interestRates, setInterestRates] = useState<{ id: number; rate: string; jewel_type_id?: number | null; estimation_percentage?: string; post_validity_rate?: string }[]>([]);
   const [loanValidities, setLoanValidities] = useState<{ id: number; months: number; label?: string; jewel_type_id?: number | null }[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string; balance: string; show_balance: boolean; is_outbound?: boolean }[]>([]);
   const [metalRates, setMetalRates] = useState<{ name: string; metal_rate?: { rate: string } }[]>([]);
   const [processingFeesConfigs, setProcessingFeesConfigs] = useState<{ jewel_type_id: number; percentage: string; max_amount: string | null }[]>([]);
   const [loanSchemes, setLoanSchemes] = useState<{ id: number; name: string; slug: string }[]>([]);
+  const [enableTransactions, setEnableTransactions] = useState(true);
 
   // --- Effects ---
 
@@ -351,7 +432,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
 
   // Automate Estimated Amount Calculation
   useEffect(() => {
-    if (!metalRates.length || !interestRates.length) return;
+    if (!metalRates.length || !interestRates.length || !enableEstimatedAmount) return;
 
     // 1. Calculate Total Net Weight of all jewels
     const totalNetWeight = jewels.reduce((sum, j) => sum + (parseFloat(j.net_weight) || 0), 0);
@@ -506,6 +587,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
     }).catch(console.error);
     api.get("/metal-rates").then(res => Array.isArray(res.data) && setMetalRates(res.data)).catch(console.error); // Added this line
     api.get("/loan-schemes?status=active").then(res => Array.isArray(res.data) && setLoanSchemes(res.data)).catch(console.error);
+    api.get("/developer/settings").then(res => setEnableTransactions(!!res.data.enable_transactions)).catch(() => setEnableTransactions(true));
   }, []);
 
   useEffect(() => {
@@ -546,6 +628,13 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
     }
   };
 
+  const handleJewelFileSelect = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setJewelFiles(prev => ({ ...prev, [index]: file }));
+    }
+  };
+
   const removeExistingFile = (id: number) => {
     setExistingFiles(prev => prev.filter(f => f.id !== id));
     setDeletedFileIds(prev => [...prev, id]);
@@ -555,11 +644,19 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
     const updated = [...jewels];
     updated[index][field] = value;
 
+    // Sync jewel type if first jewel is updated
+    if (index === 0 && field === 'jewel_type') {
+      updated.forEach((j, i) => {
+        if (i > 0) j.jewel_type = value;
+      });
+    }
+
     // Auto calc net weight
-    if (field === 'weight' || field === 'stone_weight') {
-      const w = parseFloat(updated[index].weight) || 0;
-      const sw = parseFloat(updated[index].stone_weight) || 0;
-      updated[index].net_weight = (Math.max(0, w - sw)).toFixed(2);
+    if (field === 'weight' || field === 'stone_weight' || field === 'weight_reduction') {
+      const w = parseFloat(field === 'weight' ? value : updated[index].weight) || 0;
+      const sw = parseFloat(field === 'stone_weight' ? value : updated[index].stone_weight) || 0;
+      const wr = parseFloat(field === 'weight_reduction' ? value : updated[index].weight_reduction) || 0;
+      updated[index].net_weight = (Math.max(0, w - sw - wr)).toFixed(2);
     }
 
     setJewels(updated);
@@ -571,6 +668,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
 
     // Customer
     if (customerId) fd.append("customer_id", customerId);
+    if (selectedBranchId) fd.append("branch_id", selectedBranchId); // Append Branch ID
     Object.entries(customer).forEach(([k, v]) => {
       let value = String(v ?? "");
 
@@ -607,7 +705,13 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
     };
 
     if (docFile) await compressAndAppend(docFile, "customer_document");
-    if (jewelFile) await compressAndAppend(jewelFile, "jewel_image");
+
+    // Process Jewel Files
+    for (const [index, file] of Object.entries(jewelFiles)) {
+      const compressed = await compressImage(file);
+      fd.append(`jewel_files[${index}]`, compressed);
+    }
+
     if (evidenceFile) {
       if (evidenceFile.type.startsWith('image/')) {
         await compressAndAppend(evidenceFile, "evidence_media");
@@ -629,9 +733,37 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
 
       {/* Hidden Inputs for File Dialogs */}
       <input type="file" ref={docInputRef} className="hidden" accept="image/*,application/pdf" onChange={(e) => handleFileSelect(e, setDocFile)} />
-      <input type="file" ref={jewelInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileSelect(e, setJewelFile)} />
+      {/* Jewel Input Ref is now dynamic or managed differently, or we use a single ref and track active index. 
+          For simplicity, we can just click a specific ref if we want, or use the same ref and store 'active index' in state before clicking.
+      */}
+      <input type="file" ref={jewelInputRef} className="hidden" accept="image/*" onChange={(e) => currentJewelIndex !== null && handleJewelFileSelect(e, currentJewelIndex)} />
       <input type="file" ref={evidenceInputRef} className="hidden" accept="image/*,audio/*,video/*" onChange={(e) => handleFileSelect(e, setEvidenceFile)} />
       <input type="file" ref={customerImageInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileSelect(e, setCustomerImageFile)} />
+
+
+      <input type="file" ref={customerImageInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileSelect(e, setCustomerImageFile)} />
+
+      {/* Branch Selection (Admin Only) */}
+      {branches.length > 0 && (
+        <section className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-purple-100 dark:border-gray-700">
+          <div className="flex items-center gap-3 mb-4 text-purple-600 dark:text-purple-400">
+            <span className="material-symbols-outlined">store</span>
+            <h3 className="font-bold text-lg">Branch Details</h3>
+          </div>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Select Branch</span>
+            <div className="relative">
+              <CustomDropdown
+                value={selectedBranchId}
+                onChange={(val: string) => setSelectedBranchId(val)}
+                options={branches.map(b => ({ value: b.id.toString(), label: b.branch_name }))}
+                placeholder="Select a Branch"
+                className="h-12"
+              />
+            </div>
+          </label>
+        </section>
+      )}
 
 
       {/* Customer Details Section */}
@@ -804,156 +936,256 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
         </div>
 
         {jewels.map((jewel, index) => (
-          <div key={index} className={`flex flex-col gap-4 ${index > 0 ? 'border-t pt-6 mt-2 border-dashed' : ''} relative`}>
-            {index > 0 && (
-              <button type="button" onClick={() => {
-                const updated = [...jewels];
-                updated.splice(index, 1);
-                setJewels(updated);
-              }} className="absolute top-0 right-0 text-red-500 text-sm font-bold flex items-center gap-1">
-                <span className="material-symbols-outlined text-sm">delete</span> Remove Item
-              </button>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <label className="flex flex-col gap-1.5">
-                <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Jewel Type <span className="text-red-500">*</span></span>
-                <div className="relative">
-                  <select
-                    value={jewel.jewel_type} onChange={e => updateJewel(index, 'jewel_type', e.target.value)}
-                    required
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
-                  >
-                    <option value="" disabled>Select</option>
-                    {jewelTypes.map(t => (
-                      <option key={t.id} value={t.name}>{t.name}</option>
-                    ))}
-                  </select>
-                  <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
+          <div key={index} className={`${jewels.length > 1 ? 'bg-gray-50 dark:bg-gray-800/50 rounded-xl p-5 border border-gray-200 dark:border-gray-700 mb-6' : ''} relative`}>
+            {jewels.length > 1 && (
+              <div
+                className={`flex justify-between items-center px-3 py-2 cursor-pointer rounded-lg transition-colors border mb-2 ${expandedJewelIndex === index
+                  ? 'bg-primary/5 border-primary/20 dark:bg-primary/10 dark:border-primary/30'
+                  : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/50 border-gray-100 dark:border-gray-700'
+                  }`}
+                onClick={() => setExpandedJewelIndex(expandedJewelIndex === index ? -1 : index)}
+              >
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <button type="button" onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteJewelClick(index);
+                  }} className="p-1 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded transition-colors" title="Remove Jewel">
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
+                  <span className={`transition-colors ${expandedJewelIndex === index ? 'text-primary' : 'text-gray-700 dark:text-gray-300'}`}>
+                    {jewel.quality || "—"} {jewel.description || "—"}
+                  </span>
+                  <span className="text-gray-300 dark:text-gray-600">-</span>
+                  <span className={`${expandedJewelIndex === index ? 'text-primary' : 'text-gray-700 dark:text-gray-300'}`}>
+                    {jewel.pieces || "0"}pc
+                  </span>
+                  <span className="text-gray-300 dark:text-gray-600">---&gt;</span>
+                  <span className={`font-bold ${expandedJewelIndex === index ? 'text-primary' : 'text-gray-900 dark:text-white'}`}>
+                    {jewel.net_weight || "0"}g
+                  </span>
                 </div>
-              </label>
 
-              <label className="flex flex-col gap-1.5">
-                <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Quality</span>
-                <div className="relative">
-                  <select
-                    value={jewel.quality} onChange={e => updateJewel(index, 'quality', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
-                  >
-                    <option value="" disabled>Select</option>
-                    {jewelQualities.map(q => (
-                      <option key={q.id} value={q.name}>{q.name}</option>
-                    ))}
-                  </select>
-                  <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
+                <div className="flex items-center gap-2">
+                  <span className={`material-symbols-outlined text-gray-400 transition-transform duration-300 ${expandedJewelIndex === index ? 'rotate-180 text-primary' : ''}`}>expand_more</span>
                 </div>
-              </label>
-            </div>
+              </div>
+            )
+            }
 
-            <div className="relative z-50">
-              <label className="flex flex-col gap-1.5">
-                <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Jewel Description</span>
-                <input
-                  value={jewel.description}
-                  onChange={e => updateJewel(index, 'description', e.target.value)}
-                  onFocus={() => setActiveSearchJewelIndex(index)}
-                  onBlur={() => setTimeout(() => setActiveSearchJewelIndex(null), 200)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400"
-                  placeholder="Type to search or enter new" type="text"
-                />
-              </label>
-              {activeSearchJewelIndex === index && jewel.description && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-40 overflow-y-auto no-scrollbar z-50">
-                  {jewelNames
-                    .filter(n => n.name.toLowerCase().includes(jewel.description.toLowerCase()))
-                    .map(n => (
-                      <div
-                        key={n.id}
-                        className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm text-black dark:text-white"
-                        onMouseDown={() => updateJewel(index, 'description', n.name)}
+            {/* Expanded View: Form Fields (Animated) */}
+            <div className={`transition-all duration-300 ease-in-out overflow-hidden ${(jewels.length === 1 || expandedJewelIndex === index)
+              ? 'opacity-100 max-h-[1200px] mt-2'
+              : 'opacity-0 max-h-0 mt-0'
+              }`}>
+              <div className={`${jewels.length > 1 ? 'p-2' : ''}`}>
+                <div className="grid grid-cols-2 gap-4">
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Jewel Type <span className="text-red-500">*</span></span>
+                    <div className="relative">
+                      <select
+                        value={jewel.jewel_type} onChange={e => updateJewel(index, 'jewel_type', e.target.value)}
+                        required
+                        disabled={index > 0}
+                        className={`w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all ${index > 0 ? 'opacity-70 bg-gray-100 dark:bg-gray-700 cursor-not-allowed' : ''}`}
                       >
-                        {n.name}
-                      </div>
-                    ))}
+                        <option value="" disabled>Select</option>
+                        {jewelTypes.map(t => (
+                          <option key={t.id} value={t.name}>{t.name}</option>
+                        ))}
+                      </select>
+                      <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
+                    </div>
+                  </label>
+
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Quality</span>
+                    <div className="relative">
+                      <select
+                        value={jewel.quality} onChange={e => updateJewel(index, 'quality', e.target.value)}
+                        className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
+                      >
+                        <option value="" disabled>Select</option>
+                        {jewelQualities.map(q => (
+                          <option key={q.id} value={q.name}>{q.name}</option>
+                        ))}
+                      </select>
+                      <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
+                    </div>
+                  </label>
                 </div>
-              )}
+
+                <div className="relative z-50 mt-4">
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Jewel Description</span>
+                    <input
+                      value={jewel.description}
+                      onChange={e => updateJewel(index, 'description', e.target.value)}
+                      onFocus={() => setActiveSearchJewelIndex(index)}
+                      onBlur={() => setTimeout(() => setActiveSearchJewelIndex(null), 200)}
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400"
+                      placeholder="Type to search or enter new" type="text"
+                    />
+                  </label>
+                  {activeSearchJewelIndex === index && jewel.description && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-40 overflow-y-auto no-scrollbar z-50">
+                      {jewelNames
+                        .filter(n => n.name.toLowerCase().includes(jewel.description.toLowerCase()))
+                        .map(n => (
+                          <div
+                            key={n.id}
+                            className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm text-black dark:text-white"
+                            onMouseDown={() => updateJewel(index, 'description', n.name)}
+                          >
+                            {n.name}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+
+                <label className="flex flex-col gap-1.5 mt-4">
+                  <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Pieces</span>
+                  <input
+                    value={jewel.pieces} onChange={e => updateJewel(index, 'pieces', e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400"
+                    placeholder="1" type="number"
+                  />
+                </label>
+
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Weight (g) <span className="text-red-500">*</span></span>
+                    <input
+                      value={jewel.weight ?? ""} onChange={e => updateJewel(index, 'weight', e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="0.00" step="0.01" type="number" required
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1.5 z-40">
+                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Stone Weight (g)</span>
+                    <input
+                      value={jewel.stone_weight ?? ""} onChange={e => updateJewel(index, 'stone_weight', e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="0.00" step="0.01" type="number"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Weight Reduction</span>
+                    <input
+                      value={jewel.weight_reduction ?? ""} onChange={e => updateJewel(index, 'weight_reduction', e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="0.00" step="0.01" type="number"
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Net Weight (g)</span>
+                    <input
+                      value={jewel.net_weight ?? ""} readOnly
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 h-12 px-4 shadow-sm outline-none transition-all cursor-not-allowed" placeholder="0.00"
+                    />
+                  </label>
+                </div>
+
+                <label className="flex flex-col gap-1.5 mt-4">
+                  <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Faults / Remarks</span>
+                  <textarea
+                    value={jewel.faults ?? ""} onChange={e => updateJewel(index, 'faults', e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary p-4 shadow-sm resize-none h-20 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="Describe any damage"
+                  ></textarea>
+                </label>
+                {/* Per-Jewel Image Upload */}
+                <div className="mt-4 border-t border-dashed border-gray-200 dark:border-gray-700 pt-4">
+                  <div className="h-52 w-full">
+                    <MediaUploadBlock
+                      label={`Jewel ${index + 1} Image`}
+                      icon="diamond"
+                      file={jewelFiles[index]}
+                      // Find existing media for this jewel
+                      existingUrl={existingFiles.find(f => f.jewel_id === jewel.id)?.url}
+                      mediaId={existingFiles.find(f => f.jewel_id === jewel.id)?.id}
+                      onRemove={() => {
+                        const existing = existingFiles.find(f => f.jewel_id === jewel.id);
+                        if (existing) removeExistingFile(existing.id);
+                        const newFiles = { ...jewelFiles };
+                        delete newFiles[index];
+                        setJewelFiles(newFiles);
+                      }}
+                      onGallery={() => {
+                        setCurrentJewelIndex(index);
+                        setTimeout(() => jewelInputRef.current?.click(), 0);
+                      }}
+                      onCamera={() => openCamera('jewel', index)}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-
-            <label className="flex flex-col gap-1.5">
-              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Pieces</span>
-              <input
-                value={jewel.pieces} onChange={e => updateJewel(index, 'pieces', e.target.value)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400"
-                placeholder="1" type="number"
-              />
-            </label>
-
-            <div className="grid grid-cols-2 gap-4">
-              <label className="flex flex-col gap-1.5">
-                <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Weight (g) <span className="text-red-500">*</span></span>
-                <input
-                  value={jewel.weight ?? ""} onChange={e => updateJewel(index, 'weight', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="0.00" step="0.01" type="number" required
-                />
-              </label>
-
-              <label className="flex flex-col gap-1.5 z-40">
-                <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Stone Weight (g)</span>
-                <input
-                  value={jewel.stone_weight ?? ""} onChange={e => updateJewel(index, 'stone_weight', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400" placeholder="0.00" step="0.01" type="number"
-                />
-              </label>
-            </div>
-
-            <label className="flex flex-col gap-1.5">
-              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Net Weight (g)</span>
-              <input
-                value={jewel.net_weight ?? ""} readOnly
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 h-12 px-4 shadow-sm outline-none transition-all cursor-not-allowed" placeholder="0.00"
-              />
-            </label>
-
-            <label className="flex flex-col gap-1.5">
-              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Faults / Remarks</span>
-              <textarea
-                value={jewel.faults ?? ""} onChange={e => updateJewel(index, 'faults', e.target.value)}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary p-4 shadow-sm resize-none h-20 outline-none transition-all placeholder:text-gray-400"
-                placeholder="Describe any damage"
-              ></textarea>
-            </label>
           </div>
         ))}
 
-        {/* <div className="mt-4 flex justify-end">
-          <button type="button" onClick={() => setJewels([...jewels, { jewel_type: "", quality: "", description: "", pieces: 1, weight: "", stone_weight: "", net_weight: "", faults: "" }])} className="text-primary font-bold text-sm flex items-center gap-1 hover:underline">
-            <span className="material-symbols-outlined text-sm">add_circle</span> Add Another Jewel
-          </button>
-        </div> */}
+        {jewelSummary && (
+          <div className="mt-8 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="material-symbols-outlined text-primary text-xl">diamond</span>
+              <h4 className="text-gray-800 dark:text-white font-bold text-base">Jewel Summary</h4>
+            </div>
 
-        {/* Slot 2: Jewel Image */}
-        <div className="flex flex-col gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 mt-4">
-          <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Upload Jewel Image</span>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-            <MediaUploadBlock
-              label="Capture Jewel"
-              icon="add_a_photo"
-              file={jewelFile}
-              existingUrl={existingJewelImage?.url ? (existingJewelImage.url.startsWith('http://localhost/') && !existingJewelImage.url.includes(':8000') ? existingJewelImage.url.replace('http://localhost/', 'http://localhost:8000/') : existingJewelImage.url) : null}
-              mediaId={existingJewelImage?.id}
-              onRemove={() => {
-                if (existingJewelImage) removeExistingFile(existingJewelImage.id);
-                setJewelFile(null);
-              }}
-              onGallery={() => jewelInputRef.current?.click()}
-              onCamera={() => openCamera('jewel')}
-            />
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-y-4 gap-x-6">
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Gross Wt</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-white">{jewelSummary.totalWeight.toFixed(2)} g</span>
+              </div>
+
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Pieces</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-white">{jewelSummary.totalPieces}</span>
+              </div>
+
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Stone Wt</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-white">{jewelSummary.totalStoneWeight.toFixed(2)} g</span>
+              </div>
+
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Reduction</span>
+                <span className="text-lg font-bold text-gray-900 dark:text-white">{jewelSummary.totalWeightReduction.toFixed(2)} g</span>
+              </div>
+
+              <div className="flex flex-col col-span-2 md:col-span-1 md:items-end md:text-right border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 pt-3 md:pt-0 md:pl-4 mt-1 md:mt-0">
+                <span className="text-xs text-primary font-bold uppercase tracking-wide">Net Weight</span>
+                <span className="text-2xl font-extrabold text-primary">{jewelSummary.totalNetWeight.toFixed(2)} g</span>
+              </div>
+            </div>
           </div>
+        )}
+
+        <div className="mt-6">
+          <button
+            type="button"
+            onClick={() => {
+              const firstJewelType = jewels.length > 0 ? jewels[0].jewel_type : "";
+              const newJewels = [...jewels, { jewel_type: firstJewelType, quality: "", description: "", pieces: 1, weight: "", stone_weight: "", weight_reduction: "", net_weight: "", faults: "" }];
+              setJewels(newJewels);
+              setExpandedJewelIndex(newJewels.length - 1);
+            }}
+            className="w-full py-4 border-2 border-dashed border-primary/30 rounded-xl bg-primary/5 hover:bg-primary/10 transition-all flex flex-col items-center justify-center gap-2 group cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-primary text-xl">add</span>
+            </div>
+            <span className="text-primary font-bold text-sm">Add Another Jewel</span>
+          </button>
         </div>
       </section>
 
       {/* Loan Details Section */}
-      <section className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-green-100 dark:border-gray-700 mb-20">
+      <section
+        className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-green-100 dark:border-gray-700 mb-20"
+        onClickCapture={() => setExpandedJewelIndex(-1)}
+      >
         <div className="flex items-center justify-between mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-primary">account_balance_wallet</span>
@@ -1034,14 +1266,16 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
               />
             </label>
 
-            <label className="flex flex-col gap-1.5 w-1/3">
-              <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">Estimated Amount</span>
-              <input
-                value={loan.estimated_amount}
-                readOnly
-                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400 text-sm cursor-not-allowed" placeholder="₹0" type="number"
-              />
-            </label>
+            {enableEstimatedAmount && (
+              <label className="flex flex-col gap-1.5 w-1/3">
+                <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">Estimated Amount</span>
+                <input
+                  value={loan.estimated_amount}
+                  readOnly
+                  className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300 focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 shadow-sm outline-none transition-all placeholder:text-gray-400 text-sm cursor-not-allowed" placeholder="₹0" type="number"
+                />
+              </label>
+            )}
           </div>
 
           <label className="flex flex-col gap-1.5">
@@ -1087,11 +1321,24 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
             </label>
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Interest %</span>
+              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Interest % <span className="text-red-500">*</span></span>
               <div className="relative">
                 <select
-                  value={loan.interest_percentage} onChange={e => setLoan({ ...loan, interest_percentage: e.target.value })}
+                  value={loan.interest_percentage}
+                  onChange={e => {
+                    const newInterest = e.target.value;
+
+                    // Find the selected interest rate object to get its configured post_validity_rate
+                    const selectedRate = filteredInterestOptions.find(r => `${parseFloat(r.rate)}%` === newInterest);
+
+                    setLoan({
+                      ...loan,
+                      interest_percentage: newInterest,
+                      post_validity_interest: selectedRate?.post_validity_rate ? `${parseFloat(selectedRate.post_validity_rate)}%` : loan.post_validity_interest
+                    });
+                  }}
                   className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
+                  required
                 >
                   <option value="" disabled>Select</option>
                   {filteredInterestOptions.map(r => (
@@ -1104,40 +1351,72 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
           </div>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Payment Method</span>
+            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Post Validity Interest % <span className="text-red-500">*</span></span>
             <div className="relative">
               <select
-                value={loan.payment_method} onChange={e => setLoan({ ...loan, payment_method: e.target.value })}
-                className={`w-full rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all ${balanceValidation
-                  ? balanceValidation.isSufficient
-                    ? 'border-green-500 ring-1 ring-green-500 focus:border-green-500 focus:ring-green-500'
-                    : 'border-red-500 ring-1 ring-red-500 focus:border-red-500 focus:ring-red-500'
-                  : 'border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-1 focus:ring-primary'
-                  }`}
+                value={loan.post_validity_interest}
+                onChange={e => setLoan({ ...loan, post_validity_interest: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all"
+                required
               >
                 <option value="" disabled>Select</option>
-                {paymentMethods.map(p => (
-                  <option key={p.id} value={p.name}>
-                    {p.name} {p.show_balance ? `(₹${p.balance})` : ''}
-                  </option>
-                ))}
+                {Array.from(
+                  new Set(
+                    filteredInterestOptions
+                      .filter(r => r.post_validity_rate)
+                      .map(r => parseFloat(r.post_validity_rate || "0"))
+                  )
+                )
+                  .sort((a, b) => a - b)
+                  .map(rate => (
+                    <option key={rate} value={`${rate}%`}>
+                      {rate}%
+                    </option>
+                  ))
+                }
               </select>
               <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
             </div>
-            {balanceValidation && (
-              <div className={`mt-2 p-3 rounded-lg flex items-center gap-2 border ${balanceValidation.isSufficient
-                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
-                : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
-                }`}>
-                <span className="material-symbols-outlined text-sm">
-                  {balanceValidation.isSufficient ? 'check_circle' : 'error'}
-                </span>
-                <span className="text-xs font-semibold">
-                  {balanceValidation.message}
-                </span>
-              </div>
-            )}
+            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Interest rate applied after validity period expires</span>
           </label>
+
+          {enableTransactions && (
+            <label className="flex flex-col gap-1.5">
+              <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Payment Method</span>
+              <div className="relative">
+                <select
+                  value={loan.payment_method} onChange={e => setLoan({ ...loan, payment_method: e.target.value })}
+                  className={`w-full rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white h-12 px-3 text-sm appearance-none shadow-sm outline-none transition-all ${balanceValidation
+                    ? balanceValidation.isSufficient
+                      ? 'border-green-500 ring-1 ring-green-500 focus:border-green-500 focus:ring-green-500'
+                      : 'border-red-500 ring-1 ring-red-500 focus:border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-1 focus:ring-primary'
+                    }`}
+                >
+                  <option value="" disabled>Select</option>
+                  {paymentMethods.map(p => (
+                    <option key={p.id} value={p.name}>
+                      {p.name} {p.show_balance ? `(₹${p.balance})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <span className="material-symbols-outlined absolute right-2 top-3 pointer-events-none text-gray-500 text-sm">expand_more</span>
+              </div>
+              {balanceValidation && (
+                <div className={`mt-2 p-3 rounded-lg flex items-center gap-2 border ${balanceValidation.isSufficient
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400'
+                  : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+                  }`}>
+                  <span className="material-symbols-outlined text-sm">
+                    {balanceValidation.isSufficient ? 'check_circle' : 'error'}
+                  </span>
+                  <span className="text-xs font-semibold">
+                    {balanceValidation.message}
+                  </span>
+                </div>
+              )}
+            </label>
+          )}
 
 
           {/* Existing Files Display (for Edit Mode) */}
@@ -1231,7 +1510,17 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
         onCapture={handleCapture}
       />
 
-    </form>
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        title="Delete Jewel?"
+        message="Are you sure you want to remove this jewel item? This action cannot be undone."
+        confirmLabel="Delete"
+        isDangerous={true}
+        onConfirm={confirmDeleteJewel}
+        onCancel={() => setIsDeleteModalOpen(false)}
+      />
+
+    </form >
   );
 };
 

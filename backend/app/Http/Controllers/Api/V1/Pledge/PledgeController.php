@@ -139,16 +139,18 @@ class PledgeController extends Controller
             'has_files' => $request->hasFile('files') || $request->hasFile('files.0'),
         ]);
 
-        // Validate branch_id exists
-        if (!$user->branch_id) {
+        // Validate branch_id exists (either in user or request)
+        $branchId = $request->input('branch_id') ?? $user->branch_id;
+
+        if (!$branchId) {
             return response()->json([
-                'message' => 'User must be assigned to a branch to create pledges',
+                'message' => 'Branch ID is required (either assigned to user or provided in request)',
                 'error' => 'missing_branch_id'
             ], 422);
         }
 
         try {
-            return DB::transaction(function () use ($request, $user) {
+            return DB::transaction(function () use ($request, $user, $branchId) {
                 $customerData = $request->validated()['customer'];
                 // Filter out empty strings and convert to null
                 $customerData = array_map(function ($value) {
@@ -167,12 +169,12 @@ class PledgeController extends Controller
 
                 Log::info('Creating pledge', [
                     'customer_id' => $customer->id,
-                    'branch_id' => $user->branch_id,
+                    'branch_id' => $branchId,
                 ]);
 
                 $pledge = Pledge::create([
                     'customer_id' => $customer->id,
-                    'branch_id' => $user->branch_id,
+                    'branch_id' => $branchId,
                     'created_by' => $user->id,
                     'updated_by' => $user->id,
                     'status' => $request->input('pledge.status', 'active'),
@@ -183,7 +185,7 @@ class PledgeController extends Controller
                 // Jewels
                 $jewels = $request->input('jewels', []);
                 Log::info('Processing jewels', ['count' => count($jewels)]);
-                foreach ($jewels as $j) {
+                foreach ($jewels as $index => $j) {
                     // Filter out empty strings and ensure proper types
                     $jewelData = array_map(function ($value) {
                         if ($value === '')
@@ -200,9 +202,63 @@ class PledgeController extends Controller
                     // Only create if jewel_type is provided (required field)
                     if (!empty($jewelData['jewel_type'])) {
                         $jewelData['pledge_id'] = $pledge->id;
-                        Jewel::create($jewelData);
+                        $createdJewel = Jewel::create($jewelData);
+
+                        // Handle Jewel Image (jewel_files[$index])
+                        if ($request->hasFile("jewel_files.$index")) {
+                            $jewelFile = $request->file("jewel_files.$index");
+                            $this->mediaService->handleUploads(
+                                [$jewelFile], // Wrap as array
+                                [
+                                    'customer_id' => $customer->id,
+                                    'pledge_id' => $pledge->id,
+                                    'loan_id' => null, // Not directly loan related
+                                    'jewel_id' => $createdJewel->id
+                                ],
+                                ['jewel_image'],
+                                $pledge->reference_no ?? 'REF' // Use something or loan no later
+                            );
+                        }
                     }
                 }
+
+                // --- Calculate and Save Jewel Summary (Store) ---
+                $totalWeight = 0;
+                $totalPieces = 0;
+                $totalStoneWeight = 0;
+                $totalWeightReduction = 0;
+                $totalNetWeight = 0;
+                $jewelTypes = [];
+
+                // Re-fetch jewels to ensure we have all data correct (and in case of any triggers/defaults)
+                // Or just use the loop above? The loop above uses request data.
+                // Creating a fresh query is safer.
+                $savedJewels = $pledge->jewels()->get();
+
+                foreach ($savedJewels as $sj) {
+                    $totalWeight += (float) $sj->weight;
+                    $totalPieces += (int) $sj->pieces;
+                    $totalStoneWeight += (float) $sj->stone_weight;
+                    $totalWeightReduction += (float) $sj->weight_reduction;
+                    $totalNetWeight += (float) $sj->net_weight;
+                    if ($sj->jewel_type) {
+                        $jewelTypes[] = $sj->jewel_type;
+                    }
+                }
+
+                // Unique jewel types
+                $jewelTypes = array_unique($jewelTypes);
+                $jewelTypesSummary = implode(', ', $jewelTypes);
+
+                $pledge->update([
+                    'total_weight' => $totalWeight,
+                    'total_pieces' => $totalPieces,
+                    'total_stone_weight' => $totalStoneWeight,
+                    'total_weight_reduction' => $totalWeightReduction,
+                    'total_net_weight' => $totalNetWeight,
+                    'jewel_types_summary' => $jewelTypesSummary
+                ]);
+                // ------------------------------------------------
 
                 // Loan
                 $loanData = $request->validated()['loan'];
@@ -237,8 +293,18 @@ class PledgeController extends Controller
                 $loan->save();
                 Log::info('Loan created', ['id' => $loan->id]);
 
+                // Check if estimated amount feature is enabled
+                $enableEstimatedAmountSetting = \App\Models\Settings::where('key', 'enable_estimated_amount')
+                    ->where(function ($q) use ($user) {
+                        $q->where('branch_id', $user->branch_id)
+                            ->orWhereNull('branch_id');
+                    })
+                    ->orderByDesc('branch_id')
+                    ->first();
+                $enableEstimatedAmount = $enableEstimatedAmountSetting ? filter_var($enableEstimatedAmountSetting->value, FILTER_VALIDATE_BOOLEAN) : false;
+
                 // Check if approval is required (loan amount > estimated amount)
-                $requiresApproval = (float) $loan->amount > (float) ($loan->estimated_amount ?? 0);
+                $requiresApproval = $enableEstimatedAmount && ((float) $loan->amount > (float) ($loan->estimated_amount ?? 0));
 
                 if ($requiresApproval) {
                     $pledge->update([
@@ -266,8 +332,19 @@ class PledgeController extends Controller
                 } else {
                     $pledge->update(['approval_status' => 'approved']);
 
-                    // Deduct balance from Money Source ONLY if approved
-                    if (!empty($loan->payment_method) && !empty($loan->amount_to_be_given)) {
+                    // Check if transactions are enabled for this branch (or globally)
+                    $transactionSetting = \App\Models\Settings::where('key', 'enable_transactions')
+                        ->where(function ($q) use ($user) {
+                            $q->where('branch_id', $user->branch_id)
+                                ->orWhereNull('branch_id');
+                        })
+                        ->orderByDesc('branch_id') // Prefer branch-specific setting
+                        ->first();
+
+                    $enableTransactions = $transactionSetting ? (bool) $transactionSetting->value : true; // Default true
+
+                    // Deduct balance from Money Source ONLY if approved AND transactions enabled
+                    if ($enableTransactions && !empty($loan->payment_method) && !empty($loan->amount_to_be_given)) {
                         $moneySource = MoneySource::where('name', $loan->payment_method)->first();
                         if ($moneySource) {
                             if (!$moneySource->is_outbound) {
@@ -300,6 +377,8 @@ class PledgeController extends Controller
                         } else {
                             Log::warning('Money source not found for deduction', ['name' => $loan->payment_method]);
                         }
+                    } else {
+                        Log::info('Transaction skipped due to settings or missing payment method', ['enable_transactions' => $enableTransactions]);
                     }
                 }
 
@@ -481,20 +560,70 @@ class PledgeController extends Controller
                     // Delete jewels that are not in the incoming list
                     $pledge->jewels()->whereNotIn('id', $incomingIds)->delete();
 
-                    foreach ($incomingJewels as $j) {
+                    foreach ($incomingJewels as $index => $j) {
+                        $currentJewel = null;
                         if (isset($j['id']) && $j['id']) {
                             // Update existing jewel
                             $existingJewel = Jewel::find($j['id']);
                             if ($existingJewel && $existingJewel->pledge_id == $pledge->id) {
                                 $existingJewel->update($j);
+                                $currentJewel = $existingJewel;
                             }
                         } else {
                             // Create new jewel
                             $j['pledge_id'] = $pledge->id;
-                            Jewel::create($j);
+                            $currentJewel = Jewel::create($j);
+                        }
+
+                        // Handle Jewel Image (jewel_files[$index])
+                        if ($currentJewel && $request->hasFile("jewel_files.$index")) {
+                            $jewelFile = $request->file("jewel_files.$index");
+                            $this->mediaService->handleUploads(
+                                [$jewelFile],
+                                [
+                                    'customer_id' => $pledge->customer_id,
+                                    'pledge_id' => $pledge->id,
+                                    'loan_id' => $pledge->loan?->id,
+                                    'jewel_id' => $currentJewel->id
+                                ],
+                                ['jewel_image'],
+                                $pledge->loan?->loan_no ?? 'Ref'
+                            );
                         }
                     }
                 }
+
+                // --- Calculate and Save Jewel Summary (Update) ---
+                // Fetch all jewels associated with this pledge after updates
+                $updatedJewels = $pledge->jewels()->get();
+
+                $uTotalWeight = 0;
+                $uTotalPieces = 0;
+                $uTotalStoneWeight = 0;
+                $uTotalWeightReduction = 0;
+                $uTotalNetWeight = 0;
+                $uJewelTypes = [];
+
+                foreach ($updatedJewels as $uj) {
+                    $uTotalWeight += (float) $uj->weight;
+                    $uTotalPieces += (int) $uj->pieces;
+                    $uTotalStoneWeight += (float) $uj->stone_weight;
+                    $uTotalWeightReduction += (float) $uj->weight_reduction;
+                    $uTotalNetWeight += (float) $uj->net_weight;
+                    if ($uj->jewel_type) {
+                        $uJewelTypes[] = $uj->jewel_type;
+                    }
+                }
+
+                $pledge->update([
+                    'total_weight' => $uTotalWeight,
+                    'total_pieces' => $uTotalPieces,
+                    'total_stone_weight' => $uTotalStoneWeight,
+                    'total_weight_reduction' => $uTotalWeightReduction,
+                    'total_net_weight' => $uTotalNetWeight,
+                    'jewel_types_summary' => implode(', ', array_unique($uJewelTypes))
+                ]);
+                // ------------------------------------------------
 
                 // Handle File Deletion
                 if ($request->has('deleted_file_ids')) {

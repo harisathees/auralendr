@@ -69,7 +69,7 @@ class RepledgeController extends Controller
 
         if ($existingRepledge) {
             return response()->json([
-                'message' => "Loan #{$loan->loan_no} is already repledged and is currently active.",
+                'message' => "Loan #{$loan->loan_no} is already bank pledged and is currently active.",
                 'error' => 'loan_already_repledged'
             ], 400);
         }
@@ -144,6 +144,7 @@ class RepledgeController extends Controller
                 // Merge common parent fields into item
                 $repledgeData = array_merge($item, [
                     'repledge_source_id' => $validated['repledge_source_id'],
+                    'branch_id' => $request->input('branch_id') ?? $request->user()->branch_id, // Capture branch_id
                     'status' => $validated['status'] ?? 'active',
                     'start_date' => $validated['start_date'] ?? null,
                     'end_date' => $validated['end_date'] ?? null,
@@ -155,43 +156,57 @@ class RepledgeController extends Controller
 
                 // Increment balance of Money Source
                 if (!empty($repledge->payment_method) && !empty($repledge->amount)) {
-                    $moneySource = MoneySource::where('name', $repledge->payment_method)->first();
-                    if ($moneySource) {
-                        if (!$moneySource->is_inbound) {
-                            throw new \Exception("The selected payment method '{$moneySource->name}' is not allowed for inbound transactions.");
-                        }
+                    // Check if transactions are enabled
+                    $transactionSetting = \App\Models\Settings::where('key', 'enable_transactions')
+                        ->where(function ($q) use ($request, $repledge) {
+                            $q->where('branch_id', $repledge->branch_id)
+                                ->orWhereNull('branch_id');
+                        })
+                        ->orderByDesc('branch_id')
+                        ->first();
+                    $enableTransactions = $transactionSetting ? (bool) $transactionSetting->value : true;
 
-                        // Net inflow = Amount - Processing Fee
-                        $netAmount = (float) $repledge->amount - (float) ($repledge->processing_fee ?? 0);
+                    if ($enableTransactions) {
+                        $moneySource = MoneySource::where('name', $repledge->payment_method)->first();
+                        if ($moneySource) {
+                            if (!$moneySource->is_inbound) {
+                                throw new \Exception("The selected payment method '{$moneySource->name}' is not allowed for inbound transactions.");
+                            }
 
-                        if ($netAmount > 0) {
-                            $moneySource->increment('balance', $netAmount);
+                            // Net inflow = Amount - Processing Fee
+                            $netAmount = (float) $repledge->amount - (float) ($repledge->processing_fee ?? 0);
 
-                            // Create Transaction Record
-                            \App\Models\Transaction\Transaction::create([
-                                'branch_id' => $repledge->branch_id ?? $request->user()->branch_id,
-                                'money_source_id' => $moneySource->id,
-                                'type' => 'credit',
-                                'amount' => $netAmount,
-                                'date' => $repledge->start_date ?? now(),
-                                'description' => "Repledge Creation #{$repledge->id} (Loan: {$repledge->loan_no})",
-                                'category' => 'repledge_credit',
-                                'transactionable_type' => Repledge::class,
-                                'transactionable_id' => $repledge->id,
-                                'created_by' => $request->user()->id,
-                            ]);
+                            if ($netAmount > 0) {
+                                $moneySource->increment('balance', $netAmount);
 
-                            \Illuminate\Support\Facades\Log::info('Repledge transaction recorded and source incremented', [
-                                'repledge_id' => $repledge->id,
-                                'source' => $moneySource->name,
-                                'incremented' => $netAmount,
-                                'new_balance' => $moneySource->balance
+                                // Create Transaction Record
+                                \App\Models\Transaction\Transaction::create([
+                                    'branch_id' => $repledge->branch_id ?? $request->user()->branch_id,
+                                    'money_source_id' => $moneySource->id,
+                                    'type' => 'credit',
+                                    'amount' => $netAmount,
+                                    'date' => $repledge->start_date ?? now(),
+                                    'description' => "Bank Pledge Creation #{$repledge->id} (Loan: {$repledge->loan_no})",
+                                    'category' => 'repledge_credit',
+                                    'transactionable_type' => Repledge::class,
+                                    'transactionable_id' => $repledge->id,
+                                    'created_by' => $request->user()->id,
+                                ]);
+
+                                \Illuminate\Support\Facades\Log::info('Repledge transaction recorded and source incremented', [
+                                    'repledge_id' => $repledge->id,
+                                    'source' => $moneySource->name,
+                                    'incremented' => $netAmount,
+                                    'new_balance' => $moneySource->balance
+                                ]);
+                            }
+                        } else {
+                            \Illuminate\Support\Facades\Log::warning('Money source not found for repledge increment', [
+                                'repledge_id' => $repledge->id
                             ]);
                         }
                     } else {
-                        \Illuminate\Support\Facades\Log::warning('Money source not found for repledge increment', [
-                            'repledge_id' => $repledge->id
-                        ]);
+                        \Illuminate\Support\Facades\Log::info('Transaction skipped for Repledge due to settings', ['repledge_id' => $repledge->id, 'enable_transactions' => $enableTransactions]);
                     }
                 }
             }
@@ -264,29 +279,43 @@ class RepledgeController extends Controller
                 'status' => 'closed',
             ]);
 
-            // 2. Handle Payment (Debit from Source) - Paying BACK the loan
-            $moneySource = MoneySource::lockForUpdate()->find($validated['payment_source_id']);
+            // 2. Handle Payment (Debit from Source) - Paying BACK the loan & Transactions if Enabled
+            // Check if transactions are enabled
+            $transactionSetting = \App\Models\Settings::where('key', 'enable_transactions')
+                ->where(function ($q) use ($request) {
+                    $q->where('branch_id', $request->user()->branch_id)
+                        ->orWhereNull('branch_id');
+                })
+                ->orderByDesc('branch_id')
+                ->first();
+            $enableTransactions = $transactionSetting ? (bool) $transactionSetting->value : true;
 
-            // Check for outbound permission
-            if (!$moneySource->is_outbound) {
-                throw new \Exception("Payment source '{$moneySource->name}' is not allowed for outbound payments.");
+            if ($enableTransactions) {
+                $moneySource = MoneySource::lockForUpdate()->find($validated['payment_source_id']);
+
+                // Check for outbound permission
+                if (!$moneySource->is_outbound) {
+                    throw new \Exception("Payment source '{$moneySource->name}' is not allowed for outbound payments.");
+                }
+
+                $moneySource->decrement('balance', $validated['amount_paid']);
+
+                // 3. Create Transaction
+                \App\Models\Transaction\Transaction::create([
+                    'branch_id' => $request->user()->branch_id,
+                    'money_source_id' => $moneySource->id,
+                    'type' => 'debit', // Expense/Outflow
+                    'amount' => $validated['amount_paid'],
+                    'date' => $validated['closed_date'],
+                    'description' => "Repledge Closure #{$repledge->id} (Loan: {$repledge->loan->loan_no})",
+                    'category' => 'repledge_payment', // Ensure this category exists or is handled
+                    'transactionable_type' => \App\Models\Repledge\RepledgeClosure::class,
+                    'transactionable_id' => $closure->id,
+                    'created_by' => $request->user()->id,
+                ]);
+            } else {
+                \Illuminate\Support\Facades\Log::info('Transaction skipped for Repledge Closure due to settings', ['repledge_id' => $repledge->id, 'enable_transactions' => $enableTransactions]);
             }
-
-            $moneySource->decrement('balance', $validated['amount_paid']);
-
-            // 3. Create Transaction
-            \App\Models\Transaction\Transaction::create([
-                'branch_id' => $request->user()->branch_id,
-                'money_source_id' => $moneySource->id,
-                'type' => 'debit', // Expense/Outflow
-                'amount' => $validated['amount_paid'],
-                'date' => $validated['closed_date'],
-                'description' => "Repledge Closure #{$repledge->id} (Loan: {$repledge->loan->loan_no})",
-                'category' => 'repledge_payment', // Ensure this category exists or is handled
-                'transactionable_type' => \App\Models\Repledge\RepledgeClosure::class,
-                'transactionable_id' => $closure->id,
-                'created_by' => $request->user()->id,
-            ]);
 
             // 4. Update Repledge Status
             $repledge->update(['status' => 'closed']);

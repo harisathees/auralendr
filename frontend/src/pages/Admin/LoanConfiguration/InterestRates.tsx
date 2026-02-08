@@ -53,38 +53,59 @@ const InterestSettings: React.FC = () => {
     };
 
     const renderItem = (item: any) => (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-            <div className="flex items-center gap-8 min-w-[200px]">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${item.jewel_type ? 'bg-primary/10 text-primary' : 'bg-purple-100 text-purple-600'}`}>
-                    <span className="material-symbols-outlined text-sm">
+        <div className="flex flex-col gap-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary/50 dark:hover:border-primary/50 transition-colors">
+            {/* Header with Icon and Jewel Type */}
+            <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-gray-700">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-xl text-primary">
                         {item.jewel_type ? 'diamond' : 'public'}
                     </span>
                 </div>
-                <div>
-                    <span className="text-xs text-secondary-text block">Jewel Type</span>
-                    <span className="font-medium text-primary-text dark:text-white">
+                <div className="flex-1">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Jewel Type</span>
+                    <h3 className="font-bold text-lg text-primary dark:text-primary mt-0.5">
                         {item.jewel_type ? item.jewel_type.name : 'Universal'}
-                    </span>
-                </div>
-                <div>
-                    <span className="text-xs text-secondary-text block">Interest</span>
-                    <span className="font-bold text-lg text-emerald-600 dark:text-emerald-400">
-                        {parseFloat(item.rate)}%
-                    </span>
-                </div>
-
-                <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
-
-                <div>
-                    <span className="text-xs text-secondary-text block">Estimation</span>
-                    <span className="font-bold text-lg text-blue-600 dark:text-blue-400">
-                        {parseFloat(item.estimation_percentage)}%
-                    </span>
+                    </h3>
                 </div>
             </div>
 
-            <div className="flex items-center gap-6">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-3 gap-4">
+                <div className="flex flex-col">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Interest Rate</span>
+                    <div className="flex items-baseline gap-1">
+                        <span className="font-bold text-2xl text-gray-900 dark:text-white">{parseFloat(item.rate)}</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">%</span>
+                    </div>
+                </div>
 
+                <div className="flex flex-col">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Post Validity</span>
+                    <div className="flex items-baseline gap-1">
+                        {item.post_validity_rate ? (
+                            <>
+                                <span className="font-bold text-2xl text-gray-900 dark:text-white">{parseFloat(item.post_validity_rate)}</span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">%</span>
+                            </>
+                        ) : (
+                            <span className="text-2xl text-gray-400 dark:text-gray-600">—</span>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex flex-col">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Estimation</span>
+                    <div className="flex items-baseline gap-1">
+                        {item.estimation_percentage ? (
+                            <>
+                                <span className="font-bold text-2xl text-gray-900 dark:text-white">{parseFloat(item.estimation_percentage)}</span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">%</span>
+                            </>
+                        ) : (
+                            <span className="text-2xl text-gray-400 dark:text-gray-600">—</span>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );

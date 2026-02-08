@@ -118,7 +118,7 @@ const View: React.FC = () => {
                 >
                     <span className="material-symbols-outlined text-[24px]">arrow_back</span>
                 </button>
-                <h2 className="text-[#120e1b] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Repledge Details</h2>
+                <h2 className="text-[#120e1b] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Bank Pledge Details</h2>
                 <div className="flex gap-2">
                     <button
                         onClick={() => navigate(`/re-pledge/${id}/edit`)}
@@ -129,7 +129,7 @@ const View: React.FC = () => {
                     {can('repledge.delete') && (
                         <button
                             onClick={() => {
-                                if (confirm("Delete this repledge?")) {
+                                if (confirm("Delete this bank pledge?")) {
                                     api.delete(`/repledges/${id}`).then(() => {
                                         showToast("Deleted successfully", "success");
                                         navigate("/pledges", { state: { tab: 'repledges' } });
@@ -171,7 +171,7 @@ const View: React.FC = () => {
 
                 {/* 2. Repledge Details */}
                 <div className="flex flex-col gap-2">
-                    <h3 className="text-[#120e1b] dark:text-white text-base font-bold uppercase tracking-wider ml-1">Repledge Details</h3>
+                    <h3 className="text-[#120e1b] dark:text-white text-base font-bold uppercase tracking-wider ml-1">Bank Pledge Details</h3>
                     <div className="bg-white dark:bg-[#1e192b] rounded-xl shadow-sm border border-[#e5e7eb] dark:border-[#2d2d2d] overflow-hidden">
                         <div className="grid grid-cols-2 divide-x divide-[#f3f4f6] dark:divide-[#2d2d2d]">
                             {/* Row 1 */}
@@ -183,12 +183,12 @@ const View: React.FC = () => {
                                 </div>
                             </div>
                             <div className="flex flex-col gap-1 p-4 border-b border-[#f3f4f6] dark:border-[#2d2d2d]">
-                                <p className="text-[#6b7280] dark:text-[#9ca3af] text-xs font-medium uppercase">Repledge No</p>
+                                <p className="text-[#6b7280] dark:text-[#9ca3af] text-xs font-medium uppercase">Bank Pledge No</p>
                                 <p className="text-[#120e1b] dark:text-white text-sm font-semibold">{repledge.re_no}</p>
                             </div>
                             {/* Row 2 (Amount Highlight) */}
                             <div className="col-span-2 flex flex-col gap-1 p-4 border-b border-[#f3f4f6] dark:border-[#2d2d2d] bg-purple-50 dark:bg-purple-900/10">
-                                <p className="text-purple-600 text-xs font-medium uppercase">Repledge Amount</p>
+                                <p className="text-purple-600 text-xs font-medium uppercase">Bank Pledge Amount</p>
                                 <p className="text-[#120e1b] dark:text-white text-2xl font-bold">₹{Number(repledge.amount).toLocaleString()}</p>
                             </div>
                             {/* Row 3 */}
