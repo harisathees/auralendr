@@ -954,15 +954,15 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
 
       {/* Loan Details Section */}
       <section className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-green-100 dark:border-gray-700 mb-20">
-        <div className="flex items-center justify-between mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-primary">account_balance_wallet</span>
             <h3 className="text-gray-800 dark:text-white text-xl font-bold">Loan Details</h3>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto">
             <input
               value={loan.date} onChange={e => setLoan({ ...loan, date: e.target.value })}
-              className="w-27 h-9 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs px-2 shadow-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+              className="w-32 h-9 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs px-2 shadow-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
               type="date"
               required
               title="Date"
@@ -970,7 +970,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
             <span className="text-gray-400 text-xs material-symbols-outlined">arrow_forward</span>
             <input
               value={loan.due_date} readOnly
-              className="w-27 h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-500 text-xs px-2 shadow-sm cursor-not-allowed outline-none transition-all"
+              className="w-32 h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-500 text-xs px-2 shadow-sm cursor-not-allowed outline-none transition-all"
               type="date"
               title="Due Date"
             />

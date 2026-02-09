@@ -74,27 +74,28 @@ const Create: React.FC = () => {
           <h2 className="text-primary-text dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] text-center whitespace-nowrap">Create Pledge</h2>
         </div>
 
+        {/* Metal Rates - Responsive */}
         {(metalRates.gold || metalRates.silver) ? (
-          <div className="flex items-center gap-3 text-xs md:text-sm font-medium bg-gradient-to-r from-amber-50/50 to-slate-50/50 dark:from-amber-900/10 dark:to-slate-900/10 px-3 py-1.5 rounded-full border border-gray-100/50 dark:border-gray-700/30 shadow-sm transition-all hover:shadow-md cursor-default group shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-[10px] md:text-sm font-medium bg-gradient-to-r from-amber-50/50 to-slate-50/50 dark:from-amber-900/10 dark:to-slate-900/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-full border border-gray-100/50 dark:border-gray-700/30 shadow-sm transition-all hover:shadow-md cursor-default group shrink-0 min-w-[80px] sm:min-w-0 justify-center">
             {metalRates.gold && (
-              <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
-                <span className="relative flex h-2.5 w-2.5">
+              <span className="flex items-center gap-1 sm:gap-1.5 text-amber-700 dark:text-amber-400">
+                <span className="relative flex h-1.5 w-1.5 sm:h-2.5 sm:w-2.5 shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75 duration-1000"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2.5 sm:w-2.5 bg-amber-500"></span>
                 </span>
                 <span className="hidden sm:inline">Gold:</span>
-                <span className="sm:hidden">G:</span>
+                <span className="sm:hidden font-bold">G:</span>
                 ₹{metalRates.gold}
               </span>
             )}
             {metalRates.silver && (
-              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 border-l border-gray-200 dark:border-gray-700/50 pl-3">
-                <span className="relative flex h-2.5 w-2.5">
+              <span className="flex items-center gap-1 sm:gap-1.5 text-slate-600 dark:text-slate-400 sm:border-l border-gray-200 dark:border-gray-700/50 sm:pl-3">
+                <span className="relative flex h-1.5 w-1.5 sm:h-2.5 sm:w-2.5 shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75 duration-1000 delay-300"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-500"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2.5 sm:w-2.5 bg-slate-500"></span>
                 </span>
                 <span className="hidden sm:inline">Silver:</span>
-                <span className="sm:hidden">S:</span>
+                <span className="sm:hidden font-bold">S:</span>
                 ₹{metalRates.silver}
               </span>
             )}

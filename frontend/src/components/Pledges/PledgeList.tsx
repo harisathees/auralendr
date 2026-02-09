@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, X, SlidersHorizontal, Lock, Banknote, PlusCircle, CheckCircle, ChevronDown } from "lucide-react";
+import { Search, X, SlidersHorizontal, Lock, Banknote, PlusCircle, CheckCircle, ChevronDown, Trash2 } from "lucide-react";
 import { useRepledge } from "../../hooks/useRepledge";
 import { useAuth } from "../../context/Auth/AuthContext";
 import SecureImage from "../Shared/AudioAndImageFetch/SecureImage";
@@ -100,6 +100,18 @@ const PledgeList: React.FC<Props> = ({
     // Assuming parent 'onSearchChange' or search term update triggers refetch effectively or we need a prop to refetch.
     // For now, triggering a re-search with same term to refresh.
     onSearchChange(searchTerm);
+  };
+
+  const handleDelete = async (id: number | string) => {
+    if (window.confirm("Are you sure you want to delete this pledge? This action cannot be undone and will delete all associated data including loans and customers.")) {
+      try {
+        await import("../../api/apiClient").then(module => module.default.delete(`/pledges/${id}`));
+        onSearchChange(searchTerm);
+      } catch (error) {
+        console.error("Failed to delete pledge", error);
+        alert("Failed to delete pledge");
+      }
+    }
   };
 
   return (
@@ -210,8 +222,16 @@ const PledgeList: React.FC<Props> = ({
                             <SecureImage
                               onClick={(e: React.MouseEvent) => { e.stopPropagation(); navigate(`/pledges/${p.id}`); }}
                               className="w-14 h-14 rounded-2xl object-cover border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
-                              mediaId={p.media?.find((m: any) => m.category === 'customer_image')?.id}
-                              fallbackSrc={fixImageUrl(p.media?.find((m: any) => m.category === 'customer_image')?.url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
+                              mediaId={
+                                p.media?.find((m: any) => m.category === 'customer_image')?.id ||
+                                p.media?.find((m: any) => m.category === 'gold_image')?.id ||
+                                p.media?.find((m: any) => m.mime_type?.startsWith('image/'))?.id
+                              }
+                              fallbackSrc={
+                                fixImageUrl(p.media?.find((m: any) => m.category === 'customer_image')?.url) ||
+                                fixImageUrl(p.media?.find((m: any) => m.category === 'gold_image')?.url) ||
+                                `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`
+                              }
                               alt=""
                             />
                             <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-[#1A1D1F] ${p.status === 'closed' ? 'bg-rose-500' : 'bg-primary'}`} />
@@ -292,6 +312,16 @@ const PledgeList: React.FC<Props> = ({
                                       <CheckCircle size={16} />
                                       <span className="text-[9px] font-black uppercase mt-0.5">Close</span>
                                     </button>
+
+                                    {can('pledge.delete') && (
+                                      <button
+                                        onClick={() => handleDelete(p.id)}
+                                        className="h-11 flex flex-col items-center justify-center bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-100 transition-colors border border-red-100 dark:border-red-800/50"
+                                      >
+                                        <Trash2 size={16} />
+                                        <span className="text-[9px] font-black uppercase mt-0.5">Delete</span>
+                                      </button>
+                                    )}
                                   </>
                                 )}
                               </div>

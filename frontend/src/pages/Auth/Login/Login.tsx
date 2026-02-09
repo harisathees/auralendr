@@ -42,8 +42,9 @@ const Login: React.FC = () => {
       <div className="relative w-full flex-1 flex flex-col group/design-root overflow-x-hidden">
 
         {/* Top Header Section (Image) */}
-        <div className="relative w-full h-[220px] pt-safe-top flex flex-col items-center rounded-b-[2rem] shadow-sm z-0 overflow-hidden sm:bg-primary">
-          <img src="/assets/auralendr/auralendr.png" alt="Header Background" className="absolute inset-0 w-full h-full object-cover sm:hidden" />
+                {/* <div className="relative w-full h-[220px] pt-safe-top flex flex-col items-center rounded-b-[2rem] shadow-sm z-0 overflow-hidden sm:bg-primary">
+          <img src="/assets/auralendr/auralendr.png" alt="Header Background" className="absolute inset-0 w-full h-full object-cover sm:hidden" /> */}
+        <div className="relative w-full h-[220px] pt-safe-top flex flex-col items-center rounded-b-[2rem] shadow-sm z-0 overflow-hidden bg-primary">
         </div>
 
         {/* Floating Brand Icon */}

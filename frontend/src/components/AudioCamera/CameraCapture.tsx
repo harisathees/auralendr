@@ -167,16 +167,16 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
 
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
+    <div className="fixed inset-0 z-[100] bg-black">
       <div className="relative w-full h-full">
         {/* Header */}
-        <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-4 bg-black/50">
+        <div className="absolute top-0 left-0 right-0 z-10 flex justify-between items-center p-4 bg-gradient-to-b from-black/80 to-transparent">
           <Button
             type="button"
             onClick={onClose}
             variant="ghost"
             size="sm"
-            className="text-white hover:bg-white/20"
+            className="text-white hover:bg-white/20 rounded-full h-10 w-10 p-0"
           >
             <X className="w-6 h-6" />
           </Button>
@@ -187,7 +187,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
               onClick={switchCamera}
               variant="ghost"
               size="sm"
-              className="text-white hover:bg-white/20"
+              className="text-white hover:bg-white/20 rounded-full h-10 w-10 p-0"
             >
               <RotateCcw className="w-6 h-6" />
             </Button>
@@ -206,16 +206,22 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
 
             {/* Passport Photo Frame Overlay */}
             <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
-              <div className="w-40 h-52 border-4 border-white rounded-md"></div>
+              <div className="w-[70%] aspect-[4/5] border-2 border-white/50 rounded-lg relative overflow-hidden shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]">
+                {/* Corner markers */}
+                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-sm"></div>
+                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-sm"></div>
+                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-sm"></div>
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-sm"></div>
+              </div>
             </div>
 
             {/* Capture Button */}
             {isStreaming && (
-              <div className="absolute bottom-25 left-1/2 transform -translate-x-1/2">
+              <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-20">
                 <Button
                   type="button"
                   onClick={capturePhoto}
-                  className="w-16 h-16 rounded-full bg-white border-4 border-gray-300 hover:bg-gray-100"
+                  className="w-20 h-20 rounded-full bg-white border-4 border-gray-300 hover:bg-gray-100 shadow-xl transition-transform active:scale-95 flex items-center justify-center"
                 >
                   <Camera className="w-8 h-8 text-gray-800" />
                 </Button>
@@ -228,24 +234,24 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
             <img
               src={capturedImage}
               alt="Captured"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain bg-black"
             />
 
             {/* Action Buttons */}
-            <div className="absolute bottom-25 left-1/2 transform -translate-x-1/2 flex gap-4">
+            <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-8 z-20">
               <Button
                 type="button"
                 onClick={retakePhoto}
-                className="w-12 h-12 rounded-full bg-gray-600 hover:bg-gray-700 text-white"
+                className="w-16 h-16 rounded-full bg-gray-600/90 hover:bg-gray-700 backdrop-blur-sm text-white shadow-lg border-2 border-white/20"
               >
-                <X className="w-6 h-6" />
+                <RotateCcw className="w-7 h-7" />
               </Button>
               <Button
                 type="button"
                 onClick={confirmCapture}
-                className="w-12 h-12 rounded-full bg-green-600 hover:bg-green-700 text-white"
+                className="w-16 h-16 rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg border-2 border-white/20"
               >
-                <Check className="w-6 h-6" />
+                <Check className="w-8 h-8" />
               </Button>
             </div>
           </>
