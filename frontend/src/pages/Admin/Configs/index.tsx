@@ -1,11 +1,11 @@
 import React, { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/Auth/AuthContext";
 import { Lock } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 const AdminConfigs: React.FC = () => {
-    const { user, can } = useAuth();
+    const { user, can, enableTransactions, enableTasks, enableBankPledge } = useAuth();
     const isAdmin = user?.role === 'admin';
 
     const [expandedGroup, setExpandedGroup] = React.useState<string | null>(null);
@@ -36,12 +36,13 @@ const AdminConfigs: React.FC = () => {
                         link: "/admin/configs/metal-rates"
                     },
                     {
-                        title: "Repledge Sources",
-                        description: "Manage repledge institutions",
+                        title: "Bank Pledge Sources",
+                        description: "Manage bank pledge institutions",
                         icon: "account_balance",
                         color: "text-cyan-600",
                         bg: "bg-cyan-100",
-                        link: "/admin/configs/repledge-sources"
+                        link: "/admin/configs/repledge-sources",
+                        requiresBankPledge: true
                     },
                     {
                         title: "Transaction Categories",
@@ -126,20 +127,22 @@ const AdminConfigs: React.FC = () => {
                         link: "/admin/configs/pledge-closing-calculations"
                     },
                     {
-                        title: "Repledge Schemes",
-                        description: "Repledge closing settings",
+                        title: "Bank Pledge Schemes",
+                        description: "Bank pledge closing settings",
                         icon: "functions",
                         color: "text-green-600",
                         bg: "bg-green-100",
-                        link: "/admin/configs/repledge-closing-calculations"
+                        link: "/admin/configs/repledge-closing-calculations",
+                        requiresBankPledge: true
                     },
                     {
-                        title: "Repledge Processing Fees",
-                        description: "Repledge processing fees",
+                        title: "Bank Pledge Processing Fees",
+                        description: "Bank pledge processing fees",
                         icon: "request_quote",
                         color: "text-purple-600",
                         bg: "bg-purple-100",
-                        link: "/admin/configs/repledge-processing-fees"
+                        link: "/admin/configs/repledge-processing-fees",
+                        requiresBankPledge: true
                     },
                 ]
             },
@@ -264,24 +267,36 @@ const AdminConfigs: React.FC = () => {
             }
         ];
 
-        // Filter
+        // Filter out items based on feature toggles and permissions
         const isDeveloper = user?.role === 'developer';
 
         return groups.filter(group => {
+            // Filter Templates group for developers only
             if (group.title === "Templates" && !isDeveloper) return false;
             return true;
         }).map(group => ({
             ...group,
             items: group.items.filter(item => {
-                if (item.title === "Banks to Repledge" && !isAdmin) return false;
+                // Filter Bank Pledge items
+                if (item.requiresBankPledge && !enableBankPledge) return false;
 
                 // Developer Restricted Items
                 if ((item.title === "Branches" || item.title === "Brand Kit") && !isDeveloper) return false;
 
+                // Transaction Restricted Items
+                if (item.title === "Payment Methods" && !enableTransactions) return false;
+                if (item.title === "Transaction Categories" && !enableTransactions) return false;
+
+                // Task Restricted Items
+                if (item.title === "Tasks" && !enableTasks) return false;
+
+                // Permission-based filtering
+                if (item.permission && !can(item.permission)) return false;
+
                 return true;
             })
-        }));
-    }, [isAdmin, user?.role]);
+        })).filter(group => group.items.length > 0); // Remove empty groups
+    }, [user?.role, enableTransactions, enableTasks, enableBankPledge, can]);
 
     const renderIcon = (iconName: string, colorClass: string) => {
         if (iconName === 'whatsapp_logo') {

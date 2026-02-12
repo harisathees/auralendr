@@ -75,27 +75,37 @@ class LoanPaymentController extends Controller
                     $loan->refresh(); // Refresh to get updated balance_amount
                 }
 
-                // 3. Handle Money Source (Income)
-                $moneySource->increment('balance', $totalAmount);
+                // 3. Handle Money Source (Income) & Transactions if Enabled
+                // Check if transactions are enabled for this branch (or globally)
+                $transactionSetting = \App\Models\Settings::where('key', 'enable_transactions')
+                    ->where(function ($q) use ($request) {
+                        $q->where('branch_id', $request->user()->branch_id)
+                            ->orWhereNull('branch_id');
+                    })
+                    ->orderByDesc('branch_id') // Prefer branch-specific setting
+                    ->first();
 
-                // 4. Create Transaction(s)
-                // We can create one transaction for the total, or split them.
-                // For simplicity and Dashboard Reporting, let's create ONE transaction linked to the Payment.
-                // If dashboard needs split, it can query LoanPayment details.
-                // However, transaction category might be useful.
+                $enableTransactions = $transactionSetting ? (bool) $transactionSetting->value : true; // Default true
 
-                Transaction::create([
-                    'branch_id' => $request->user()->branch_id, // Ensure user has branch_id
-                    'money_source_id' => $moneySource->id,
-                    'type' => 'credit',
-                    'amount' => $totalAmount,
-                    'date' => $validated['payment_date'],
-                    'description' => "Partial Payment for Loan #{$loan->loan_no}",
-                    'category' => 'loan_repayment',
-                    'transactionable_type' => LoanPayment::class,
-                    'transactionable_id' => $payment->id,
-                    'created_by' => $request->user()->id,
-                ]);
+                if ($enableTransactions) {
+                    $moneySource->increment('balance', $totalAmount);
+
+                    // 4. Create Transaction(s)
+                    Transaction::create([
+                        'branch_id' => $request->user()->branch_id, // Ensure user has branch_id
+                        'money_source_id' => $moneySource->id,
+                        'type' => 'credit',
+                        'amount' => $totalAmount,
+                        'date' => $validated['payment_date'],
+                        'description' => "Partial Payment for Loan #{$loan->loan_no}",
+                        'category' => 'loan_repayment',
+                        'transactionable_type' => LoanPayment::class,
+                        'transactionable_id' => $payment->id,
+                        'created_by' => $request->user()->id,
+                    ]);
+                } else {
+                    Log::info('Transaction skipped for Loan Payment due to settings', ['loan_id' => $loan->id, 'enable_transactions' => $enableTransactions]);
+                }
 
                 // Create Activity Log
                 \App\Models\Activity::create([

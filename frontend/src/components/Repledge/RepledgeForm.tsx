@@ -4,6 +4,7 @@ import { useRepledge } from "../../hooks/useRepledge";
 import { useToast } from "../../context";
 import api from "../../api/apiClient";
 import CustomDropdown from "../Shared/CustomDropdown";
+import { useAuth } from "../../context/Auth/AuthContext";
 
 import type { RepledgeItem } from "../../types/models";
 
@@ -19,6 +20,24 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
     const { sources, loading: sourcesLoading } = useRepledgeSource();
     const { fetchLoanDetails } = useRepledge();
     const { showToast } = useToast();
+    const { user: _user } = useAuth(); // Import useAuth to get user role
+
+    // Admin Branch Selection State
+    const [branches, setBranches] = useState<any[]>([]);
+    const [selectedBranchId, setSelectedBranchId] = useState<string>("");
+
+    useEffect(() => {
+        if (_user?.role === 'admin' || _user?.role === 'superadmin' || _user?.role === 'developer') {
+            api.get('/branches').then(res => {
+                setBranches(res.data);
+                if ((initialData as any)?.branch_id) {
+                    setSelectedBranchId(String((initialData as any).branch_id));
+                } else if (_user.branch_id) {
+                    setSelectedBranchId(String(_user.branch_id));
+                }
+            });
+        }
+    }, [_user, initialData]);
 
     // Global State
     const [status, setStatus] = useState("active");
@@ -358,6 +377,7 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
 
         const payload = {
             repledge_source_id: primarySourceId, // Top level might be legacy or for grouping
+            branch_id: selectedBranchId || null, // Add branch_id
             status,
             start_date: items.length > 0 ? items[0].startDate : (() => {
                 const d = new Date();
@@ -386,6 +406,29 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
 
     return (
         <div className="flex flex-col gap-5 p-2 pb-48 w-full max-w-7xl mx-auto min-h-full overflow-y-auto bg-[#f7f8fc] dark:bg-[#1F1B2E]">
+
+            {/* Branch Selection (Admin Only) */}
+            {branches.length > 0 && (
+                <div className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-purple-100 dark:border-gray-800">
+                    <div className="flex items-center gap-2 mb-3">
+                        <span className="material-symbols-outlined text-purple-600 dark:text-purple-400">store</span>
+                        <h3 className="font-bold text-gray-900 dark:text-white text-base">Branch Details</h3>
+                    </div>
+                    <label className="flex flex-col gap-1.5">
+                        <span className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase">Select Branch</span>
+                        <div className="relative">
+                            <CustomDropdown
+                                value={selectedBranchId}
+                                onChange={(val) => setSelectedBranchId(val)}
+                                options={branches.map(b => ({ value: String(b.id), label: b.branch_name }))}
+                                placeholder="Select a branch"
+                                className="h-12"
+                            />
+                        </div>
+                    </label>
+                </div>
+            )}
+
             {/* Item Details Cards */}
             {items.map((item, index) => (
                 <div key={item.id || index} className="flex flex-col rounded-xl bg-white dark:bg-gray-900 shadow-sm border border-gray-100 dark:border-gray-800 relative group overflow-hidden">
@@ -428,7 +471,7 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex-1">
                                         <div className="flex justify-between items-center mb-1.5">
-                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Repledge Source</label>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Bank Pledge Source</label>
                                             {onSettingsClick && (
                                                 <button type="button" onClick={onSettingsClick} className="text-xs text-purple-600 font-bold hover:underline flex items-center gap-1">
                                                     <span className="material-symbols-outlined text-[14px]">settings</span> Manage
@@ -540,8 +583,8 @@ const RepledgeForm: React.FC<Props> = ({ initialData, onSubmit, loading = false,
                         </div>
 
                         <label className="flex flex-col w-full gap-1.5">
-                            <span className="text-gray-400 text-sm font-medium">Re-Pledge No.</span>
-                            <input type="text" value={item.reNo} onChange={(e) => handleItemChange(index, "reNo", e.target.value)} className={inputClass} placeholder="Enter Re-pledge number" />
+                            <span className="text-gray-400 text-sm font-medium">Bank Pledge No.</span>
+                            <input type="text" value={item.reNo} onChange={(e) => handleItemChange(index, "reNo", e.target.value)} className={inputClass} placeholder="Enter Bank Pledge number" />
                         </label>
 
                         <div className="grid grid-cols-3 gap-4">

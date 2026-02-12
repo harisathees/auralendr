@@ -11,13 +11,13 @@ const List: React.FC = () => {
         fetchRepledgeEntries();
     }, [fetchRepledgeEntries]);
 
-    if (loading && repledgeEntries.length === 0) return <GoldCoinSpinner text="Loading Repledges..." />;
+    if (loading && repledgeEntries.length === 0) return <GoldCoinSpinner text="Loading Bank Pledges..." />;
 
     return (
         <div className="flex flex-col h-full bg-[#f7f8fc] dark:bg-gray-900">
             <header className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-10">
                 <div>
-                    <h1 className="text-2xl font-bold text-primary-text dark:text-white">Repledges</h1>
+                    <h1 className="text-2xl font-bold text-primary-text dark:text-white">Bank Pledges</h1>
                     <p className="text-sm text-secondary-text dark:text-gray-400">Manage external re-pledged items</p>
                 </div>
                 <Link
@@ -25,7 +25,7 @@ const List: React.FC = () => {
                     className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-lg shadow-purple-600/30 transition-all"
                 >
                     <span className="material-symbols-outlined">add</span>
-                    New Repledge
+                    New Bank Pledge
                 </Link>
             </header>
 
@@ -83,7 +83,7 @@ const List: React.FC = () => {
                     {repledgeEntries.length === 0 && !loading && (
                         <div className="text-center py-20 text-gray-400">
                             <span className="material-symbols-outlined text-6xl mb-4">move_item</span>
-                            <p>No repledges found.</p>
+                            <p>No bank pledges found.</p>
                         </div>
                     )}
                 </div>

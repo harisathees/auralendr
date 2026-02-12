@@ -30,7 +30,7 @@ const RepledgeProcessingFees: React.FC = () => {
                 setRepledgeFees(feesRes.data);
             } catch (error) {
                 console.error("Failed to fetch data", error);
-                showToast("Failed to load repledge fees", "error");
+                showToast("Failed to load bank pledge fees", "error");
             } finally {
                 setLoading(false);
             }
@@ -70,11 +70,11 @@ const RepledgeProcessingFees: React.FC = () => {
                     return [...prev, res.data];
                 }
             });
-            showToast("Repledge fee updated successfully", "success");
+            showToast("Bank Pledge fee updated successfully", "success");
 
         } catch (error) {
             console.error("Failed to save repledge fee", error);
-            showToast("Failed to save repledge fee", "error");
+            showToast("Failed to save bank pledge fee", "error");
         } finally {
             setSaving(null);
         }
@@ -91,10 +91,10 @@ const RepledgeProcessingFees: React.FC = () => {
                             <span className="material-symbols-outlined">arrow_back</span>
                         </Link>
                         <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
-                            Repledge Fees
+                            Bank Pledge Fees
                         </h2>
                     </div>
-                    <p className="text-secondary-text dark:text-gray-400 ml-8 text-sm">Configure global repledge processing fees per Jewel Type</p>
+                    <p className="text-secondary-text dark:text-gray-400 ml-8 text-sm">Configure global bank pledge processing fees per Jewel Type</p>
                 </div>
             </header>
 

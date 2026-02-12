@@ -17,7 +17,13 @@ class Pledge extends Model
         'updated_by',
         'status',
         'reference_no',
-        'approval_status'
+        'approval_status',
+        'total_weight',
+        'total_pieces',
+        'total_stone_weight',
+        'total_weight_reduction',
+        'total_net_weight',
+        'jewel_types_summary'
     ];
 
     public function pendingApproval()
@@ -29,7 +35,7 @@ class Pledge extends Model
     {
         return $this->belongsTo(Customer::class);
     }
-// @phpstan-ignore-next-line
+    // @phpstan-ignore-next-line
     public function loan()
     {
         return $this->hasOne(Loan::class);

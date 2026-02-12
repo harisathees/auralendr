@@ -1,0 +1,17 @@
+{
+    "id": 1,
+    "name": "Scheme 1 (Maximum Interest)",
+    "slug": "scheme-1",
+    "description": null,
+    "interest_rate": 2,
+    "interest_period": "monthly",
+    "calculation_type": "tiered",
+    "scheme_config": {
+        "validity_months": 12,
+        "surcharge_rate": 2.5
+    },
+    "status": "active",
+    "created_at": "2026-01-27T14:12:59.000000Z",
+    "updated_at": "2026-01-27T14:12:59.000000Z",
+    "deleted_at": null
+}

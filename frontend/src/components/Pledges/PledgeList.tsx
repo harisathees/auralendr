@@ -36,7 +36,7 @@ const PledgeList: React.FC<Props> = ({
   onLoansPageChange
 }) => {
   const navigate = useNavigate();
-  const { can } = useAuth();
+  const { can, enableBankPledge } = useAuth();
   const [expandedPledgeId, setExpandedPledgeId] = useState<number | string | null>(null);
   const { repledgeEntries, fetchRepledgeEntries, loading: repledgeLoading, currentPage: repledgePage, totalPages: repledgeTotalPages, setCurrentPage: setRepledgePage } = useRepledge();
 
@@ -140,15 +140,17 @@ const PledgeList: React.FC<Props> = ({
           >
             Pledges
           </button>
-          <button
-            onClick={() => onTabChange('repledges')}
-            className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${activeTab === 'repledges'
-              ? 'bg-white dark:bg-gray-800 text-purple-600 shadow-sm ring-1 ring-black/5'
-              : 'text-gray-400 dark:text-gray-500 hover:text-gray-600'
-              }`}
-          >
-            Repledges
-          </button>
+          {enableBankPledge && (
+            <button
+              onClick={() => onTabChange('repledges')}
+              className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${activeTab === 'repledges'
+                ? 'bg-white dark:bg-gray-800 text-purple-600 shadow-sm ring-1 ring-black/5'
+                : 'text-gray-400 dark:text-gray-500 hover:text-gray-600'
+                }`}
+            >
+              Bank Pledges
+            </button>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -157,7 +159,7 @@ const PledgeList: React.FC<Props> = ({
             <Search className="absolute left-4 text-gray-400 group-focus-within:text-primary transition-colors w-5 h-5" />
             <input
               type="text"
-              placeholder={activeTab === 'loans' ? "Search loans, customers..." : "Search re-no, sources, customer..."}
+              placeholder={activeTab === 'loans' ? "Search loans, customers..." : "Search bank pledges, sources, customer..."}
               className="w-full h-12 pl-12 pr-12 text-sm bg-gray-50 dark:bg-[#1A1D1F] border border-gray-100 dark:border-gray-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-gray-900 dark:text-white placeholder-gray-400 font-bold"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -356,7 +358,7 @@ const PledgeList: React.FC<Props> = ({
                   Locked Section
                 </h3>
                 <p className="text-sm text-gray-500 max-w-[200px]">
-                  Permissions required for Repledges module.
+                  Permissions required for Bank Pledges module.
                 </p>
               </div>
             ) : (
@@ -364,14 +366,14 @@ const PledgeList: React.FC<Props> = ({
                 {repledgeLoading ? (
                   <div className="flex flex-col items-center justify-center py-24 gap-3">
                     <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-gray-100 dark:border-gray-800 border-t-purple-600 shadow-sm"></div>
-                    <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest animate-pulse">Loading repledges...</p>
+                    <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest animate-pulse">Loading bank pledges...</p>
                   </div>
                 ) : (
                   <div className="space-y-4 pb-12">
                     {repledgeEntries.length === 0 && (
                       <div className="text-center text-gray-500 py-16">
                         <span className="material-symbols-outlined text-6xl opacity-10 mb-2">autorenew</span>
-                        <p className="font-bold">No repledges recorded</p>
+                        <p className="font-bold">No bank pledges recorded</p>
                       </div>
                     )}
                     {repledgeEntries.map((item, index) => {

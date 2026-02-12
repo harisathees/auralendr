@@ -76,7 +76,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
             </button>
 
             {/* Dropdown Menu */}
-            <div className={`absolute z-50 left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-xl overflow-hidden transition-all duration-200 origin-top
+            <div className={`absolute z-[60] left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-xl overflow-hidden transition-all duration-200 origin-top
                 ${isOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'}
             `}>
                 <div className="max-h-68 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
@@ -86,27 +86,29 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
                                 key={option.value}
                                 type="button"
                                 onClick={() => handleSelect(option.value)}
-                                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors text-left
+                                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors text-left font-medium
                                     ${(value?.toString() === option.value.toString())
-                                        ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300'
-                                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'}
+                                        ? 'bg-purple-50 dark:bg-purple-900/40 text-purple-900 dark:text-purple-100'
+                                        : 'text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'}
                                 `}
                             >
-                                <div className="flex flex-col truncate">
-                                    <span className="font-medium truncate">{option.label}</span>
+                                <div className="flex-1 min-w-0 pr-2">
+                                    <div className="truncate font-bold text-sm">
+                                        {option.label}
+                                    </div>
                                     {option.subLabel && (
-                                        <span className={`text-[11px] truncate ${value?.toString() === option.value.toString() ? 'text-purple-600/70 dark:text-purple-400/70' : 'text-gray-400 dark:text-gray-500'}`}>
+                                        <div className={`truncate text-xs mt-0.5 ${value?.toString() === option.value.toString() ? 'text-purple-700 dark:text-purple-300' : 'text-gray-500 dark:text-gray-400'}`}>
                                             {option.subLabel}
-                                        </span>
+                                        </div>
                                     )}
                                 </div>
                                 {(value?.toString() === option.value.toString()) && (
-                                    <span className="material-symbols-outlined text-lg ml-2 flex-shrink-0">check</span>
+                                    <span className="material-symbols-outlined text-lg opacity-100 font-bold ml-2">check</span>
                                 )}
                             </button>
                         ))
                     ) : (
-                        <div className="px-4 py-3 text-sm text-gray-500 text-center">No options available</div>
+                        <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center font-medium">No options available</div>
                     )}
                 </div>
             </div>

@@ -7,7 +7,7 @@ import { useToast } from "../../context/Toast/ToastContext";
 
 const Create: React.FC = () => {
   const navigate = useNavigate();
-  const { can, user } = useAuth();
+  const { can, user, enableReceiptPrint } = useAuth();
   const toast = useToast();
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -29,7 +29,11 @@ const Create: React.FC = () => {
         return;
       } else {
         toast.success("Pledge created successfully!");
-        navigate("/pledges");
+        if (enableReceiptPrint) {
+          navigate("/pledges/receipt", { state: { id: response.data.data.id } });
+        } else {
+          navigate("/pledges");
+        }
       }
     } catch (err: any) {
       console.error("Failed to create pledge", err);

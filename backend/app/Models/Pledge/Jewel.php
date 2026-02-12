@@ -10,8 +10,16 @@ class Jewel extends Model
     use HasFactory;
 
     protected $fillable = [
-        'pledge_id','jewel_type','quality','description',
-        'pieces','weight','stone_weight','net_weight','faults'
+        'pledge_id',
+        'jewel_type',
+        'quality',
+        'description',
+        'pieces',
+        'weight',
+        'stone_weight',
+        'weight_reduction',
+        'net_weight',
+        'faults'
     ];
 
     public function pledge()

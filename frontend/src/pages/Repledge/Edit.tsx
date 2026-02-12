@@ -34,15 +34,15 @@ const Edit: React.FC = () => {
     const handleSubmit = async (data: any) => {
         try {
             await api.put(`/repledges/${id}`, data);
-            showToast("Repledge updated successfully", "success");
+            showToast("Bank Pledge updated successfully", "success");
             navigate("/repledge");
         } catch (error) {
             console.error(error);
-            showToast("Failed to update repledge", "error");
+            showToast("Failed to update bank pledge", "error");
         }
     };
 
-    if (loading) return <GoldCoinSpinner text="Loading Repledge..." />;
+    if (loading) return <GoldCoinSpinner text="Loading Bank Pledge..." />;
 
     return (
         <div className="flex flex-col h-full bg-[#f7f8fc] dark:bg-gray-900">
@@ -50,7 +50,7 @@ const Edit: React.FC = () => {
                 <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
                     <span className="material-symbols-outlined text-gray-600 dark:text-gray-300">arrow_back</span>
                 </button>
-                <h1 className="text-xl font-bold text-primary-text dark:text-white">Edit Repledge</h1>
+                <h1 className="text-xl font-bold text-primary-text dark:text-white">Edit Bank Pledge</h1>
             </header>
 
             <main className="flex-1 overflow-y-auto no-scrollbar p-6 max-w-5xl mx-auto w-full">
@@ -58,7 +58,7 @@ const Edit: React.FC = () => {
                     <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
                         <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">lock</span>
                         <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Access Denied</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">You don't have permission to edit repledges.</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">You don't have permission to edit bank pledges.</p>
                         <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-left">
                             <p><strong>Debug Info:</strong></p>
                             <p>Check: repledge.update</p>

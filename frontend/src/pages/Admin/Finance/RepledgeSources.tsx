@@ -82,8 +82,8 @@ const RepledgeSources: React.FC = () => {
                         <span className="material-symbols-outlined text-purple-600 dark:text-purple-400">account_balance</span>
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold text-primary-text dark:text-white">Repledge Sources</h1>
-                        <p className="text-xs text-secondary-text dark:text-gray-400">Manage external sources for repledging</p>
+                        <h1 className="text-xl font-bold text-primary-text dark:text-white">Bank Pledge Sources</h1>
+                        <p className="text-xs text-secondary-text dark:text-gray-400">Manage external sources for bank pledging</p>
                     </div>
                 </div>
                 <button
@@ -157,7 +157,7 @@ const RepledgeSources: React.FC = () => {
                         {sources.length === 0 && (
                             <div className="col-span-full text-center p-12 bg-gray-50 dark:bg-gray-800/50 rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-gray-700">
                                 <span className="material-symbols-outlined text-5xl text-gray-300 dark:text-gray-600 mb-4">account_balance</span>
-                                <p className="text-gray-500 dark:text-gray-400 font-medium">No repledge sources configured yet.</p>
+                                <p className="text-gray-500 dark:text-gray-400 font-medium">No bank pledge sources configured yet.</p>
                                 <button onClick={handleOpenCreate} className="mt-4 px-6 py-2 bg-primary text-white rounded-full font-bold shadow-lg shadow-primary/30 hover:bg-primary-dark transition-all">
                                     Add your first source
                                 </button>
@@ -184,7 +184,7 @@ const RepledgeSources: React.FC = () => {
             <ConfirmationModal
                 isOpen={isDeleteOpen}
                 title="Delete Source?"
-                message="Are you sure you want to delete this source? This might affect existing repledges."
+                message="Are you sure you want to delete this source? This might affect existing bank pledges."
                 onConfirm={handleConfirmDelete}
                 onCancel={() => setIsDeleteOpen(false)}
                 confirmLabel="Delete Source"

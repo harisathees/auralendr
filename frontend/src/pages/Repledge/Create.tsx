@@ -15,11 +15,11 @@ const Create: React.FC = () => {
     const handleSubmit = async (data: any) => {
         try {
             await saveRepledgeEntry(data);
-            showToast("Repledge created successfully", "success");
+            showToast("Bank Pledge created successfully", "success");
             navigate("/repledge");
         } catch (error) {
             console.error(error);
-            showToast("Failed to create repledge", "error");
+            showToast("Failed to create bank pledge", "error");
         }
     };
 
@@ -46,7 +46,7 @@ const Create: React.FC = () => {
                 </button>
 
                 <div className="flex-1 flex justify-center">
-                    <h2 className="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] text-center whitespace-nowrap">Create Repledge</h2>
+                    <h2 className="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] text-center whitespace-nowrap">Create Bank Pledge</h2>
                 </div>
 
                 {(metalRates.gold || metalRates.silver) ? (
@@ -84,7 +84,7 @@ const Create: React.FC = () => {
                     <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
                         <span className="material-symbols-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">lock</span>
                         <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Access Denied</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">You don't have permission to create repledges.</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">You don't have permission to create bank pledges.</p>
                         <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs text-left">
                             <p><strong>ASK ADMIN TO ACCESS</strong></p>
                         </div>

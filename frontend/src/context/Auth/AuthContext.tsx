@@ -18,6 +18,13 @@ interface AuthContextType {
   can: (permission: string) => boolean;
   booting: boolean;
   refreshUser: () => Promise<void>;
+  enableTransactions: boolean;
+  enableTasks: boolean;
+  enableReceiptPrint: boolean;
+  enableEstimatedAmount: boolean;
+  enableBankPledge: boolean;
+  noBranchMode: boolean;
+  enableApprovals: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -54,6 +61,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   );
 
   const [user, setUser] = useState<User | null>(getUserFromStorage());
+  const [enableTransactions, setEnableTransactions] = useState<boolean>(false); // Default false
+  const [enableTasks, setEnableTasks] = useState<boolean>(false); // Default false
+  const [enableReceiptPrint, setEnableReceiptPrint] = useState<boolean>(false); // Default true
+  const [enableEstimatedAmount, setEnableEstimatedAmount] = useState<boolean>(false); // Default false
+  const [enableBankPledge, setEnableBankPledge] = useState<boolean>(false); // Default false
+  const [noBranchMode, setNoBranchMode] = useState<boolean>(false); // Default false
+  const [enableApprovals, setEnableApprovals] = useState<boolean>(false); // Default false
+
 
   const logout = async (): Promise<void> => {
     // Only call API if we think we have a session
@@ -122,7 +137,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Safe User Fetching
   const fetchUser = async () => {
     try {
-      const res = await authService.me();
+      const [userRes, settingsRes] = await Promise.all([
+        authService.me(),
+        api.get('/developer/settings/resolve').catch(() => ({ data: { enable_transactions: false, enable_tasks: false, enable_receipt_print: false, enable_estimated_amount: false, enable_bank_pledge: false, no_branch_mode: false, enable_approvals: false } }))
+      ]);
+
+      const res = userRes;
       const userData: User = {
         id: res.data.id,
         name: res.data.name,
@@ -136,6 +156,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       };
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
+
+      if (settingsRes.data) {
+        setEnableTransactions(!!settingsRes.data.enable_transactions);
+        setEnableTasks(!!settingsRes.data.enable_tasks);
+        setEnableReceiptPrint(!!settingsRes.data.enable_receipt_print);
+        setEnableEstimatedAmount(!!settingsRes.data.enable_estimated_amount);
+        setEnableBankPledge(settingsRes.data.enable_bank_pledge !== undefined ? !!settingsRes.data.enable_bank_pledge : false);
+        setNoBranchMode(settingsRes.data.no_branch_mode !== undefined ? !!settingsRes.data.no_branch_mode : false);
+        setEnableApprovals(settingsRes.data.enable_approvals !== undefined ? !!settingsRes.data.enable_approvals : false);
+      }
+
     } catch (error: any) {
       if (error.response?.status === 401) {
         logout();
@@ -162,20 +193,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // 💓 Heartbeat: Check session validity every 60s
   useEffect(() => {
-  if (!token || booting) return; // Don't run during boot
+    if (!token || booting) return; // Don't run during boot
 
-  const interval = setInterval(() => {
-    authService.me().catch(() => {
-      // Interceptor or global handler will catch 401
-    });
-  }, 60 * 60 * 1000); // 1 hour
+    const interval = setInterval(() => {
+      authService.me().catch(() => {
+        // Interceptor or global handler will catch 401
+      });
+    }, 60 * 60 * 1000); // 1 hour
 
-  return () => clearInterval(interval);
-}, [token, booting]);
+    return () => clearInterval(interval);
+  }, [token, booting]);
 
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, can, booting, refreshUser: fetchUser }}>
+    <AuthContext.Provider value={{ token, user, login, logout, can, booting, refreshUser: fetchUser, enableTransactions, enableTasks, enableReceiptPrint, enableEstimatedAmount, enableBankPledge, noBranchMode, enableApprovals }}>
       {children}
     </AuthContext.Provider>
   );

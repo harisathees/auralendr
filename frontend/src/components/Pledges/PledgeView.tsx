@@ -90,7 +90,7 @@ import { useAuth } from "../../context/Auth/AuthContext";
 
 const PledgeView: React.FC<Props> = ({ data }) => {
   const navigate = useNavigate();
-  const { can } = useAuth();
+  const { can, enableReceiptPrint } = useAuth();
   const { customer, loan, jewels = [], media = [] } = data;
 
   // Organize Media by Category
@@ -153,13 +153,15 @@ const PledgeView: React.FC<Props> = ({ data }) => {
         )}
 
         <div className="flex items-center gap-3 z-10">
-          <button
-            onClick={() => navigate(`/pledges/${data.id}/receipt`)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-full hover:bg-indigo-700 transition-colors shadow-sm"
-          >
-            <span className="material-symbols-outlined text-[18px]">print</span>
-            <span>Receipt</span>
-          </button>
+          {enableReceiptPrint && (
+            <button
+              onClick={() => navigate(`/pledges/${data.id}/receipt`)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-full hover:bg-indigo-700 transition-colors shadow-sm"
+            >
+              <span className="material-symbols-outlined text-[18px]">print</span>
+              <span>Receipt</span>
+            </button>
+          )}
 
 
         </div>
@@ -373,21 +375,24 @@ const PledgeView: React.FC<Props> = ({ data }) => {
                     <ReadOnlyField label="Weight (g)" value={jewel.weight} />
                     <ReadOnlyField label="Stone Weight (g)" value={jewel.stone_weight} />
                   </div>
-                  <ReadOnlyField label="Net Weight (g)" value={jewel.net_weight} />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <ReadOnlyField label="Weight Reduction (g)" value={jewel.weight_reduction} />
+                    <ReadOnlyField label="Net Weight (g)" value={jewel.net_weight} />
+                  </div>
+
+                  {/* Jewel Image */}
+                  <div className="mt-4 pt-4 border-t border-dashed border-gray-200 dark:border-gray-700">
+                    <div className="h-40 w-full md:w-1/2">
+                      <MediaDisplay
+                        label={`Jewel ${index + 1}`}
+                        icon="diamond"
+                        mediaItem={media.find((m: any) => m.jewel_id === jewel.id)}
+                      />
+                    </div>
+                  </div>
                 </div>
               ))}
-
-              {/* Slot 2: Jewel Image */}
-              <div className="flex flex-col gap-3 pt-6 mt-4 border-t border-gray-100 dark:border-gray-700">
-                <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">Jewel Images</span>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-                  <MediaDisplay
-                    label="Jewel Photo"
-                    icon="camera_alt"
-                    mediaItem={mediaMap['jewel_image'] || media.find((m: any) => m.category === 'jewel_image' || m.collection_name === 'jewel_image')}
-                  />
-                </div>
-              </div>
             </section>
 
             {/* Loan Details Section */}
