@@ -48,6 +48,7 @@ const RepledgeView = lazy(() => import("../pages/Repledge/View"));
 const CloseRepledge = lazy(() => import("../pages/Repledge/CloseRepledge"));
 const Privileges = lazy(() => import("../pages/Staff/Privileges/Privileges"));
 const ActivityLog = lazy(() => import("../pages/Staff/Activities/ActivityLog"));
+const CashReconciliation = lazy(() => import("../pages/Staff/Reconciliation/CashReconciliation"));
 
 const MetalRates = lazy(() => import("../pages/Admin/Finance/MetalRates"));
 const StaffMetalRates = lazy(() => import("../pages/Staff/Privileges/MetalRates"));
@@ -151,6 +152,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/privileges" element={<Privileges />} />
         <Route path="/privileges/metal-rates" element={<StaffMetalRates />} />
         <Route path="/activities" element={<ActivityLog />} />
+        <Route path="/staff/reconciliation" element={<CashReconciliation />} />
       </Route>
 
       {/* Admin Routes */}

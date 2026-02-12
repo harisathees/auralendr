@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { LogOut, Sun, Moon, LayoutDashboard, AlertCircle, User, Settings2, Camera, Loader2 } from 'lucide-react';
+import { LogOut, Sun, Moon, LayoutDashboard, CreditCard, Repeat, Receipt, ClipboardList, Shield, Camera, Loader2, Bell } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/Auth/AuthContext';
 import { useTheme } from '../../context/Theme/ThemeContext';
@@ -9,39 +9,26 @@ import api from '../../api/apiClient';
 import { toast } from 'react-hot-toast';
 import { compressImage } from '../../utils/imageCompression';
 
-interface AdminSidebarMenuProps {
+interface StaffSidebarMenuProps {
     show: boolean;
     onClose: () => void;
     onLogout: () => void;
 }
 
-const AdminSidebarMenu: React.FC<AdminSidebarMenuProps> = ({ show, onClose, onLogout }) => {
-    const { user, enableApprovals, refreshUser } = useAuth();
+const StaffSidebarMenu: React.FC<StaffSidebarMenuProps> = ({ show, onClose, onLogout }) => {
+    const { user, enableBankPledge, enableTransactions, refreshUser } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const [isUploading, setIsUploading] = useState(false);
     const location = useLocation();
     const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
 
-    if (!show && !isUploading) return null; // Keep rendered if uploading? No, just unmount usually. But show controls visibility.
-
-    // If we want animation on unmount, we need to keep it mounted but hidden, or use AnimatePresence (framer-motion).
-    // For now, we follow the existing pattern: conditional rendering in parent.
-    // Wait, the parent does {showMenu && ...}. So this component receives show=true.
-    // If we want to move the conditional into the component, we can.
-    // Let's assume parent handles conditional rendering for now, or we handle it here if passed `show`.
-    // The previous code had {showMenu && ( ... )}.
-    // If I move the conditional inside, I can handle animation exit better later, but for now let's match existing behavior.
-
-    // Actually, to make "overlaying" easy, let's just return null if !show used inside the component?
-    // But usually typically standard is parent controls.
-
-    // Let's replicate the structure.
+    if (!show && !isUploading) return null;
 
     const getStorageUrl = (url: string | null) => {
         if (!url) return '';
         if (url.startsWith('http')) return url;
         const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/?$/, '') || '';
-        return `${baseUrl}${url} `;
+        return `${baseUrl}${url}`;
     };
 
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,13 +84,13 @@ const AdminSidebarMenu: React.FC<AdminSidebarMenuProps> = ({ show, onClose, onLo
                 </button>
 
                 <div className="flex flex-col items-center mb-8 mt-4">
-                    <div className="w-24 h-24 rounded-full bg-[#FDB931] flex items-center justify-center text-black font-bold border-4 border-white dark:border-[#1A1D1F] overflow-hidden shrink-0 relative group mb-4 shadow-lg">
+                    <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold border-4 border-white dark:border-[#1A1D1F] overflow-hidden shrink-0 relative group mb-4 shadow-lg">
                         {isUploading ? (
-                            <Loader2 className="w-8 h-8 text-black animate-spin" />
+                            <Loader2 className="w-8 h-8 text-primary animate-spin" />
                         ) : user?.photo_url ? (
-                            <img src={getStorageUrl(user.photo_url)} alt="Admin" className="w-full h-full object-cover" />
+                            <img src={getStorageUrl(user.photo_url)} alt={user.name} className="w-full h-full object-cover" />
                         ) : (
-                            <img src={`https://ui-avatars.com/api/?name=${user?.name || 'Admin'}&background=FDB931&color=000&size=128`} alt="Admin" />
+                            <img src={`https://ui-avatars.com/api/?name=${user?.name || 'Staff'}&background=random&color=fff&size=128`} alt={user?.name} />
                         )}
 
                         {/* Camera Overlay */}
@@ -123,73 +110,118 @@ const AdminSidebarMenu: React.FC<AdminSidebarMenuProps> = ({ show, onClose, onLo
                         }
                     </div >
                     <div className="text-center">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{user?.name || "Admin"}</h2>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{user?.name || "Staff Member"}</h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
-                        <p className="text-xs font-semibold text-primary mt-1 uppercase tracking-wider">{user?.role || 'Administrator'}</p>
+                        <p className="text-xs font-semibold text-primary mt-1 uppercase tracking-wider">{user?.branch?.branch_name || 'Branch Staff'}</p>
                     </div>
                 </div >
 
-                <div className="space-y-2 flex-1">
+                <div className="space-y-2 flex-1 overflow-y-auto no-scrollbar">
                     <Link
-                        to="/admin/dashboard"
+                        to="/dashboard"
                         onClick={onClose}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${isActive('/admin/dashboard')
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${isActive('/dashboard')
                             ? 'bg-primary text-white shadow-lg shadow-primary/30 font-bold'
                             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                             }`}
                     >
-                        <LayoutDashboard className={`w-5 h-5 transition-transform duration-300 ${isActive('/admin/dashboard') ? 'scale-110' : 'group-hover:scale-110'}`} />
+                        <LayoutDashboard className={`w-5 h-5 transition-transform duration-300 ${isActive('/dashboard') ? 'scale-110' : 'group-hover:scale-110'}`} />
                         <span className="relative z-10">Dashboard</span>
-                        {isActive('/admin/dashboard') && (
+                        {isActive('/dashboard') && (
                             <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
                         )}
                     </Link>
 
                     <Link
-                        to="/admin/profile"
+                        to="/pledges"
                         onClick={onClose}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${isActive('/admin/profile')
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${isActive('/pledges')
                             ? 'bg-primary text-white shadow-lg shadow-primary/30 font-bold'
                             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                             }`}
                     >
-                        <User className={`w-5 h-5 transition-transform duration-300 ${isActive('/admin/profile') ? 'scale-110' : 'group-hover:scale-110'}`} />
-                        <span className="relative z-10">Profile & Password</span>
-                        {isActive('/admin/profile') && (
+                        <CreditCard className={`w-5 h-5 transition-transform duration-300 ${isActive('/pledges') ? 'scale-110' : 'group-hover:scale-110'}`} />
+                        <span className="relative z-10">Loans</span>
+                        {isActive('/pledges') && (
                             <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
                         )}
                     </Link>
 
-                    {enableApprovals && (
+                    {enableBankPledge && (
                         <Link
-                            to="/admin/approvals"
+                            to="/re-pledge"
                             onClick={onClose}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${isActive('/admin/approvals')
-                                + ' ' + (isActive('/admin/approvals') ? 'bg-primary text-white shadow-lg shadow-primary/30 font-bold'
-                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800')
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${isActive('/re-pledge')
+                                ? 'bg-primary text-white shadow-lg shadow-primary/30 font-bold'
+                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                                 }`}
                         >
-                            {/* Wait, the className logic just above was manually weird, let's keep original logic but simple */}
-                            {/* Actually, I should just paste the content exactly as it was but wrapped. I'll stick to original content logic. */}
-                            <AlertCircle className={`w-5 h-5 transition-transform duration-300 ${isActive('/admin/approvals') ? 'scale-110' : 'group-hover:scale-110'}`} />
-                            <span className="relative z-10">Approvals</span>
-                            {isActive('/admin/approvals') && (
+                            <Repeat className={`w-5 h-5 transition-transform duration-300 ${isActive('/re-pledge') ? 'scale-110' : 'group-hover:scale-110'}`} />
+                            <span className="relative z-10">Bank Pledges</span>
+                            {isActive('/re-pledge') && (
+                                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
+                            )}
+                        </Link>
+                    )}
+
+                    {enableTransactions && (
+                        <Link
+                            to="/transactions"
+                            onClick={onClose}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${isActive('/transactions')
+                                ? 'bg-primary text-white shadow-lg shadow-primary/30 font-bold'
+                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                }`}
+                        >
+                            <Receipt className={`w-5 h-5 transition-transform duration-300 ${isActive('/transactions') ? 'scale-110' : 'group-hover:scale-110'}`} />
+                            <span className="relative z-10">Transactions</span>
+                            {isActive('/transactions') && (
                                 <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
                             )}
                         </Link>
                     )}
 
                     <Link
-                        to="/admin/configs"
+                        to="/staff/reconciliation"
                         onClick={onClose}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${isActive('/admin/configs')
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${isActive('/staff/reconciliation')
                             ? 'bg-primary text-white shadow-lg shadow-primary/30 font-bold'
                             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                             }`}
                     >
-                        <Settings2 className={`w-5 h-5 transition-transform duration-300 ${isActive('/admin/configs') ? 'scale-110' : 'group-hover:scale-110'}`} />
-                        <span className="relative z-10">Configuration</span>
-                        {isActive('/admin/configs') && (
+                        <ClipboardList className={`w-5 h-5 transition-transform duration-300 ${isActive('/staff/reconciliation') ? 'scale-110' : 'group-hover:scale-110'}`} />
+                        <span className="relative z-10">Reconciliation</span>
+                        {isActive('/staff/reconciliation') && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
+                        )}
+                    </Link>
+
+                    <Link
+                        to="/notices"
+                        onClick={onClose}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${isActive('/notices')
+                            ? 'bg-primary text-white shadow-lg shadow-primary/30 font-bold'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            }`}
+                    >
+                        <Bell className={`w-5 h-5 transition-transform duration-300 ${isActive('/notices') ? 'scale-110' : 'group-hover:scale-110'}`} />
+                        <span className="relative z-10">Notices</span>
+                        {isActive('/notices') && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
+                        )}
+                    </Link>
+
+                    <Link
+                        to="/privileges"
+                        onClick={onClose}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${isActive('/privileges')
+                            ? 'bg-primary text-white shadow-lg shadow-primary/30 font-bold'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            }`}
+                    >
+                        <Shield className={`w-5 h-5 transition-transform duration-300 ${isActive('/privileges') ? 'scale-110' : 'group-hover:scale-110'}`} />
+                        <span className="relative z-10">Privileges</span>
+                        {isActive('/privileges') && (
                             <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
                         )}
                     </Link>
@@ -222,4 +254,4 @@ const AdminSidebarMenu: React.FC<AdminSidebarMenuProps> = ({ show, onClose, onLo
     );
 };
 
-export default AdminSidebarMenu;
+export default StaffSidebarMenu;

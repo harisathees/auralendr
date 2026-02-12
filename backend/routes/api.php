@@ -169,6 +169,11 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
 
     // Loan Payments
     Route::post('/loan-payments', [\App\Http\Controllers\Api\V1\Pledge\LoanPaymentController::class, 'store']);
+
+    // Cash Reconciliation
+    Route::get('/cash-reconciliation/today', [\App\Http\Controllers\Api\V1\Staff\CashReconciliationController::class, 'today']);
+    Route::post('/cash-reconciliation', [\App\Http\Controllers\Api\V1\Staff\CashReconciliationController::class, 'store']);
+    Route::get('/cash-reconciliation/history', [\App\Http\Controllers\Api\V1\Staff\CashReconciliationController::class, 'index']);
     // Activity Logs (Shared)
     Route::get('/activities', [\App\Http\Controllers\Api\V1\Admin\Activity\ActivityController::class, 'index']);
 

@@ -22,10 +22,11 @@ import { ActivityService } from '../../services/ActivityService';
 import type { Activity } from '../../types/Activity';
 
 import StaffTopNavigation from '../../components/Shared/Navigation/StaffNavigation/StaffTopNavigation';
+import StaffSidebarMenu from '../../components/Dashboard/StaffSidebarMenu';
 
 const StaffDashboard: React.FC = () => {
   const { user, logout, enableTasks } = useAuth();
-  // const [showMenu, setShowMenu] = useState(false); // Moved to StaffTopNavigation
+  const [showMenu, setShowMenu] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -70,6 +71,7 @@ const StaffDashboard: React.FC = () => {
   }, [user?.id, enableTasks]);
 
   const handleLogoutClick = () => {
+    setShowMenu(false);
     setShowConfirm(true);
   };
 
@@ -108,11 +110,11 @@ const StaffDashboard: React.FC = () => {
 
       {/* Header - Fixed */}
       <StaffTopNavigation
-        onLogout={handleLogoutClick}
         selectedDate={selectedDate}
         onDateChange={handleDateChange}
         dateInputRef={dateInputRef}
         onDateIconClick={handleDateIconClick}
+        onMenuClick={() => setShowMenu(true)}
       />
 
       {/* Spacer for Fixed Header */}
@@ -167,6 +169,7 @@ const StaffDashboard: React.FC = () => {
           {[
             { icon: Calculator, label: "Calculator", iconColor: "text-green-600 dark:text-green-400", action: () => setShowCalculator(true) },
             { icon: Scale, label: "Estimate", iconColor: "text-orange-500 dark:text-orange-400", action: () => setShowEstimate(true) },
+            { icon: ClipboardList, label: "Recon", iconColor: "text-purple-500 dark:text-purple-400", action: () => window.location.href = '/staff/reconciliation' },
             // { icon: Wallet, label: "Payments", iconColor: "text-blue-500 dark:text-blue-400", action: () => { } }, // Placeholder
             // { icon: Megaphone, label: "Notices", iconColor: "text-pink-500 dark:text-pink-400", action: () => { } }, // Placeholder
             // { icon: History, label: "Activity", iconColor: "text-slate-500 dark:text-slate-400", action: () => { } }, // Placeholder
@@ -323,6 +326,12 @@ const StaffDashboard: React.FC = () => {
       )}
 
       {/* Global Bottom Navigation - Moved to Layout */}
+
+      <StaffSidebarMenu
+        show={showMenu}
+        onClose={() => setShowMenu(false)}
+        onLogout={handleLogoutClick}
+      />
     </div>
   );
 };
