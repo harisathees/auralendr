@@ -15,8 +15,8 @@ self.addEventListener('push', function (event: PushEvent) {
     const title = payload.title || 'New Notification';
     const options: ExtendedNotificationOptions = {
         body: payload.body || 'You have a new update.',
-        icon: payload.icon || '/assets/auralendr/auralendr.png',
-        badge: '/assets/auralendr/auralendr-favicon.png',
+        icon: payload.icon || '/assets/nsh/auralendr.png',
+        badge: '/assets/nsh/auralendr-favicon.png',
         data: payload.data || {},
         actions: payload.actions || []
     };

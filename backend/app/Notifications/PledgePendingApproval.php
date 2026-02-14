@@ -44,7 +44,7 @@ class PledgePendingApproval extends Notification implements ShouldQueue
         return [
             'title' => 'Approval Required',
             'body' => "Loan #{$this->loanNo} (₹{$this->amount}) requires admin approval.",
-            'icon' => '/assets/auralendr/auralendr.png',
+            'icon' => '/assets/nsh/auralendr.png',
             'data' => [
                 'url' => '/approvals' // Opens the approvals page
             ],

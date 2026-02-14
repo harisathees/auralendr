@@ -24,12 +24,12 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: '/assets/auralendr/auralendr.png',
+            src: '/assets/nsh/auralendr.png',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: '/assets/auralendr/auralendr.png',
+            src: '/assets/nsh/auralendr.png',
             sizes: '512x512',
             type: 'image/png',
           },

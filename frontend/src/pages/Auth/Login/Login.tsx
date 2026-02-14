@@ -51,7 +51,7 @@ const Login: React.FC = () => {
         <div className="absolute top-[172px] left-1/2 -translate-x-1/2 z-10">
           <div className="flex items-center justify-center w-24 h-24 bg-white dark:bg-background-dark rounded-full shadow-lg p-1">
             <div className="flex items-center justify-center w-full h-full bg-white dark:bg-zinc-800 rounded-full border border-gray-100 dark:border-zinc-700 overflow-hidden">
-              <img src="/assets/auralendr/images.jpg" alt="Logo" className="w-full h-full object-cover" />
+              <img src="/assets/nsh/login-nsh.png" alt="Logo" className="w-full h-full object-cover" />
             </div>
           </div>
         </div>

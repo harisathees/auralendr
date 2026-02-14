@@ -4,8 +4,8 @@ import * as htmlToImage from 'html-to-image';
 import { FiShare2, FiLoader } from 'react-icons/fi';
 import { FaIdCard } from 'react-icons/fa';
 
-import bg1 from '/assets/auralendr/front.png';
-import bg2 from '/assets/auralendr/back.jpg';
+import bg1 from '/assets/nsh/front.jpg';
+import bg2 from '/assets/nsh/back.jpg';
 import GoldCoinSpinner from '../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner';
 import { getPledge } from '../../api/pledgeService';
 import api from '../../api/apiClient';

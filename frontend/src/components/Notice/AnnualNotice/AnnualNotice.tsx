@@ -20,7 +20,7 @@ const AnnualNotice = React.forwardRef<HTMLDivElement, AnnualNoticeProps>((props,
         <div ref={ref} className="w-[210mm] min-h-[297mm] p-[20mm] mx-auto bg-white text-black font-serif relative box-border shadow-md">
             <div className="a4-content">
                 <header className="text-center mb-8">
-                    <h1 className="text-2xl font-bold">Auralendr Gold Finance</h1>
+                    <h1 className="text-2xl font-bold">NSH Gold Finance</h1>
                     <p className="text-sm">123/address street, THOOTHUKUDI</p>
                     <p className="text-sm">Phone: 9942153378,8778748399</p>
                 </header>
@@ -76,7 +76,7 @@ const AnnualNotice = React.forwardRef<HTMLDivElement, AnnualNoticeProps>((props,
                 </div>
 
                 <div className="mt-16 text-right">
-                    <p className="font-semibold">Auralendr Gold Finance</p>
+                    <p className="font-semibold">NSH Gold Finance</p>
                     <p className="mt-16 border-t border-gray-400 pt-2 inline-block">Authorized Signatory</p>
                 </div>
 
