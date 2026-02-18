@@ -1,17 +1,38 @@
 import React, { useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../../context/Auth/AuthContext";
 import { Lock } from "lucide-react";
 import { toast } from "react-hot-toast";
 
+interface ConfigItem {
+    title: string;
+    description: string;
+    icon: string;
+    color: string;
+    bg: string;
+    link: string;
+    requiresBankPledge?: boolean;
+    permission?: string;
+}
+
+interface ConfigGroup {
+    title: string;
+    icon: string;
+    description: string;
+    color: string;
+    bg: string;
+    items: ConfigItem[];
+}
+
 const AdminConfigs: React.FC = () => {
     const { user, can, enableTransactions, enableTasks, enableBankPledge, enableDataBackup } = useAuth();
     const isAdmin = user?.role === 'admin';
+ 
 
     const [expandedGroup, setExpandedGroup] = React.useState<string | null>(null);
 
     const configGroups = useMemo(() => {
-        const groups = [
+        const groups: ConfigGroup[] = [
             {
                 title: "Financials",
                 icon: "account_balance_wallet",

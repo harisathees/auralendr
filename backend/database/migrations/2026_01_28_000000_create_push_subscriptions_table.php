@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('push_subscriptions', function (Blueprint $table) {
             $table->id();
-            $table->morphs('subscribable');
+            $table->ulidMorphs('subscribable');   
             $table->string('endpoint', 500)->unique();
             $table->string('public_key')->nullable();
             $table->string('auth_token')->nullable();
