@@ -25,6 +25,7 @@ interface AuthContextType {
   enableBankPledge: boolean;
   noBranchMode: boolean;
   enableApprovals: boolean;
+  enableDataBackup: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -68,6 +69,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [enableBankPledge, setEnableBankPledge] = useState<boolean>(false); // Default false
   const [noBranchMode, setNoBranchMode] = useState<boolean>(false); // Default false
   const [enableApprovals, setEnableApprovals] = useState<boolean>(false); // Default false
+  const [enableDataBackup, setEnableDataBackup] = useState<boolean>(false); // Default false
 
 
   const logout = async (): Promise<void> => {
@@ -139,7 +141,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       const [userRes, settingsRes] = await Promise.all([
         authService.me(),
-        api.get('/developer/settings/resolve').catch(() => ({ data: { enable_transactions: false, enable_tasks: false, enable_receipt_print: false, enable_estimated_amount: false, enable_bank_pledge: false, no_branch_mode: false, enable_approvals: false } }))
+        api.get('/developer/settings/resolve').catch(() => ({ data: { enable_transactions: false, enable_tasks: false, enable_receipt_print: false, enable_estimated_amount: false, enable_bank_pledge: false, no_branch_mode: false, enable_approvals: false, enable_data_backup: false } }))
       ]);
 
       const res = userRes;
@@ -165,6 +167,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setEnableBankPledge(settingsRes.data.enable_bank_pledge !== undefined ? !!settingsRes.data.enable_bank_pledge : false);
         setNoBranchMode(settingsRes.data.no_branch_mode !== undefined ? !!settingsRes.data.no_branch_mode : false);
         setEnableApprovals(settingsRes.data.enable_approvals !== undefined ? !!settingsRes.data.enable_approvals : false);
+        setEnableDataBackup(settingsRes.data.enable_data_backup !== undefined ? !!settingsRes.data.enable_data_backup : false);
       }
 
     } catch (error: any) {
@@ -206,7 +209,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, can, booting, refreshUser: fetchUser, enableTransactions, enableTasks, enableReceiptPrint, enableEstimatedAmount, enableBankPledge, noBranchMode, enableApprovals }}>
+    <AuthContext.Provider value={{ token, user, login, logout, can, booting, refreshUser: fetchUser, enableTransactions, enableTasks, enableReceiptPrint, enableEstimatedAmount, enableBankPledge, noBranchMode, enableApprovals, enableDataBackup }}>
       {children}
     </AuthContext.Provider>
   );

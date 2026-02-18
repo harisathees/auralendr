@@ -108,16 +108,19 @@ const Receipt = () => {
 
 
 
+                const jewelType = jewel?.jewel_type || '';
+                const isSilver = jewelType.toLowerCase().includes('silver');
+
                 setData({
                     // Legacy flattened data (keep for backward compatibility if needed)
                     name: customer?.name || 'N/A',
                     address: customer?.address || 'N/A',
-                    phone: customer?.mobile_no || 'N/A',
-                    whatsapp: customer?.whatsapp_no || '',
+                    phone: customer?.mobile_no ? customer.mobile_no.replace('+91', '') : 'N/A',
+                    whatsapp: customer?.whatsapp_no ? customer.whatsapp_no.replace('+91', '') : '',
                     date: formatDate(loan?.date), // loan might be null in some edge cases?
                     duedate: formatDate(loan?.due_date),
                     weight: jewel?.gross_weight || jewel?.net_weight || 0,
-                    interest: loan?.interest_rate,
+                    interest: parseFloat(loan?.interest_percentage || 0),
                     interestTaken: loan?.interest_taken === 1 || loan?.interest_taken === true,
                     jewelName: jewel?.description || jewel?.jewel_name || 'N/A',
                     faults: jewel?.faults || 'N/A',
@@ -127,10 +130,11 @@ const Receipt = () => {
                     amount: loan?.amount,
                     customerImage: customerImageUrl,
                     jewelImage: jewelImageUrl,
-                    goldRate: loan?.gold_rate ?? rates.goldRate,
-                    silverRate: loan?.silver_rate ?? rates.silverRate,
+                    goldRate: (!isSilver && loan?.metal_rate) ? loan.metal_rate : (loan?.gold_rate ?? rates.goldRate),
+                    silverRate: (isSilver && loan?.metal_rate) ? loan.metal_rate : (loan?.silver_rate ?? rates.silverRate),
                     ID: customer?.id_proof_number || customer?.id_proof || 'N/A',
                     qrCode: loan?.qr_code || null,
+                    isSilver: isSilver,
 
 
                     // NEW: Raw nested data for DynamicReceipt
@@ -547,12 +551,20 @@ const Receipt = () => {
 
 const fields = (data: any) => {
     const monthlyInterest = data.interest > 0 ? (data.amount * data.interest) / 100 : 0;
+
+    // Determine which rate to show
+    // If isSilver is true, show Silver Rate. Otherwise show Gold Rate.
+    const rateField = data.isSilver
+        ? { top: '121.5mm', left: '188mm', label: `S:${data.silverRate}` }
+        : { top: '100.5mm', left: '188mm', label: `G:${data.goldRate}` };
+
     return [
-        //office copy
         { top: '100.5mm', left: '201mm', label: `Date:${data.date}` },
         { top: '100.5mm', left: '196mm', label: `Due :${data.duedate}` },
-        { top: '100.5mm', left: '188mm', label: `G:${data.goldRate}` },
-        { top: '121.5mm', left: '188mm', label: `S:${data.silverRate}` },
+
+        // Conditionally render Rate
+        rateField,
+
         { top: '2.5mm', left: '187mm', label: `Rate/g: ₹${(data.weight > 0 ? (data.amount / data.weight).toFixed(2) : '0.0')}` },
 
         { top: '2.5mm', left: '179mm', label: `கடன் எண்:${data.itemNo}` },

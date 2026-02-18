@@ -15,7 +15,7 @@ class DeveloperSettingsController extends Controller
         if ($branchId === 'null')
             $branchId = null;
 
-        $settings = \App\Models\Settings::whereIn('key', ['enable_customer_app', 'enable_transactions', 'enable_tasks', 'enable_receipt_print', 'enable_estimated_amount', 'enable_bank_pledge', 'no_branch_mode', 'enable_approvals'])
+        $settings = \App\Models\Settings::whereIn('key', ['enable_customer_app', 'enable_transactions', 'enable_tasks', 'enable_receipt_print', 'enable_estimated_amount', 'enable_bank_pledge', 'no_branch_mode', 'enable_approvals', 'enable_data_backup'])
             ->where(function ($query) use ($branchId) {
                 if ($branchId) {
                     $query->where('branch_id', $branchId);
@@ -36,6 +36,7 @@ class DeveloperSettingsController extends Controller
             'enable_bank_pledge' => isset($settings['enable_bank_pledge']) ? (bool) $settings['enable_bank_pledge']->value : false, // Default to false
             'no_branch_mode' => isset($settings['no_branch_mode']) ? (bool) $settings['no_branch_mode']->value : false, // Default to false
             'enable_approvals' => isset($settings['enable_approvals']) ? (bool) $settings['enable_approvals']->value : false, // Default to false
+            'enable_data_backup' => isset($settings['enable_data_backup']) ? (bool) $settings['enable_data_backup']->value : false, // Default to false
         ]);
     }
 
@@ -50,7 +51,8 @@ class DeveloperSettingsController extends Controller
             'enable_estimated_amount' => 'sometimes|boolean',
             'enable_bank_pledge' => 'sometimes|boolean',
             'no_branch_mode' => 'sometimes|boolean',
-            'enable_approvals' => 'sometimes|boolean'
+            'enable_approvals' => 'sometimes|boolean',
+            'enable_data_backup' => 'sometimes|boolean'
         ]);
 
         $branchId = $request->branch_id;
@@ -151,6 +153,18 @@ class DeveloperSettingsController extends Controller
             );
         }
 
+        if ($request->has('enable_data_backup')) {
+            \App\Models\Settings::updateOrCreate(
+                [
+                    'key' => 'enable_data_backup',
+                    'branch_id' => $branchId
+                ],
+                [
+                    'value' => $request->enable_data_backup ? '1' : '0'
+                ]
+            );
+        }
+
         return response()->json(['status' => 'success', 'message' => 'Settings updated successfully']);
     }
     public function resolve(\Illuminate\Http\Request $request)
@@ -158,7 +172,7 @@ class DeveloperSettingsController extends Controller
         $user = $request->user();
         $branchId = $user ? $user->branch_id : null;
 
-        $keys = ['enable_customer_app', 'enable_transactions', 'enable_tasks', 'enable_receipt_print', 'enable_estimated_amount', 'enable_bank_pledge', 'no_branch_mode', 'enable_approvals'];
+        $keys = ['enable_customer_app', 'enable_transactions', 'enable_tasks', 'enable_receipt_print', 'enable_estimated_amount', 'enable_bank_pledge', 'no_branch_mode', 'enable_approvals', 'enable_data_backup'];
 
         $resolvedSettings = [];
 
@@ -181,6 +195,7 @@ class DeveloperSettingsController extends Controller
                 'enable_bank_pledge' => false,
                 'no_branch_mode' => false,
                 'enable_approvals' => false,
+                'enable_data_backup' => false,
                 default => null
             };
 

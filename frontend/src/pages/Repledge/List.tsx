@@ -1,15 +1,17 @@
 import React, { useEffect } from "react";
 import { useRepledge } from "../../hooks/useRepledge";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import GoldCoinSpinner from "../../components/Shared/LoadingGoldCoinSpinner/GoldCoinSpinner";
 
 const List: React.FC = () => {
     const { repledgeEntries, fetchRepledgeEntries, loading, deleteRepledgeEntry } = useRepledge();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const query = searchParams.get('search') || '';
 
     useEffect(() => {
-        fetchRepledgeEntries();
-    }, [fetchRepledgeEntries]);
+        fetchRepledgeEntries(1, query); // Pass query to fetcher
+    }, [fetchRepledgeEntries, query]);
 
     if (loading && repledgeEntries.length === 0) return <GoldCoinSpinner text="Loading Bank Pledges..." />;
 

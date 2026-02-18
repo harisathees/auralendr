@@ -21,7 +21,7 @@ function App() {
         <AppRoutes />
       </ToastProvider>
     </BrowserRouter>
-  );     
+  );
 
 }
 

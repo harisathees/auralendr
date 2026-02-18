@@ -4,6 +4,8 @@ import SecureAudio from "../Shared/AudioAndImageFetch/SecureAudio";
 import SecureImage from "../Shared/AudioAndImageFetch/SecureImage";
 import CommunicationButtons from "../Shared/WhatsappAndSms/CommunicationButtons";
 import api from "../../api/apiClient";
+import ConfirmationModal from "../Shared/ConfirmationModal";
+import { useState } from "react";
 
 // --- Helper Components ---
 
@@ -92,6 +94,20 @@ const PledgeView: React.FC<Props> = ({ data }) => {
   const navigate = useNavigate();
   const { can, enableReceiptPrint } = useAuth();
   const { customer, loan, jewels = [], media = [] } = data;
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    try {
+      await api.delete(`/pledges/${data.id}`);
+      navigate('/pledges');
+    } catch (error) {
+      console.error("Failed to delete pledge", error);
+      alert("Failed to delete pledge.");
+    } finally {
+      setIsDeleteModalOpen(false);
+    }
+  };
 
   // Organize Media by Category
   const mediaMap = useMemo(() => {
@@ -447,17 +463,7 @@ const PledgeView: React.FC<Props> = ({ data }) => {
                 </button>
                 {can('pledge.delete') && (
                   <button
-                    onClick={async () => {
-                      if (window.confirm("Are you sure you want to delete this pledge? This action cannot be undone.")) {
-                        try {
-                          await api.delete(`/pledges/${data.id}`);
-                          navigate('/pledges');
-                        } catch (error) {
-                          console.error("Failed to delete pledge", error);
-                          alert("Failed to delete pledge.");
-                        }
-                      }
-                    }}
+                    onClick={() => setIsDeleteModalOpen(true)}
                     className="flex w-full items-center justify-center gap-2.5 px-8 py-3 bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-900/10 dark:text-rose-400 dark:border-rose-900/30 rounded-xl font-bold text-sm hover:bg-rose-100 dark:hover:bg-rose-900/20 transition-all"
                   >
                     <span className="material-symbols-outlined text-[20px]">delete</span>
@@ -468,6 +474,16 @@ const PledgeView: React.FC<Props> = ({ data }) => {
             </div>
           </>
         )}
+
+        <ConfirmationModal
+          isOpen={isDeleteModalOpen}
+          title="Delete Pledge"
+          message="Are you sure you want to delete this pledge? This action cannot be undone and will delete all associated data including loans and customers."
+          confirmLabel="Delete Forever"
+          isDangerous={true}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setIsDeleteModalOpen(false)}
+        />
       </main>
     </div>
   );

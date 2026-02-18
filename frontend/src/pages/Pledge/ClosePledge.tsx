@@ -197,7 +197,6 @@ const ClosePledge: React.FC = () => {
         );
         if (success) {
             setShowSuccessMessage(true);
-            setTimeout(() => navigate('/pledges'), 2000);
         }
     };
 
@@ -215,7 +214,7 @@ const ClosePledge: React.FC = () => {
                 settledAmount: calculationResult?.totalAmount || 0,
                 closedDate: toDate
             }}
-            onContinue={() => navigate('/pledges')}
+            onContinue={() => navigate(`/pledges/${loanId}/closure-receipt`)}
         />
     );
     if (error || !loanData) return <ErrorState error={error || 'Loan data not found.'} onBack={() => navigate('/pledges')} />;

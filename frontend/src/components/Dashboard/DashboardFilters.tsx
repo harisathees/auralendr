@@ -15,19 +15,19 @@ import "react-day-picker/dist/style.css";
 import { Calendar as CalendarIcon } from "lucide-react";
 
 interface Branch {
-    id: number;
+    id: string | number;
     branch_name: string;
     location: string | null;
 }
 
 interface DashboardFiltersProps {
-    onFilterChange: (filters: { branch_id?: number; start_date?: string; end_date?: string }) => void;
+    onFilterChange: (filters: { branch_id?: string | number; start_date?: string; end_date?: string }) => void;
     isLoading?: boolean;
 }
 
 const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isLoading }) => {
     const [branches, setBranches] = useState<Branch[]>([]);
-    const [selectedBranch, setSelectedBranch] = useState<number | ''>('');
+    const [selectedBranch, setSelectedBranch] = useState<string>(""); // Use string for select value
     const [dateRange, setDateRange] = useState<DateRange | undefined>();
     const [isOpen, setIsOpen] = useState(false);
     const [activePreset, setActivePreset] = useState<string>('');
@@ -47,7 +47,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isL
 
     const handleApply = () => {
         onFilterChange({
-            branch_id: selectedBranch === '' ? undefined : selectedBranch,
+            branch_id: selectedBranch ? Number(selectedBranch) : undefined,
             start_date: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
             end_date: dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined,
         });
@@ -55,7 +55,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isL
     };
 
     const handleClear = () => {
-        setSelectedBranch('');
+        setSelectedBranch("");
         setDateRange(undefined);
         setActivePreset('');
         onFilterChange({});
@@ -103,12 +103,13 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isL
 
     return (
         <div className="flex items-center gap-3 relative">
-            <div className="flex-1 max-w-xs relative group hidden md:block">
+            <div className="flex-1 max-w-xs relative group">
                 <select
                     value={selectedBranch}
                     onChange={(e) => {
-                        const val = e.target.value ? Number(e.target.value) : '';
+                        const val = e.target.value;
                         setSelectedBranch(val);
+
                         onFilterChange({
                             branch_id: val === '' ? undefined : val,
                             start_date: dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined,
@@ -119,7 +120,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isL
                 >
                     <option value="">All Branches</option>
                     {branches.map((branch) => (
-                        <option key={branch.id} value={branch.id}>
+                        <option key={branch.id} value={String(branch.id)}>
                             {branch.branch_name}
                         </option>
                     ))}
@@ -132,14 +133,14 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isL
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`h-11 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-sm hover:shadow-md border ${isOpen || dateRange?.from
-                        ? 'bg-purple-600 text-white border-purple-600'
-                        : 'bg-white dark:bg-[#1A1D1F] text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-800'
+                    ? 'bg-purple-600 text-white border-purple-600'
+                    : 'bg-white dark:bg-[#1A1D1F] text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-800'
                     }`}
             >
                 {isLoading ? (
-                    <span className="material-symbols-outlined text-xl animate-spin">sync</span>
+                    <span className="material-symbols-outlined text-lg md:text-xl animate-spin">sync</span>
                 ) : (
-                    <CalendarIcon className="w-5 h-5" />
+                    <CalendarIcon className="w-4 h-4 md:w-5 md:h-5" />
                 )}
                 <span className="text-sm font-bold hidden sm:inline">
                     {dateRange?.from ? (
@@ -156,7 +157,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isL
             {isOpen && (
                 <>
                     <div className="fixed inset-0 z-[60]" onClick={() => setIsOpen(false)} />
-                    <div className="absolute top-14 right-0 bg-white dark:bg-[#1A1D1F] rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 p-0 z-[70] animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col md:flex-row w-[320px] md:w-auto">
+                    <div className="absolute top-14 right-0 bg-white dark:bg-[#1A1D1F] rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 p-0 z-[70] animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col md:flex-row w-[280px] md:w-auto origin-top-right transform scale-90 md:scale-100">
 
                         <div className="bg-gray-50 dark:bg-[#202428] p-4 flex flex-col gap-2 min-w-[160px] border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-700">
                             <h3 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2 px-1">Presets</h3>
@@ -172,8 +173,8 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isL
                                     key={preset.value}
                                     onClick={() => applyPreset(preset.value)}
                                     className={`px-4 py-2.5 rounded-xl text-xs font-bold text-left transition-all ${activePreset === preset.value
-                                            ? 'bg-purple-600 text-white shadow-purple-600/20 shadow-lg'
-                                            : 'text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm'
+                                        ? 'bg-purple-600 text-white shadow-purple-600/20 shadow-lg'
+                                        : 'text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm'
                                         }`}
                                 >
                                     {preset.label}
@@ -181,8 +182,8 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isL
                             ))}
                         </div>
 
-                        <div className="p-4 md:p-6">
-                            <div className="mb-4">
+                        <div className="p-3 md:p-6">
+                            <div className="mb-2 md:mb-4">
                                 <DayPicker
                                     mode="range"
                                     selected={dateRange}
@@ -194,18 +195,18 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ onFilterChange, isL
                                     showOutsideDays
                                     className="border-0 p-0 m-0"
                                     classNames={{
-                                        caption: "flex justify-center relative items-center pt-1 mb-4",
-                                        caption_label: "text-sm font-bold text-gray-900 dark:text-white",
+                                        caption: "flex justify-center relative items-center pt-1 mb-2 md:mb-4",
+                                        caption_label: "text-xs md:text-sm font-bold text-gray-900 dark:text-white",
                                         nav: "space-x-1 flex items-center",
-                                        nav_button: "h-7 w-7 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg flex items-center justify-center transition-colors text-gray-500",
+                                        nav_button: "h-6 w-6 md:h-7 md:w-7 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg flex items-center justify-center transition-colors text-gray-500",
                                         nav_button_previous: "absolute left-1",
                                         nav_button_next: "absolute right-1",
                                         table: "w-full border-collapse space-y-1",
                                         head_row: "flex mb-2",
-                                        head_cell: "text-gray-400 rounded-md w-9 font-bold text-[0.8rem]",
-                                        row: "flex w-full mt-2",
-                                        cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-purple-50 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 dark:[&:has([aria-selected])]:bg-purple-900/20",
-                                        day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-700 dark:text-gray-300 font-medium text-sm",
+                                        head_cell: "text-gray-400 rounded-md w-8 md:w-9 font-bold text-[0.7rem] md:text-[0.8rem]",
+                                        row: "flex w-full mt-1 md:mt-2",
+                                        cell: "text-center text-xs md:text-sm p-0 relative [&:has([aria-selected])]:bg-purple-50 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20 dark:[&:has([aria-selected])]:bg-purple-900/20",
+                                        day: "h-8 w-8 md:h-9 md:w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-700 dark:text-gray-300 font-medium text-xs md:text-sm",
                                         day_selected: "bg-purple-600 text-white hover:bg-purple-600 hover:text-white focus:bg-purple-600 focus:text-white rounded-lg shadow-md",
                                         day_today: "bg-gray-100 dark:bg-gray-800 text-purple-600 font-bold",
                                         day_outside: "text-gray-300 opacity-50 dark:text-gray-600",

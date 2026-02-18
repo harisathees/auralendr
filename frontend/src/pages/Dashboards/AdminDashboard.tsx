@@ -1,21 +1,39 @@
 import { useAuth } from "../../context/Auth/AuthContext";
 import DashboardFilters from "../../components/Dashboard/DashboardFilters";
-import { LogOut, LayoutDashboard, Repeat, BarChart3 } from "lucide-react";
+import { LogOut, Bell } from "lucide-react";
 import React, { useState } from "react";
 import LoansDashboard from "./LoansDashboard";
-import RepledgeDashboard from "./RepledgeDashboard";
-import BusinessOverviewDashboard from "./BusinessOverviewDashboard";
 import AdminSidebarMenu from "../../components/Dashboard/AdminSidebarMenu";
+import { useNavigate } from "react-router-dom";
+import api from "../../api/apiClient";
 
 type Tab = 'loans' | 'repledge' | 'business';
 
 const AdminDashboard: React.FC = () => {
   const { user, logout, enableBankPledge } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<Tab>('business');
+  // const [activeTab, setActiveTab] = useState<Tab>('business');
   const [showMenu, setShowMenu] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [filters, setFilters] = useState<{ branch_id?: number; start_date?: string; end_date?: string }>({});
+  const [filters, setFilters] = useState<{ branch_id?: string | number; start_date?: string; end_date?: string }>({});
+  const [unreadCount, setUnreadCount] = useState(0);
+  const navigate = useNavigate();
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await api.get("/notifications");
+      const unread = res.data.filter((n: any) => !n.read_at).length;
+      setUnreadCount(unread);
+    } catch (error) {
+      console.error("Failed to fetch notifications", error);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const getStorageUrl = (url: string | null) => {
     if (!url) return '';
@@ -43,7 +61,7 @@ const AdminDashboard: React.FC = () => {
         <div className="flex items-center gap-3">
           <div className="relative">
             <div
-              className="w-10 h-10 rounded-full bg-[#FDB931] flex items-center justify-center text-black font-bold border-2 border-white dark:border-[#1A1D1F] overflow-hidden shadow-md cursor-pointer hover:opacity-80 transition-opacity relative group"
+              className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#FDB931] flex items-center justify-center text-black font-bold border-2 border-white dark:border-[#1A1D1F] overflow-hidden shadow-md cursor-pointer hover:opacity-80 transition-opacity relative group"
               onClick={() => setShowMenu(!showMenu)}
             >
               {user?.photo_url ? (
@@ -72,59 +90,28 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {/* Notifications */}
+            <button
+              onClick={() => navigate('/notifications')}
+              className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <Bell className="w-5 h-5 md:w-6 md:h-6 text-gray-600 dark:text-gray-300" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] flex items-center justify-center border-2 border-white dark:border-[#121417]">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
             <DashboardFilters onFilterChange={setFilters} isLoading={false} />
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex justify-center mb-6">
-        <div className="flex bg-gray-100 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-200 dark:border-gray-700/50">
-          <button
-            onClick={() => setActiveTab('business')}
-            className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'business'
-              ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-              : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-          >
-            <BarChart3 className="w-4 h-4" />
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('loans')}
-            className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'loans'
-              ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-              : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            Loans
-          </button>
-          {enableBankPledge && (
-            <button
-              onClick={() => setActiveTab('repledge')}
-              className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'repledge'
-                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }`}
-            >
-              <Repeat className="w-4 h-4" />
-              Bank Pledge
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Dashboard Body */}
-      {
-        activeTab === 'business' ? (
-          <BusinessOverviewDashboard filters={filters} />
-        ) : activeTab === 'loans' ? (
-          <LoansDashboard filters={filters} />
-        ) : (
-          <RepledgeDashboard filters={filters} />
-        )
-      }
+      {/* Dashboard Body - Usage of 'gap-12' to separate sections */}
+      {/* Section: Loans (Pledges) */}
+      <section className="animate-in fade-in slide-in-from-bottom-6 duration-700">
+        <LoansDashboard filters={filters} />
+      </section>
 
       <AdminSidebarMenu
         show={showMenu}

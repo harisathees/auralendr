@@ -1,58 +1,51 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Bell, CheckCircle, AlertCircle, Info, Clock, Check } from "lucide-react";
+import api from "../../../api/apiClient";
+import { formatDistanceToNow } from "date-fns";
 
 const Notifications: React.FC = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = React.useState<'all' | 'unread'>('all');
+    const [notifications, setNotifications] = React.useState<any[]>([]);
+    const [loading, setLoading] = React.useState(true);
 
-    // Mock Notifications Data
-    const notifications = [
-        {
-            id: 1,
-            title: "Loan Approved",
-            message: "Pledge #PL-10045 has been approved by the manager.",
-            time: "2 mins ago",
-            type: "success",
-            read: false,
-        },
-        {
-            id: 2,
-            title: "Pending Approval",
-            message: "Pledge #PL-10046 requires your attention for verification.",
-            time: "1 hour ago",
-            type: "warning",
-            read: false,
-        },
-        {
-            id: 3,
-            title: "New Policy Update",
-            message: "Updated gold loan interest rates are effective from tomorrow.",
-            time: "Yesterday, 4:30 PM",
-            type: "info",
-            read: true,
-        },
-        {
-            id: 4,
-            title: "Payment Received",
-            message: "Full payment received for Pledge #PL-9988.",
-            time: "Yesterday, 2:15 PM",
-            type: "success",
-            read: true,
-        },
-        {
-            id: 5,
-            title: "System Maintenance",
-            message: "Scheduled maintenance on Sunday from 2 AM to 4 AM.",
-            time: "2 days ago",
-            type: "alert",
-            read: true,
-        },
-    ];
+    const fetchNotifications = async () => {
+        try {
+            const res = await api.get('/notifications');
+            setNotifications(res.data);
+        } catch (error) {
+            console.error("Failed to fetch notifications", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    const markAsRead = async (id: string) => {
+        try {
+            await api.post(`/notifications/${id}/read`);
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, read_at: new Date().toISOString() } : n));
+        } catch (error) {
+            console.error("Failed to mark as read", error);
+        }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            await api.post(`/notifications/read-all`);
+            setNotifications(prev => prev.map(n => ({ ...n, read_at: new Date().toISOString() })));
+        } catch (error) {
+            console.error("Failed to mark all as read", error);
+        }
+    };
 
     const filteredNotifications = activeTab === 'all'
         ? notifications
-        : notifications.filter(n => !n.read);
+        : notifications.filter(n => !n.read_at);
 
     const getIcon = (type: string) => {
         switch (type) {
@@ -86,15 +79,18 @@ const Notifications: React.FC = () => {
                     <div>
                         <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                             Notifications
-                            {notifications.filter(n => !n.read).length > 0 && (
+                            {notifications.filter(n => !n.read_at).length > 0 && (
                                 <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                    {notifications.filter(n => !n.read).length} New
+                                    {notifications.filter(n => !n.read_at).length} New
                                 </span>
                             )}
                         </h1>
                     </div>
                 </div>
-                <button className="text-sm font-medium text-primary hover:text-primary-dark transition-colors">
+                <button
+                    onClick={markAllAsRead}
+                    className="text-sm font-medium text-primary hover:text-primary-dark transition-colors"
+                >
                     Mark all as read
                 </button>
             </header>
@@ -104,8 +100,8 @@ const Notifications: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('all')}
                     className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'all'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
                         }`}
                 >
                     All
@@ -113,8 +109,8 @@ const Notifications: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('unread')}
                     className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'unread'
-                            ? 'border-primary text-primary'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
                         }`}
                 >
                     Unread
@@ -124,7 +120,11 @@ const Notifications: React.FC = () => {
             {/* Notifications List */}
             <main className="flex-1 overflow-y-auto p-4">
                 <div className="max-w-3xl mx-auto space-y-3">
-                    {filteredNotifications.length === 0 ? (
+                    {loading ? (
+                        <div className="flex justify-center p-10">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        </div>
+                    ) : filteredNotifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-gray-400">
                             <Bell className="w-16 h-16 mb-4 opacity-20" />
                             <p className="text-lg font-medium">No notifications yet</p>
@@ -134,31 +134,44 @@ const Notifications: React.FC = () => {
                         filteredNotifications.map((item) => (
                             <div
                                 key={item.id}
-                                className={`p-4 rounded-xl border transition-colors relative group ${item.read
-                                        ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700'
-                                        : 'bg-primary/5 border-primary/10'
+                                className={`p-4 rounded-xl border transition-colors relative group cursor-pointer ${item.read_at
+                                    ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700'
+                                    : 'bg-primary/5 border-primary/10'
                                     }`}
+                                onClick={() => {
+                                    if (item.data.link) {
+                                        navigate(item.data.link);
+                                        markAsRead(item.id);
+                                    }
+                                }}
                             >
                                 <div className="flex gap-4">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${getBgColor(item.type)}`}>
-                                        {getIcon(item.type)}
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${getBgColor(item.data.type || 'info')}`}>
+                                        {getIcon(item.data.type || 'info')}
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex items-start justify-between mb-1">
-                                            <h3 className={`font-semibold text-sm ${item.read ? 'text-gray-800 dark:text-gray-200' : 'text-gray-900 dark:text-white'}`}>
-                                                {item.title}
+                                            <h3 className={`font-semibold text-sm ${item.read_at ? 'text-gray-800 dark:text-gray-200' : 'text-gray-900 dark:text-white'}`}>
+                                                {item.data.title || "Notification"}
                                             </h3>
                                             <span className="text-xs text-gray-400 whitespace-nowrap flex items-center gap-1">
-                                                <Clock className="w-3 h-3" /> {item.time}
+                                                <Clock className="w-3 h-3" /> {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                                             </span>
                                         </div>
                                         <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                                            {item.message}
+                                            {item.data.message || ""}
                                         </p>
                                     </div>
                                 </div>
-                                {!item.read && (
-                                    <button className="absolute top-4 right-4 p-1 text-primary opacity-0 group-hover:opacity-100 transition-opacity" title="Mark as read">
+                                {!item.read_at && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            markAsRead(item.id);
+                                        }}
+                                        className="absolute top-4 right-4 p-1 text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                                        title="Mark as read"
+                                    >
                                         <Check className="w-4 h-4" />
                                     </button>
                                 )}

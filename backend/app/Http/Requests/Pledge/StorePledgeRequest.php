@@ -48,7 +48,7 @@ class StorePledgeRequest extends FormRequest
 
             // Loan
             'loan' => 'required|array',
-            'loan.loan_no' => 'nullable|string|max:255|unique:loans,loan_no',
+            'loan.loan_no' => 'required|string|max:255|unique:loans,loan_no',
             'loan.date' => 'nullable|date',
             'loan.amount' => 'required|numeric|min:0',
             'loan.interest_percentage' => 'nullable|numeric|min:0',

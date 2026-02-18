@@ -21,6 +21,8 @@ class DashboardController extends Controller
             $startDate = $request->query('start_date');
             $endDate = $request->query('end_date');
 
+            \Log::info('Dashboard Stats Request:', $request->all());
+
             if ($startDate) {
                 $startDate = Carbon::parse($startDate)->startOfDay();
             }
@@ -147,8 +149,6 @@ class DashboardController extends Controller
                     });
                     if ($branchId)
                         $q->where('branch_id', $branchId);
-                    if ($startDate && $endDate)
-                        $q->whereBetween('created_at', [$startDate, $endDate]);
                 })
                 ->where('due_date', '<', Carbon::now());
 
@@ -260,21 +260,121 @@ class DashboardController extends Controller
             $statusDistribution = $pledgeQuery->select('status', DB::raw('count(*) as count'))->groupBy('status')->get();
 
 
-            // --- Repledge Stats (Preserved) ---
+            // --- Repledge Stats ---
             $repledgeQuery = Repledge::query();
             if ($branchId)
                 $repledgeQuery->where('branch_id', $branchId);
             if ($startDate && $endDate)
                 $repledgeQuery->whereBetween('created_at', [$startDate, $endDate]);
 
-            $totalRepCount = (clone $repledgeQuery)->count();
-            $totalRepAmount = (clone $repledgeQuery)->sum('amount');
-            $activeRepCount = (clone $repledgeQuery)->where('status', 'active')->count();
-            $activeRepAmount = (clone $repledgeQuery)->where('status', 'active')->sum('amount');
-            $releasedRepCount = (clone $repledgeQuery)->where('status', 'closed')->count();
-            $releasedRepAmount = (clone $repledgeQuery)->where('status', 'closed')->sum('amount');
-            $overdueRepCount = (clone $repledgeQuery)->where('status', 'active')->where('due_date', '<', Carbon::now())->count();
-            $overdueRepAmount = (clone $repledgeQuery)->where('status', 'active')->where('due_date', '<', Carbon::now())->sum('amount');
+            // Helper for Repledge Interest (similar to Loan)
+            $calculateRepledgeInterest = function ($repledges) {
+                $totalAccrued = 0;
+                $now = Carbon::now();
+
+                foreach ($repledges as $repledge) {
+                    $fromDate = Carbon::parse($repledge->start_date); // Repledge start date
+
+                    if ($now->lessThan($fromDate)) {
+                        continue;
+                    }
+
+                    $diffYears = $now->year - $fromDate->year;
+                    $diffMonths = $now->month - $fromDate->month;
+                    $months = $diffYears * 12 + $diffMonths;
+
+                    if ($now->day > $fromDate->day) {
+                        $months++;
+                    }
+
+                    if ($months < 0)
+                        $months = 0;
+
+                    $rate = $repledge->interest_percent; // Field from Request validation
+                    $amount = $repledge->amount;
+
+                    $interest = $amount * ($rate / 100) * $months;
+                    $totalAccrued += $interest;
+                }
+                return $totalAccrued;
+            };
+
+            // 1. Total Repledges (Filtered)
+            $totalRepLoans = (clone $repledgeQuery)->get();
+            $totalRepCount = $totalRepLoans->count();
+            $totalRepAmount = $totalRepLoans->sum('amount');
+
+            // 2. Active Repledges
+            $activeRepQuery = (clone $repledgeQuery)->where('status', 'active');
+            $activeRepLoans = $activeRepQuery->get();
+            $activeRepCount = $activeRepLoans->count();
+            $activeRepAmount = $activeRepLoans->sum('amount');
+            $activeRepInterest = $calculateRepledgeInterest($activeRepLoans);
+
+            // 3. Released (Closed) Repledges
+            // Use RepledgeClosure for accurate interest paid
+            $closedRepQuery = (clone $repledgeQuery)->where('status', 'closed');
+            $closedRepLoans = $closedRepQuery->get();
+            $releasedRepCount = $closedRepLoans->count();
+            $releasedRepAmount = $closedRepLoans->sum('amount'); // Principal closed? Or Amount Paid? Usually Principal Volume.
+
+            // Calculate Realized Interest from Closures (if date filtered, should match closure date?)
+            // The main query filters by Created At. 
+            // If user wants "Closed Interest" for repledges created in period? Or Closed in period?
+            // "Closed Interest" usually means "Interest Realized in this period". 
+            // But here, repledgeQuery is filtered by created_at.
+            // Let's check matching logic for Loans. 
+            // For Loans, "Closed Interest" was $realizedClosureInterest which filters by CLOSED DATE.
+            // But "Closed Pledges" count filters by CREATED DATE in main logic?
+            // Wait, existing logic:
+            // $closedPledgeCount = Pledge::where('status', 'closed')...whereBetween('created_at'...)
+            // $closedInterest = $realizedClosureInterest (which filters by CLOSED DATE).
+            // This is mixed. 
+            // Let's stick to the existing mixed logic for consistency: 
+            // Count/Principal based on Creation (if filtered), Interest based on Realization (if filtered).
+            // Actually, if dashboard filters are applied (Created Date), we should show Pledges created then.
+            // But "Closed Interest" card implies income. Income is based on Payment Date.
+            // Let's try to match:
+
+            // Realized Repledge Interest (Closed Date Filter)
+            $closedRepInterest = \App\Models\Repledge\RepledgeClosure::whereHas('repledge', function ($q) use ($branchId) {
+                if ($branchId)
+                    $q->where('branch_id', $branchId);
+            })
+                ->when($startDate && $endDate, function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('closed_date', [$startDate, $endDate]);
+                })
+                ->sum('interest_paid');
+
+
+            // 4. Overdue Repledges
+            // Active + Due Date < Now
+            // Remove Created At filter for Overdue to match Loan Logic?
+            // Yes, user requested "All Overdue".
+            $overdueRepQuery = Repledge::where('branch_id', $branchId ? $branchId : '!=', null) // Hack to handle optional branch
+                ->when($branchId, function ($q) use ($branchId) {
+                    $q->where('branch_id', $branchId);
+                })
+                ->where('status', 'active')
+                ->where('due_date', '<', Carbon::now());
+
+            $overdueRepLoans = $overdueRepQuery->get();
+            $overdueRepCount = $overdueRepLoans->count();
+            $overdueRepAmount = $overdueRepLoans->sum('amount');
+            $overdueRepInterest = $calculateRepledgeInterest($overdueRepLoans);
+
+
+            // 5. MANUAL EXPENSES (Transactions where transactionable_type is NULL and type is debit)
+            $manualExpensesQuery = \App\Models\Transaction\Transaction::where('type', 'debit')
+                ->whereNull('transactionable_type'); // Exclude system transactions like Loans, Repledges
+
+            if ($branchId)
+                $manualExpensesQuery->where('branch_id', $branchId);
+            // For expenses, typically we look at Date (Transaction Date), not Created At
+            if ($startDate && $endDate)
+                $manualExpensesQuery->whereBetween('date', [$startDate, $endDate]);
+
+            $totalManualExpenses = $manualExpensesQuery->sum('amount');
 
 
             return response()->json([
@@ -300,18 +400,41 @@ class DashboardController extends Controller
                         'interest' => round($overdueAccruedInterest)
                     ]
                 ],
-                'repledge_stats' => [ // Preserved & Fixed
-                    'total' => ['count' => $totalRepCount, 'amount' => $totalRepAmount],
-                    'active' => ['count' => $activeRepCount, 'amount' => $activeRepAmount],
-                    'released' => ['count' => $releasedRepCount, 'amount' => $releasedRepAmount],
-                    'overdue' => ['count' => $overdueRepCount, 'amount' => $overdueRepAmount],
+                'repledge_stats' => [
+                    'total' => [
+                        'count' => $totalRepCount,
+                        'amount' => $totalRepAmount,
+                        'interest' => round($activeRepInterest + $closedRepInterest) // Est Total Interest
+                    ],
+                    'active' => [
+                        'count' => $activeRepCount,
+                        'amount' => $activeRepAmount,
+                        'interest' => round($activeRepInterest)
+                    ],
+                    'released' => [ // Mapping to 'closed'
+                        'count' => $releasedRepCount,
+                        'amount' => $releasedRepAmount,
+                        'interest' => round($closedRepInterest)
+                    ],
+                    'overdue' => [
+                        'count' => $overdueRepCount,
+                        'amount' => $overdueRepAmount,
+                        'interest' => round($overdueRepInterest)
+                    ],
                 ],
                 // NEW: Business Business Overview Stats
                 'business_stats' => [
                     'turnover' => $totalDisbursed, // Total Principal Disbursed
-                    'net_profit' => round($totalInterest), // Realized + Accrued
-                    'customers' => \App\Models\Pledge\Pledge::distinct('customer_id')->count('customer_id'),
-                    'assets_value' => $this->calculateAssetValue()
+                    'net_profit' => round($totalPaidInterest - $totalManualExpenses), // Realized Interest - Manual Expenses
+                    'collected_interest' => round($totalPaidInterest), // Realized Only
+                    'manual_expenses' => round($totalManualExpenses), // Exposed for debugging/UI
+                    'customers' => \App\Models\Pledge\Pledge::where(function ($q) use ($branchId, $startDate, $endDate) {
+                        if ($branchId)
+                            $q->where('branch_id', $branchId);
+                        if ($startDate && $endDate)
+                            $q->whereBetween('created_at', [$startDate, $endDate]);
+                    })->distinct('customer_id')->count('customer_id'),
+                    'assets_value' => $this->calculateAssetValue($branchId, $startDate, $endDate)
                 ],
                 'trends' => $trends,
                 'branch_distribution' => $branchDistribution,
@@ -332,7 +455,7 @@ class DashboardController extends Controller
      * Calculate Total Asset Value based on Current Metal Rates
      * Returns: ['total_value' => X, 'gold' => ['weight' => Y, 'value' => Z], 'silver' => ...]
      */
-    private function calculateAssetValue()
+    private function calculateAssetValue($branchId = null, $startDate = null, $endDate = null)
     {
         try {
             $rates = \App\Models\Admin\Finance\MetalRate::with('jewelType')->get();
@@ -356,7 +479,13 @@ class DashboardController extends Controller
                 elseif (str_contains($typeName, 'silver'))
                     $metalKey = 'silver';
 
-                $weight = \App\Models\Pledge\Jewel::where('jewel_type', 'LIKE', "%{$typeName}%")
+                $weight = \App\Models\Pledge\Jewel::whereHas('pledge', function ($q) use ($branchId, $startDate, $endDate) {
+                    if ($branchId)
+                        $q->where('branch_id', $branchId);
+                    if ($startDate && $endDate)
+                        $q->whereBetween('created_at', [$startDate, $endDate]);
+                })
+                    ->where('jewel_type', 'LIKE', "%{$typeName}%")
                     ->sum('net_weight');
 
                 $value = $weight * $ratePerGram;

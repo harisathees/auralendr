@@ -1,7 +1,7 @@
 ﻿import React, { useState, useRef, useEffect, useMemo } from "react";
 import api from "../../api/apiClient";
-// import { AudioRecorder } from "../audiocamera/AudioRecorder";
-// import { CameraCapture } from "../audiocamera/CameraCapture";
+import { AudioRecorder } from "../AudioCamera/AudioRecorder";
+import { CameraCapture } from "../AudioCamera/CameraCapture";
 import { useAuth } from "../../context/Auth/AuthContext";
 import { compressImage } from "../../utils/imageCompression";
 import SecureImage from "../Shared/AudioAndImageFetch/SecureImage";
@@ -154,7 +154,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
   // Modal State
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isAudioOpen, setIsAudioOpen] = useState(false);
-  const [activeSlot, setActiveSlot] = useState<'doc' | 'jewel' | 'evidence' | 'customer_image' | null>(null);
+  const [activeSlot, setActiveSlot] = useState<'doc' | 'jewel' | 'evidence' | 'customer_image' | 'group_jewel' | null>(null);
 
   // Handlers for Modals
   const [expandedJewelIndex, setExpandedJewelIndex] = useState<number>(0);
@@ -201,7 +201,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
     setJewelToDelete(null);
   };
 
-  const openCamera = (slot: 'doc' | 'jewel' | 'customer_image', index?: number) => {
+  const openCamera = (slot: 'doc' | 'jewel' | 'customer_image' | 'group_jewel', index?: number) => {
     setActiveSlot(slot);
     if (index !== undefined) setCurrentJewelIndex(index);
     setIsCameraOpen(true);
@@ -219,6 +219,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
     }
     if (activeSlot === 'evidence') setEvidenceFile(file);
     if (activeSlot === 'customer_image') setCustomerImageFile(file);
+    if (activeSlot === 'group_jewel') setGroupJewelFile(file);
 
     // Close modals
     setIsCameraOpen(false);
@@ -316,6 +317,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
   const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
 
   const [customerImageFile, setCustomerImageFile] = useState<File | null>(null);
+  const [groupJewelFile, setGroupJewelFile] = useState<File | null>(null);
 
   // Fetched URLs from Customer Search
   const [fetchedDocUrl, setFetchedDocUrl] = useState<string | null>(null);
@@ -330,10 +332,11 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
 
   const existingEvidence = useMemo(() => existingFiles.find(f => f.category === 'evidence_media'), [existingFiles]);
   const existingCustomerImage = useMemo(() => existingFiles.find(f => f.category === 'customer_image'), [existingFiles]);
+  const existingGroupJewel = useMemo(() => existingFiles.find(f => f.category === 'group_jewel_image'), [existingFiles]);
 
   // Remaining files (generic uploads)
   const remainingFiles = useMemo(() => existingFiles.filter(f =>
-    !['customer_document', 'jewel_image', 'evidence_media', 'customer_image'].includes(f.category)
+    !['customer_document', 'jewel_image', 'evidence_media', 'customer_image', 'group_jewel_image'].includes(f.category)
   ), [existingFiles]);
 
   // Metadata Options
@@ -363,6 +366,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
   const jewelInputRef = useRef<HTMLInputElement>(null);
   const evidenceInputRef = useRef<HTMLInputElement>(null);
   const customerImageInputRef = useRef<HTMLInputElement>(null);
+  const groupJewelInputRef = useRef<HTMLInputElement>(null);
 
   // Loan Configs
   const [interestRates, setInterestRates] = useState<{ id: number; rate: string; jewel_type_id?: number | null; estimation_percentage?: string; post_validity_rate?: string }[]>([]);
@@ -721,6 +725,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
       }
     }
     if (customerImageFile) await compressAndAppend(customerImageFile, "customer_image");
+    if (groupJewelFile) await compressAndAppend(groupJewelFile, "group_jewel_image");
 
     // Deleted IDs
     deletedFileIds.forEach(id => fd.append("deleted_file_ids[]", String(id)));
@@ -739,6 +744,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
       <input type="file" ref={jewelInputRef} className="hidden" accept="image/*" onChange={(e) => currentJewelIndex !== null && handleJewelFileSelect(e, currentJewelIndex)} />
       <input type="file" ref={evidenceInputRef} className="hidden" accept="image/*,audio/*,video/*" onChange={(e) => handleFileSelect(e, setEvidenceFile)} />
       <input type="file" ref={customerImageInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileSelect(e, setCustomerImageFile)} />
+      <input type="file" ref={groupJewelInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileSelect(e, setGroupJewelFile)} />
 
 
       <input type="file" ref={customerImageInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileSelect(e, setCustomerImageFile)} />
@@ -1162,6 +1168,28 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
           </div>
         )}
 
+        {/* Overall Jewel Image (Group Photo) */}
+        {jewels.length > 1 && (
+          <div className="mt-6 border-t border-dashed border-gray-200 dark:border-gray-700 pt-6">
+            <span className="text-gray-700 dark:text-gray-300 text-sm font-medium mb-3 block">Overall Jewel Image (Group Photo)</span>
+            <div className="h-52 w-full md:w-1/2">
+              <MediaUploadBlock
+                label="Group Photo"
+                icon="collections"
+                file={groupJewelFile}
+                existingUrl={existingGroupJewel?.url ? (existingGroupJewel.url.startsWith('http://localhost/') && !existingGroupJewel.url.includes(':8000') ? existingGroupJewel.url.replace('http://localhost/', 'http://localhost:8000/') : existingGroupJewel.url) : null}
+                mediaId={existingGroupJewel?.id}
+                onRemove={() => {
+                  if (existingGroupJewel) removeExistingFile(existingGroupJewel.id);
+                  setGroupJewelFile(null);
+                }}
+                onGallery={() => groupJewelInputRef.current?.click()}
+                onCamera={() => openCamera('group_jewel')}
+              />
+            </div>
+          </div>
+        )}
+
         <div className="mt-6">
           <button
             type="button"
@@ -1182,19 +1210,16 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
       </section>
 
       {/* Loan Details Section */}
-      <section
-        className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-green-100 dark:border-gray-700 mb-20"
-        onClickCapture={() => setExpandedJewelIndex(-1)}
-      >
+      <section className="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-green-100 dark:border-gray-700 mb-20">
         <div className="flex items-center justify-between mb-5 border-b border-gray-100 dark:border-gray-700 pb-3">
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-primary">account_balance_wallet</span>
             <h3 className="text-gray-800 dark:text-white text-xl font-bold">Loan Details</h3>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto">
             <input
               value={loan.date} onChange={e => setLoan({ ...loan, date: e.target.value })}
-              className="w-27 h-9 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs px-2 shadow-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+              className="w-32 h-9 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs px-2 shadow-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
               type="date"
               required
               title="Date"
@@ -1202,7 +1227,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
             <span className="text-gray-400 text-xs material-symbols-outlined">arrow_forward</span>
             <input
               value={loan.due_date} readOnly
-              className="w-27 h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-500 text-xs px-2 shadow-sm cursor-not-allowed outline-none transition-all"
+              className="w-32 h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-500 text-xs px-2 shadow-sm cursor-not-allowed outline-none transition-all"
               type="date"
               title="Due Date"
             />
@@ -1498,7 +1523,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
       </div>
 
       {/* Modals */}
-      {/* <CameraCapture
+      <CameraCapture
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         onCapture={handleCapture}
@@ -1508,7 +1533,7 @@ const PledgeForm: React.FC<Props> = ({ initial, onSubmit, isSubmitting = false }
         isOpen={isAudioOpen}
         onClose={() => setIsAudioOpen(false)}
         onCapture={handleCapture}
-      /> */}
+      />
 
       <ConfirmationModal
         isOpen={isDeleteModalOpen}

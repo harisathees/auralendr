@@ -61,6 +61,11 @@ class Loan extends Model
         return $this->hasOne(\App\Models\CustomerApp\CustomerLoanTrack::class);
     }
 
+    public function repledges()
+    {
+        return $this->hasMany(\App\Models\Repledge\Repledge::class, 'loan_id');
+    }
+
     public function payments()
     {
         return $this->hasMany(\App\Models\Pledge\LoanPayment::class);

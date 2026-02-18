@@ -10,7 +10,8 @@ import {
     Plus,
     Tag,
     RotateCw,
-    Shield
+    Shield,
+    Bell
 } from "lucide-react";
 
 import { useAuth } from "../../../../context/Auth/AuthContext";
@@ -19,6 +20,7 @@ const AdminBottomNavigation: React.FC = () => {
     const { enableTransactions, noBranchMode, enableBankPledge, enableApprovals } = useAuth();
     const location = useLocation();
     const [pendingCount, setPendingCount] = useState(0);
+    const [unreadCount, setUnreadCount] = useState(0);
     const [fabOpen, setFabOpen] = useState(false);
     const navigate = useNavigate();
 
@@ -39,9 +41,23 @@ const AdminBottomNavigation: React.FC = () => {
         }
     };
 
+    const fetchUnreadCount = async () => {
+        try {
+            const res = await api.get("/notifications");
+            const unread = res.data.filter((n: any) => !n.read_at).length;
+            setUnreadCount(unread);
+        } catch (error) {
+            console.error("Failed to fetch notifications", error);
+        }
+    };
+
     useEffect(() => {
         fetchPendingCount();
-        const interval = setInterval(fetchPendingCount, 60 * 60 * 1000); // Refresh every 1 hour
+        fetchUnreadCount();
+        const interval = setInterval(() => {
+            fetchPendingCount();
+            fetchUnreadCount();
+        }, 60 * 60 * 1000); // Refresh every 1 hour
         return () => clearInterval(interval);
     }, []);
 
@@ -280,6 +296,8 @@ const AdminBottomNavigation: React.FC = () => {
                             />
                             <span className="text-[10px] md:text-xs font-bold">Loans</span>
                         </Link>
+
+
 
                         {/* Privileges */}
                         <Link

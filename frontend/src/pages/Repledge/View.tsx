@@ -121,6 +121,13 @@ const View: React.FC = () => {
                 <h2 className="text-[#120e1b] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Bank Pledge Details</h2>
                 <div className="flex gap-2">
                     <button
+                        onClick={() => navigate(`/re-pledge/${id}/close`, { state: { id: id } })}
+                        className="text-emerald-600 hover:opacity-70 transition-opacity p-2"
+                        title="Close Bank Pledge"
+                    >
+                        <span className="material-symbols-outlined">check_circle</span>
+                    </button>
+                    <button
                         onClick={() => navigate(`/re-pledge/${id}/edit`)}
                         className="text-purple-600 hover:opacity-70 transition-opacity p-2"
                     >

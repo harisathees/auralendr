@@ -49,11 +49,36 @@ class PledgeController extends Controller
 
         if (!$user->hasRole('admin')) {
             $query->where('branch_id', $user->branch_id);
+        } else {
+            // Admin Logic: Filter by provided branch_id if valid
+            if ($branchId = $request->query('branch_id')) {
+                $query->where('branch_id', $branchId);
+            }
+        }
+
+        // Filter by Date Range (Creation Date)
+        if ($startDate = $request->query('start_date')) {
+            $query->whereDate('created_at', '>=', $startDate);
+        }
+        if ($endDate = $request->query('end_date')) {
+            $query->whereDate('created_at', '<=', $endDate);
         }
 
         // Hide rejected and pending pledges from the main list
         $query->whereNotIn('status', ['rejected', 'pending']);
 
+
+        // Status Filtering
+        if ($status = $request->query('status')) {
+            if ($status === 'overdue') {
+                $query->whereHas('loan', function ($q) {
+                    $q->where('status', 'active')
+                        ->where('due_date', '<', now());
+                });
+            } else {
+                $query->where('status', $status);
+            }
+        }
 
         // Report Filtering
         if ($reportType = $request->query('report_type')) {
@@ -282,8 +307,8 @@ class PledgeController extends Controller
                 $loanData['pledge_id'] = $pledge->id;
                 Log::info('Creating loan', ['data' => $loanData]);
                 $loan = Loan::create($loanData);
-                $loanCount = Loan::count() + 1;
-                $loan->loan_no = 'LN-' . str_pad($loanCount, 6, '0', STR_PAD_LEFT);
+                // Loan number is manually provided
+                // $loan->loan_no = 'LN-' . str_pad($loanCount, 6, '0', STR_PAD_LEFT);
 
                 // Initialize balance_amount to the loan amount if not set
                 if (!isset($loan->balance_amount) || $loan->balance_amount === null) {
@@ -765,7 +790,9 @@ class PledgeController extends Controller
                     'metal_rate' => $validated['metal_rate'] ?? null,
                 ]);
 
-                // 2. Handle Payment Source & Transaction
+
+
+                // 2. Handle Payment Source & Transaction (Correct logic)
                 $moneySource = MoneySource::lockForUpdate()->find($validated['payment_source_id']);
                 $amountPaid = $validated['amount_paid'];
 
@@ -781,7 +808,7 @@ class PledgeController extends Controller
                         'amount' => $amountPaid,
                         'date' => $validated['closed_date'],
                         'description' => "Pledge Closure Payment #{$pledge->id} (Cust: {$pledge->customer->name})",
-                        'category' => 'loan_repayment',
+                        'category' => 'pledge_closure',
                         'transactionable_type' => \App\Models\Pledge\PledgeClosure::class,
                         'transactionable_id' => $closure->id,
                         'created_by' => $request->user()->id,
@@ -808,6 +835,19 @@ class PledgeController extends Controller
                 // 4. Update Loan Status
                 if ($pledge->loan) {
                     $pledge->loan->update(['status' => 'closed']);
+
+                    // Check for active repledges and notify admins
+                    $activeRepledge = $pledge->loan->repledges()->where('status', 'active')->with('source')->first();
+                    if ($activeRepledge) {
+                        try {
+                            // Find admins by role column or Spatie role
+                            $admins = \App\Models\Admin\Organization\User\User::whereIn('role', ['admin', 'superadmin'])->get();
+
+                            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\RepledgeClosurePending($pledge->loan->loan_no, $pledge->id, $activeRepledge));
+                        } catch (\Exception $e) {
+                            Log::error('Failed to send repledge closure notification: ' . $e->getMessage());
+                        }
+                    }
                 }
 
                 $this->activityService->log('close', "Closed Pledge (Loan: {$pledge->loan->loan_no})", $pledge);

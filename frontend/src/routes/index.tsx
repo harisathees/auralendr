@@ -16,8 +16,13 @@ const Create = lazy(() => import("../pages/Pledge/Create"));
 const Edit = lazy(() => import("../pages/Pledge/Edit"));
 const View = lazy(() => import("../pages/Pledge/View"));
 const Receipt = lazy(() => import("../pages/Pledge/Receipt"));
+const ClosureReceipt = lazy(() => import("../pages/Pledge/ClosureReceipt")); // New Import
 const ClosePledge = lazy(() => import("../pages/Pledge/ClosePledge"));
 const ApprovalConfirmation = lazy(() => import("../pages/Pledge/ApprovalConfirmation"));
+const LoanVerificationReport = lazy(() => import("../pages/Reports/LoanVerificationReport"));
+const InterestVerificationReport = lazy(() => import("../pages/Reports/InterestVerificationReport"));
+const RepledgeInterestVerificationReport = lazy(() => import("../pages/Reports/RepledgeInterestVerificationReport"));
+const BusinessVerificationReport = lazy(() => import("../pages/Reports/BusinessVerificationReport"));
 const BranchList = lazy(() => import("../pages/Admin/Organization/Branch/List"));
 const BranchForm = lazy(() => import("../pages/Admin/Organization/Branch/Form"));
 const UsersList = lazy(() => import("../pages/Admin/Organization/User/List"));
@@ -34,6 +39,9 @@ const ProcessingFees = lazy(() => import("../pages/Admin/LoanConfiguration/Proce
 const BrandKit = lazy(() => import("../pages/Admin/Configs/BrandKit"));
 const StoragePage = lazy(() => import("../pages/Admin/Configs/Storage"));
 const RepledgeSources = lazy(() => import("../pages/Admin/Finance/RepledgeSources"));
+const CapitalSources = lazy(() => import("../pages/Admin/Finance/Capital/Index"));
+const CapitalSourceView = lazy(() => import("../pages/Admin/Finance/Capital/View"));
+const DataBackup = lazy(() => import("../pages/Admin/Configuration/Backup/DataBackup"));
 
 // Repledge Pages
 const Notices = lazy(() => import("../pages/Staff/Notices/Notices"));
@@ -124,11 +132,19 @@ const AppRoutes: React.FC = () => {
         <Route path="/pledges/edit" element={<Edit />} />
         <Route path="/pledges/view" element={<View />} />
         <Route path="/pledges/receipt" element={<Receipt />} />
+        <Route path="/pledges/receipt" element={<Receipt />} />
+        <Route path="/pledges/closure-receipt" element={<ClosureReceipt />} /> // New Route
         <Route path="/pledges/close" element={<ClosePledge />} />
+        <Route path="/analysis" element={<div>Advanced Analysis Page (Placeholder)</div>} />
+        <Route path="/reports/verification" element={<LoanVerificationReport />} />
+        <Route path="/reports/verification/interest" element={<InterestVerificationReport />} />
+        <Route path="/reports/verification/repledge-interest" element={<RepledgeInterestVerificationReport />} />
+        <Route path="/reports/verification/business-overview" element={<BusinessVerificationReport />} />
 
         {/* Redirect Routes (Capture ID -> Redirect to Generic) */}
         <Route path="/pledges/:id/edit" element={<RedirectWithState to="/pledges/edit" param="id" />} />
         <Route path="/pledges/:id/receipt" element={<RedirectWithState to="/pledges/receipt" param="id" />} />
+        <Route path="/pledges/:id/closure-receipt" element={<RedirectWithState to="/pledges/closure-receipt" param="id" />} /> // Redirect
         <Route path="/pledges/:id" element={<RedirectWithState to="/pledges/view" param="id" />} />
         <Route path="/pledges/:loanId/close" element={<RedirectWithState to="/pledges/close" param="loanId" />} />
 
@@ -195,6 +211,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin/pledges/:id" element={<RedirectWithState to="/admin/pledges/view" param="id" />} />
 
         <Route path="/admin/cashflow" element={<TransactionHistory />} />
+        <Route path="/admin/finance/capital" element={<CapitalSources />} />
+        <Route path="/admin/finance/capital/:id" element={<CapitalSourceView />} />
 
         <Route path="/admin/configs" element={<AdminConfigs />} />
         <Route
@@ -206,6 +224,7 @@ const AppRoutes: React.FC = () => {
         >
           <Route path="/admin/configs/brand-kit" element={<BrandKit />} />
         </Route>
+        <Route path="/admin/configs/data-backup" element={<DataBackup />} />
         <Route path="/admin/configs/money-sources" element={<MoneySources />} />
         <Route path="/admin/configs/metal-rates" element={<MetalRates />} />
         <Route

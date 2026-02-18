@@ -191,6 +191,23 @@ const CustomerAppControl: React.FC = () => {
         }
     };
 
+    const [enableDataBackup, setEnableDataBackup] = useState(false);
+
+    const handleDataBackupToggle = async (newValue: boolean) => {
+        setEnableDataBackup(newValue);
+        try {
+            const payload = {
+                branch_id: selectedBranchId === "" ? null : selectedBranchId,
+                enable_data_backup: newValue
+            };
+            await api.post('/developer/settings', payload);
+            toast.success(`Data Backup ${newValue ? 'Enabled' : 'Disabled'}`);
+        } catch (err) {
+            setEnableDataBackup(!newValue);
+            toast.error("Failed to update setting");
+        }
+    };
+
     if (user?.role !== 'developer') {
         return <div className="p-6 text-red-500">Access Denied</div>;
     }
@@ -440,6 +457,32 @@ const CustomerAppControl: React.FC = () => {
                             disabled={loading}
                         />
                         <div className="w-14 h-8 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-pink-300 dark:peer-focus:ring-pink-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-pink-600"></div>
+                    </label>
+                </div>
+            </div>
+
+            <div className="p-6 bg-gradient-to-r from-gray-50 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl border border-gray-100 dark:border-slate-700 transition-all max-w-2xl mt-6">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-gray-100 dark:bg-slate-700 rounded-xl text-gray-600 dark:text-gray-400">
+                            <span className="material-symbols-outlined">database</span>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-gray-800 dark:text-white">Data Backup</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                Enable or disable data backup functionality for administrators.
+                            </p>
+                        </div>
+                    </div>
+
+                    <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={enableDataBackup}
+                            onChange={(e) => handleDataBackupToggle(e.target.checked)}
+                        />
+                        <div className="w-14 h-8 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-gray-300 dark:peer-focus:ring-gray-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-gray-600"></div>
                     </label>
                 </div>
             </div>

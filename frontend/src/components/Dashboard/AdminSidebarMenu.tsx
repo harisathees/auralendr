@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { LogOut, Sun, Moon, LayoutDashboard, AlertCircle, User, Settings2, Camera, Loader2 } from 'lucide-react';
+import { LogOut, Sun, Moon, LayoutDashboard, AlertCircle, User, Settings2, Camera, Loader2, Landmark } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/Auth/AuthContext';
 import { useTheme } from '../../context/Theme/ThemeContext';
@@ -178,6 +178,21 @@ const AdminSidebarMenu: React.FC<AdminSidebarMenuProps> = ({ show, onClose, onLo
                             )}
                         </Link>
                     )}
+
+                    <Link
+                        to="/admin/finance/capital"
+                        onClick={onClose}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${isActive('/admin/finance/capital')
+                            ? 'bg-primary text-white shadow-lg shadow-primary/30 font-bold'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            }`}
+                    >
+                        <Landmark className={`w-5 h-5 transition-transform duration-300 ${isActive('/admin/finance/capital') ? 'scale-110' : 'group-hover:scale-110'}`} />
+                        <span className="relative z-10">Capital</span>
+                        {isActive('/admin/finance/capital') && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
+                        )}
+                    </Link>
 
                     <Link
                         to="/admin/configs"

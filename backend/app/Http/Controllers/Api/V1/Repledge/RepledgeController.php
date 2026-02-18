@@ -275,7 +275,7 @@ class RepledgeController extends Controller
                 'principal_amount' => $validated['principal_amount'],
                 'interest_paid' => $validated['interest_paid'] ?? 0,
                 'total_paid_amount' => $validated['amount_paid'],
-                'remarks' => $validated['remarks'],
+                'remarks' => $validated['remarks'] ?? null,
                 'status' => 'closed',
             ]);
 
@@ -319,6 +319,18 @@ class RepledgeController extends Controller
 
             // 4. Update Repledge Status
             $repledge->update(['status' => 'closed']);
+
+            // 5. Cleanup Notifications (Auto-resolve)
+            try {
+                // Find notifications related to this repledge and delete them
+                DB::table('notifications')
+                    ->where('type', 'App\Notifications\RepledgeClosurePending')
+                    ->whereJsonContains('data->repledge_id', $repledge->id)
+                    ->delete();
+            } catch (\Exception $e) {
+                // Log but don't fail the transaction
+                \Illuminate\Support\Facades\Log::warning('Failed to cleanup notifications for repledge closure', ['repledge_id' => $repledge->id]);
+            }
 
             $this->activityService->log('close', "Closed Repledge (Loan: {$repledge->loan->loan_no})", $repledge);
 

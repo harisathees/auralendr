@@ -102,6 +102,8 @@ const PledgeList: React.FC<Props> = ({
     onSearchChange(searchTerm);
   };
 
+
+
   return (
     <div className="fixed inset-0 bottom-[76px] flex flex-col bg-background-light dark:bg-background-dark overflow-hidden font-display">
       {/* Header Section - Truly Fixed Position via Flex Parent */}
@@ -212,8 +214,16 @@ const PledgeList: React.FC<Props> = ({
                             <SecureImage
                               onClick={(e: React.MouseEvent) => { e.stopPropagation(); navigate(`/pledges/${p.id}`); }}
                               className="w-14 h-14 rounded-2xl object-cover border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
-                              mediaId={p.media?.find((m: any) => m.category === 'customer_image')?.id}
-                              fallbackSrc={fixImageUrl(p.media?.find((m: any) => m.category === 'customer_image')?.url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`}
+                              mediaId={
+                                p.media?.find((m: any) => m.category === 'customer_image')?.id ||
+                                p.media?.find((m: any) => m.category === 'gold_image')?.id ||
+                                p.media?.find((m: any) => m.mime_type?.startsWith('image/'))?.id
+                              }
+                              fallbackSrc={
+                                fixImageUrl(p.media?.find((m: any) => m.category === 'customer_image')?.url) ||
+                                fixImageUrl(p.media?.find((m: any) => m.category === 'gold_image')?.url) ||
+                                `https://ui-avatars.com/api/?name=${encodeURIComponent(p.customer?.name || 'Unknown')}&background=random&color=fff&bold=true`
+                              }
                               alt=""
                             />
                             <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-[#1A1D1F] ${p.status === 'closed' ? 'bg-rose-500' : 'bg-primary'}`} />
@@ -294,6 +304,8 @@ const PledgeList: React.FC<Props> = ({
                                       <CheckCircle size={16} />
                                       <span className="text-[9px] font-black uppercase mt-0.5">Close</span>
                                     </button>
+
+
                                   </>
                                 )}
                               </div>

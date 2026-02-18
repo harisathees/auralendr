@@ -5,7 +5,7 @@ import { Lock } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 const AdminConfigs: React.FC = () => {
-    const { user, can, enableTransactions, enableTasks, enableBankPledge } = useAuth();
+    const { user, can, enableTransactions, enableTasks, enableBankPledge, enableDataBackup } = useAuth();
     const isAdmin = user?.role === 'admin';
 
     const [expandedGroup, setExpandedGroup] = React.useState<string | null>(null);
@@ -214,6 +214,14 @@ const AdminConfigs: React.FC = () => {
                         bg: "bg-cyan-100",
                         link: "/admin/configs/storage"
                     },
+                    {
+                        title: "Data Backup",
+                        description: "Download local database backups",
+                        icon: "database",
+                        color: "text-slate-600",
+                        bg: "bg-slate-100",
+                        link: "/admin/configs/data-backup"
+                    },
                 ]
             },
             {
@@ -290,13 +298,16 @@ const AdminConfigs: React.FC = () => {
                 // Task Restricted Items
                 if (item.title === "Tasks" && !enableTasks) return false;
 
+                // Data Backup Restricted Items
+                if (item.title === "Data Backup" && !enableDataBackup) return false;
+
                 // Permission-based filtering
                 if (item.permission && !can(item.permission)) return false;
 
                 return true;
             })
         })).filter(group => group.items.length > 0); // Remove empty groups
-    }, [user?.role, enableTransactions, enableTasks, enableBankPledge, can]);
+    }, [user?.role, enableTransactions, enableTasks, enableBankPledge, enableDataBackup, can]);
 
     const renderIcon = (iconName: string, colorClass: string) => {
         if (iconName === 'whatsapp_logo') {

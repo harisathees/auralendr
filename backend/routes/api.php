@@ -29,10 +29,13 @@ use App\Http\Controllers\Api\V1\Admin\DashboardController;
 use App\Http\Controllers\Api\V1\Admin\Configuration\BrandSettingsController;
 use App\Http\Controllers\Api\V1\Admin\Configuration\ReceiptTemplateController;
 use App\Http\Controllers\Api\V2\DeveloperSettingsController;
+use App\Http\Controllers\Api\V1\Admin\Finance\CapitalSourceController;
 
 Route::get('/test', function () {
     return response()->json(['status' => 'API Working']);
 });
+
+
 
 // Public Metal Rates
 Route::get('/metal-rates', [MetalRateController::class, 'index']);
@@ -117,6 +120,8 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
         Route::get('/customers/{id}/analysis', [CustomerController::class, 'analysis']);
         Route::get('/customers', [CustomerController::class, 'index']);
 
+        // Data Backup
+        Route::get('/backup/export', [\App\Http\Controllers\Api\V1\Admin\Backup\BackupController::class, 'export']);
     });
 
     // Shared Routes (Admin + Staff)
@@ -161,6 +166,12 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::delete('/money-sources/{id}', [MoneySourceController::class, 'destroy']);
     Route::get('/money-source-types', [MoneySourceTypeController::class, 'index']);
 
+    // Capital Sources
+    Route::get('/capital-sources/metrics', [CapitalSourceController::class, 'getMetrics']);
+    Route::apiResource('capital-sources', CapitalSourceController::class);
+    Route::post('/capital-sources/add-capital', [CapitalSourceController::class, 'addCapital']);
+    Route::post('/capital-sources/withdraw-capital', [CapitalSourceController::class, 'withdrawCapital']);
+
 
     // Transactions
     Route::get('/transactions/report', [TransactionController::class, 'report']);
@@ -193,4 +204,13 @@ Route::middleware(['auth:sanctum', 'check.time'])->group(function () {
     Route::middleware('developer')->group(function () {
         Route::apiResource('branches', BranchController::class)->only(['store', 'update', 'destroy']);
     });
+    // Report Routes
+    Route::get('/reports/verification/business-overview', [\App\Http\Controllers\Api\V1\Admin\ReportController::class, 'getBusinessOverviewVerification']);
+    Route::get('/reports/verification/interest', [\App\Http\Controllers\Api\V1\Admin\ReportController::class, 'getInterestVerification']);
+    Route::get('/reports/verification/repledge-interest', [\App\Http\Controllers\Api\V1\Admin\ReportController::class, 'getRepledgeInterestVerification']);
+
+    // Notification Routes
+    Route::get('/notifications', [\App\Http\Controllers\Api\V1\Notification\NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\V1\Notification\NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [\App\Http\Controllers\Api\V1\Notification\NotificationController::class, 'markAllAsRead']);
 });
