@@ -8,13 +8,14 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      strategies: 'generateSW', // ✅ change here
+      strategies: 'generateSW',
       registerType: 'autoUpdate',
-
-      devOptions: {
-        enabled: false,
+      injectRegister: 'auto',
+      workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
       },
-
+      
       manifest: {
         name: 'AuraLendr',
         short_name: 'AuraLendr',
@@ -22,20 +23,21 @@ export default defineConfig({
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
-        icons: [
-          {
-            src: '/assets/nsh/auralendr.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: '/assets/nsh/auralendr.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-        ],
+      icons: [
+        {
+          src: '/assets/nsh/auralendr.png',
+          sizes: '192x192',
+          type: 'image/png',
+        },
+        {
+        src: '/assets/nsh/auralendr.png',
+        sizes: '512x512',
+        type: 'image/png',
       },
-    }),
+    ],
+  },
+})
+
   ],
 
   resolve: {

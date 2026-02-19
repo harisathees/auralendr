@@ -25,10 +25,11 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        // 'http://localhost:5173',
-        // 'http://localhost:5174',
-        'https://nsh.auralendr.com',
-        // 'http://customer-app.auralendr.com',
+    // 'http://localhost:5173',
+    // 'http://localhost:5174',
+    'https://nsh.auralendr.com',     
+    'https://api-nsh.auralendr.com',
+      // 'https://customer-app.auralendr.com',
     ],
 
     'allowed_origins_patterns' => [],
